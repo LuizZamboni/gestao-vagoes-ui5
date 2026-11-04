@@ -32,18 +32,6 @@
 					<Text text="{/view/liveText}"/>
 				</HBox>
 				<Text text="{/view/hora}" class="vgHead__clock"/>
-				<Button
-					icon="{/view/simIcone}"
-					tooltip="{/view/simTexto}"
-					type="Transparent"
-					enabled="{= !${/fatura/emitida} }"
-					press=".onToggleSim"/>
-				<Button
-					text="{/fatura/botaoTexto}"
-					icon="{/fatura/botaoIcone}"
-					type="Emphasized"
-					enabled="{/fatura/podeEmitir}"
-					press=".onEmitirFatura"/>
 			</FlexBox>
 		</FlexBox>
 

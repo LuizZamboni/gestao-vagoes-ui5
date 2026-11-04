@@ -2,10 +2,9 @@ sap.ui.define([
 	"sap/ui/core/mvc/Controller",
 	"sap/ui/model/json/JSONModel",
 	"sap/m/MessageToast",
-	"sap/m/MessageBox",
 	"../model/Regras",
 	"../model/Simulador"
-], function (Controller, JSONModel, MessageToast, MessageBox, Regras, Simulador) {
+], function (Controller, JSONModel, MessageToast, Regras, Simulador) {
 	"use strict";
 
 	/** Intervalo da simulação. Em produção: polling/WebSocket do backend. */
@@ -113,14 +112,6 @@ sap.ui.define([
 		},
 
 		/* =========================================================== */
-		/* Cabeçalho                                                   */
-		/* =========================================================== */
-
-		onToggleSim: function () {
-			this._executar(Simulador.alternarSimulacao);
-		},
-
-		/* =========================================================== */
 		/* Estação: vagões e bocas                                     */
 		/* =========================================================== */
 
@@ -193,31 +184,6 @@ sap.ui.define([
 			} else if (oVal.bocaIndex >= 0) {
 				this._abrirBoca(oVal.bocaIndex, oLink);
 			}
-		},
-
-		/* =========================================================== */
-		/* Fatura                                                      */
-		/* =========================================================== */
-
-		onEmitirFatura: function () {
-			var oFat = this._vm("/fatura");
-			if (!oFat || !oFat.podeEmitir) {
-				return;
-			}
-			var sTexto = this._t("fat.confirmTexto", [this._vm("/composicao/codigo"), this._vm("/kpi/totalTxt"), oFat.nCarregados]);
-			MessageBox.confirm(sTexto, {
-				title: this._t("fat.confirmTitulo"),
-				emphasizedAction: MessageBox.Action.OK,
-				onClose: function (sAcao) {
-					if (sAcao !== MessageBox.Action.OK) {
-						return;
-					}
-					var d = new Date();
-					var sHora = String(d.getHours()).padStart(2, "0") + ":" + String(d.getMinutes()).padStart(2, "0");
-					this._executar(Simulador.emitirFatura, sHora);
-					MessageToast.show(this._t("fat.ok", [this._vm("/fatura/numeroTxt")]));
-				}.bind(this)
-			});
 		}
 	});
 });

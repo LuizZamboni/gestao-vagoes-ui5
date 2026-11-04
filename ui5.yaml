@@ -1,0 +1,13 @@
+specVersion: "4.0"
+metadata:
+  name: vagoes.dashboard
+type: application
+framework:
+  name: SAPUI5
+  version: "1.120.0"
+  libraries:
+    - name: sap.ui.core
+    - name: sap.m
+    - name: sap.f
+    - name: sap.ui.layout
+    - name: themelib_sap_horizon

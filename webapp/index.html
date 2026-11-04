@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="pt-BR" style="height: 100%">
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>Gestão de Vagões</title>
+	<!--
+		Bootstrap local (ui5 serve / build). Para abrir direto do CDN da SAP sem o
+		UI5 Tooling, use o arquivo index-cdn.html.
+	-->
+	<script id="sap-ui-bootstrap"
+		src="resources/sap-ui-core.js"
+		data-sap-ui-theme="sap_horizon_dark"
+		data-sap-ui-language="pt-BR"
+		data-sap-ui-resource-roots='{ "vagoes.dashboard": "./" }'
+		data-sap-ui-on-init="module:sap/ui/core/ComponentSupport"
+		data-sap-ui-compat-version="edge"
+		data-sap-ui-async="true"></script>
+</head>
+<body class="sapUiBody" id="content" style="height: 100%; margin: 0">
+	<div data-sap-ui-component
+		data-name="vagoes.dashboard"
+		data-id="container"
+		data-height="100%"
+		data-settings='{ "id": "vagoes" }'
+		style="height: 100%"></div>
+</body>
+</html>

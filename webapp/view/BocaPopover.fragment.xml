@@ -1,0 +1,92 @@
+<core:FragmentDefinition
+	xmlns="sap.m"
+	xmlns:core="sap.ui.core"
+	xmlns:form="sap.ui.layout.form">
+	<ResponsivePopover
+		id="bocaPopover"
+		title="{/bocaSel/titulo}"
+		placement="Auto"
+		contentWidth="23rem"
+		class="vgBocaPop">
+		<content>
+			<VBox class="sapUiSmallMargin">
+				<FlexBox justifyContent="SpaceBetween" alignItems="Center">
+					<ObjectStatus
+						text="{/bocaSel/statusText}"
+						state="{/bocaSel/statusState}"
+						icon="{/bocaSel/statusIcon}"
+						inverted="true"/>
+					<ObjectNumber
+						number="{/bocaSel/vazaoTxt}"
+						unit="t/h"
+						emphasized="true"
+						state="{= ${/bocaSel/ativa} ? 'Information' : 'None' }"
+						class="vgPopVazao"/>
+				</FlexBox>
+
+				<MessageStrip
+					text="{/bocaSel/alertaTxt}"
+					type="{/bocaSel/alertaTipo}"
+					visible="{/bocaSel/temAlerta}"
+					showIcon="true"
+					class="sapUiSmallMarginTop"/>
+
+				<form:SimpleForm editable="false" layout="ColumnLayout" columnsM="1" columnsL="1" columnsXL="1" class="vgForm">
+					<Label text="{i18n>pop.produto}"/>
+					<Text text="{/bocaSel/produto}"/>
+					<Label text="{i18n>pop.umidade}"/>
+					<Text text="{/bocaSel/umidadeTxt}"/>
+					<Label text="{i18n>pop.nominal}"/>
+					<Text text="{/bocaSel/nominalTxt}"/>
+					<Label text="{i18n>colDestino}"/>
+					<Text text="{/bocaSel/destinoTxt}"/>
+					<Label text="{i18n>pop.eta}"/>
+					<Text text="{/bocaSel/etaTxt}"/>
+					<Label text="{i18n>pop.turno}"/>
+					<Text text="{/bocaSel/turnoTxt} t"/>
+				</form:SimpleForm>
+
+				<Label text="{i18n>pop.nivel}" class="sapUiTinyMarginTop"/>
+				<ProgressIndicator
+					percentValue="{/bocaSel/nivelPct}"
+					displayValue="{/bocaSel/nivelTxt}"
+					state="{/bocaSel/nivelState}"/>
+
+				<Label text="{/bocaSel/aberturaLabel}" labelFor="sldAbertura" class="sapUiSmallMarginTop"/>
+				<Slider
+					id="sldAbertura"
+					value="{/bocaSel/abertura}"
+					min="0"
+					max="100"
+					step="5"
+					enableTickmarks="true"
+					width="100%"
+					enabled="{/bocaSel/podeOperar}"
+					liveChange=".onAberturaChange"/>
+
+				<Label text="{i18n>pop.destino}" labelFor="selDestino" class="sapUiTinyMarginTop"/>
+				<Select
+					id="selDestino"
+					width="100%"
+					forceSelection="false"
+					items="{/destinos}"
+					selectedKey="{/bocaSel/destinoKey}"
+					enabled="{/bocaSel/podeOperar}"
+					change=".onDestinoChange">
+					<core:Item key="{key}" text="{text}"/>
+				</Select>
+			</VBox>
+		</content>
+		<beginButton>
+			<Button
+				text="{/bocaSel/acaoTexto}"
+				type="{/bocaSel/acaoTipo}"
+				icon="{/bocaSel/acaoIcone}"
+				enabled="{/bocaSel/podeOperar}"
+				press=".onBocaAcao"/>
+		</beginButton>
+		<endButton>
+			<Button text="{i18n>fechar}" press=".onFecharPopover"/>
+		</endButton>
+	</ResponsivePopover>
+</core:FragmentDefinition>

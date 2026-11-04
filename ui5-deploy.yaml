@@ -1,0 +1,27 @@
+# Deploy para o repositório BSP do S/4 (ABAP).
+# Ajuste url, client, package e transport antes de rodar "npm run deploy".
+specVersion: "4.0"
+metadata:
+  name: vagoes.dashboard
+type: application
+builder:
+  resources:
+    excludes:
+      - /test/**
+      - /localService/**
+      - /index-cdn.html
+  customTasks:
+    - name: deploy-to-abap
+      afterTask: generateCachebusterInfo
+      configuration:
+        ignoreCertError: false
+        target:
+          url: https://SEU-S4-HOST:44300
+          client: "100"
+        app:
+          name: ZGESTAO_VAGOES
+          description: Gestão de Vagões
+          package: ZPACOTE
+          transport: DEVK900000
+        exclude:
+          - /test/

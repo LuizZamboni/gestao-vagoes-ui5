@@ -1,0 +1,35 @@
+{
+	"composicao": {
+		"codigo": "C-2041",
+		"patio": "Pátio de carregamento · Linha 2",
+		"estacao": "Moega 2",
+		"produto": "Soja em grão",
+		"limiteVagao": 96,
+		"taraVagao": 25.4,
+		"margemAlvo": 0.4,
+		"nivelMinimoSiloPct": 15
+	},
+	"vagoes": [
+		{ "pos": 1, "id": "HFE 718204-3", "vistoriado": true, "checklist": { "limpeza": true, "escotilhas": true, "comportas": true, "rodeiros": true }, "carga": 95.8, "bocas": [1, 2] },
+		{ "pos": 2, "id": "HFE 718311-0", "vistoriado": true, "checklist": { "limpeza": true, "escotilhas": true, "comportas": true, "rodeiros": true }, "carga": 97.4, "bocas": [2, 3] },
+		{ "pos": 3, "id": "HFE 719042-6", "vistoriado": true, "checklist": { "limpeza": true, "escotilhas": true, "comportas": true, "rodeiros": true }, "carga": 95.1, "bocas": [1, 3] },
+		{ "pos": 4, "id": "HFE 719155-1", "vistoriado": true, "checklist": { "limpeza": true, "escotilhas": true, "comportas": true, "rodeiros": true }, "carga": 61.3, "bocas": [1, 2, 3] },
+		{ "pos": 5, "id": "HFE 720018-9", "vistoriado": false, "checklist": { "limpeza": true, "escotilhas": false, "comportas": true, "rodeiros": false }, "carga": 0, "bocas": [] },
+		{ "pos": 6, "id": "HFE 720102-4", "vistoriado": true, "checklist": { "limpeza": true, "escotilhas": true, "comportas": true, "rodeiros": true }, "carga": 0, "bocas": [] },
+		{ "pos": 7, "id": "HFE 720377-2", "vistoriado": false, "checklist": { "limpeza": true, "escotilhas": true, "comportas": false, "rodeiros": true }, "carga": 0, "bocas": [] },
+		{ "pos": 8, "id": "HFE 720490-5", "vistoriado": true, "checklist": { "limpeza": true, "escotilhas": true, "comportas": true, "rodeiros": true }, "carga": 0, "bocas": [] }
+	],
+	"bocas": [
+		{ "n": 1, "silo": "Silo 01", "produto": "Soja em grão", "status": "ativa", "vazaoNominal": 650, "abertura": 95, "vazao": 618, "estoque": 1840, "capacidade": 2500, "umidade": 12.4, "destino": 4, "descarregadoTurno": 412.6, "os": null },
+		{ "n": 2, "silo": "Silo 02", "produto": "Soja em grão", "status": "ativa", "vazaoNominal": 620, "abertura": 90, "vazao": 558, "estoque": 2105, "capacidade": 2500, "umidade": 12.9, "destino": 4, "descarregadoTurno": 389.1, "os": null },
+		{ "n": 3, "silo": "Silo 03", "produto": "Soja em grão", "status": "ativa", "vazaoNominal": 600, "abertura": 70, "vazao": 420, "estoque": 240, "capacidade": 1500, "umidade": 13.1, "destino": 4, "descarregadoTurno": 276.4, "os": null },
+		{ "n": 4, "silo": "Silo 04", "produto": "Milho em grão", "status": "parada", "vazaoNominal": 600, "abertura": 0, "vazao": 0, "estoque": 1320, "capacidade": 2500, "umidade": 13.8, "destino": null, "descarregadoTurno": 0, "os": null },
+		{ "n": 5, "silo": "Silo 05", "produto": "Soja em grão", "status": "manutencao", "vazaoNominal": 650, "abertura": 0, "vazao": 0, "estoque": 980, "capacidade": 2500, "umidade": 12.6, "destino": null, "descarregadoTurno": 0, "os": "OS-4471 · troca do atuador da comporta" }
+	],
+	"fatura": {
+		"emitida": false,
+		"numero": null,
+		"hora": null,
+		"numeroPrevisto": "000.482"
+	}
+}

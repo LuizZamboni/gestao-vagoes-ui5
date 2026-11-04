@@ -1,0 +1,9 @@
+# Publica a pasta webapp como site estático; o UI5 vem do CDN da SAP (index-cdn.html).
+[build]
+  publish = "webapp"
+  command = ""
+
+[[redirects]]
+  from = "/"
+  to = "/index-cdn.html"
+  status = 200

@@ -1,0 +1,2276 @@
+<!DOCTYPE html>
+<html lang="pt-BR" data-theme="dark" class="sapUiTheme-sap_horizon_dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Gestão de Vagões UI5</title>
+<style>
+/* Aproximação visual do tema SAP Horizon / Horizon Dark para a prévia HTML. */
+:root, [data-theme="dark"] {
+	--sapBackgroundColor: #12171c;
+	--sapShellColor: #12171c;
+	--sapTile_Background: #1d232a;
+	--sapGroup_ContentBackgroundColor: #1d232a;
+	--sapList_Background: #1d232a;
+	--sapList_HeaderBackground: #1d232a;
+	--sapList_BorderColor: #33404d;
+	--sapList_Hover_Background: #26303a;
+	--sapGroup_TitleBorderColor: #33404d;
+	--sapTextColor: #eaecee;
+	--sapTitleColor: #eaecee;
+	--sapContent_LabelColor: #a9b4be;
+	--sapContent_FocusColor: #4db1ff;
+	--sapBrandColor: #4db1ff;
+	--sapButton_Background: #1d232a;
+	--sapButton_BorderColor: #8396a8;
+	--sapButton_TextColor: #4db1ff;
+	--sapButton_Hover_Background: #26303a;
+	--sapButton_Emphasized_Background: #4db1ff;
+	--sapButton_Emphasized_TextColor: #12171c;
+	--sapButton_Emphasized_Hover_Background: #73c2ff;
+	--sapButton_Accept_Background: #1d232a;
+	--sapButton_Accept_TextColor: #5dc122;
+	--sapButton_Accept_BorderColor: #5dc122;
+	--sapButton_Reject_Background: #1d232a;
+	--sapButton_Reject_TextColor: #ff8888;
+	--sapButton_Reject_BorderColor: #ff8888;
+	--sapField_Background: #12171c;
+	--sapField_BorderColor: #8396a8;
+	--sapPositiveColor: #5dc122;
+	--sapPositiveElementColor: #5dc122;
+	--sapPositiveTextColor: #5dc122;
+	--sapNegativeColor: #ff8888;
+	--sapNegativeElementColor: #ff6363;
+	--sapNegativeTextColor: #ff8888;
+	--sapCriticalColor: #ffab1d;
+	--sapCriticalElementColor: #ff9a3d;
+	--sapCriticalTextColor: #ffab1d;
+	--sapInformativeElementColor: #4db1ff;
+	--sapInformativeTextColor: #4db1ff;
+	--sapNeutralElementColor: #8396a8;
+	--sapNeutralTextColor: #a9b4be;
+	--sapContent_Shadow0: 0 0 0.125rem 0 rgba(0, 0, 0, .3), 0 0.125rem 0.5rem 0 rgba(0, 0, 0, .5);
+	--sapContent_Shadow2: 0 0 0.125rem 0 rgba(0, 0, 0, .5), 0 0.625rem 1.875rem 0 rgba(0, 0, 0, .6);
+	--sapFontFamily: "72", "72full", "Segoe UI", Arial, Helvetica, sans-serif;
+	--onInv: #12171c;
+	color-scheme: dark;
+}
+[data-theme="light"] {
+	--sapBackgroundColor: #f5f6f7;
+	--sapShellColor: #ffffff;
+	--sapTile_Background: #ffffff;
+	--sapGroup_ContentBackgroundColor: #ffffff;
+	--sapList_Background: #ffffff;
+	--sapList_HeaderBackground: #ffffff;
+	--sapList_BorderColor: #e5e5e5;
+	--sapList_Hover_Background: #eaecee;
+	--sapGroup_TitleBorderColor: #a8b2bd;
+	--sapTextColor: #1d2d3e;
+	--sapTitleColor: #1d2d3e;
+	--sapContent_LabelColor: #556b82;
+	--sapContent_FocusColor: #0032a5;
+	--sapBrandColor: #0070f2;
+	--sapButton_Background: #ffffff;
+	--sapButton_BorderColor: #bcc3ca;
+	--sapButton_TextColor: #0064d9;
+	--sapButton_Hover_Background: #eaecee;
+	--sapButton_Emphasized_Background: #0070f2;
+	--sapButton_Emphasized_TextColor: #ffffff;
+	--sapButton_Emphasized_Hover_Background: #0064d9;
+	--sapButton_Accept_Background: #f5fae5;
+	--sapButton_Accept_TextColor: #256f3a;
+	--sapButton_Accept_BorderColor: #b0d450;
+	--sapButton_Reject_Background: #ffd6e9;
+	--sapButton_Reject_TextColor: #aa0808;
+	--sapButton_Reject_BorderColor: #ffc2de;
+	--sapField_Background: #ffffff;
+	--sapField_BorderColor: #556b82;
+	--sapPositiveColor: #256f3a;
+	--sapPositiveElementColor: #30914c;
+	--sapPositiveTextColor: #256f3a;
+	--sapNegativeColor: #aa0808;
+	--sapNegativeElementColor: #e90b0b;
+	--sapNegativeTextColor: #aa0808;
+	--sapCriticalColor: #b44f00;
+	--sapCriticalElementColor: #e76500;
+	--sapCriticalTextColor: #b44f00;
+	--sapInformativeElementColor: #0070f2;
+	--sapInformativeTextColor: #0064d9;
+	--sapNeutralElementColor: #788fa6;
+	--sapNeutralTextColor: #556b82;
+	--sapContent_Shadow0: 0 0 0.125rem 0 rgba(34, 53, 72, .2), 0 0.125rem 0.25rem 0 rgba(34, 53, 72, .2);
+	--sapContent_Shadow2: 0 0 0.125rem 0 rgba(34, 53, 72, .2), 0 0.625rem 1.875rem 0 rgba(34, 53, 72, .25);
+	--onInv: #ffffff;
+	color-scheme: light;
+}
+
+* { box-sizing: border-box; }
+html, body { margin: 0; }
+body {
+	background: var(--sapBackgroundColor);
+	color: var(--sapTextColor);
+	font-family: var(--sapFontFamily);
+	font-size: 14px;
+	line-height: 1.4;
+	-webkit-font-smoothing: antialiased;
+}
+button, select, input { font: inherit; }
+[hidden] { display: none !important; }
+.ico { width: 1rem; height: 1rem; flex: none; display: inline-block; vertical-align: -0.15em; }
+
+/* Dynamic Page */
+.dp { min-height: 100vh; padding-bottom: 4.5rem; }
+.dp-title {
+	position: sticky; top: 0; z-index: 20;
+	background: var(--sapShellColor);
+	padding: 0.75rem 2rem 0.5rem;
+	display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 0.5rem 1rem;
+}
+.dp-heading { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem 0.75rem; }
+.dp-heading h1 { margin: 0; font-size: 1.25rem; font-weight: 700; color: var(--sapTitleColor); }
+.dp-sub { width: 100%; color: var(--sapContent_LabelColor); font-size: 0.875rem; margin-top: -0.25rem; }
+.dp-actions { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-left: auto; }
+.dp-header {
+	background: var(--sapShellColor);
+	padding: 0.5rem 2rem 1rem;
+	border-bottom: 1px solid var(--sapList_BorderColor);
+	box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, .15);
+}
+.kpis { display: flex; flex-wrap: wrap; gap: 0.75rem 3rem; }
+.kpi { min-width: 8rem; display: flex; flex-direction: column; gap: 0.125rem; }
+.lbl { color: var(--sapContent_LabelColor); font-size: 0.875rem; }
+.kpi-v { font-size: 1.75rem; font-weight: 700; line-height: 2rem; }
+.kpi-v small { font-size: 1rem; font-weight: 400; color: var(--sapContent_LabelColor); margin-left: 0.25rem; }
+.kpi-s { color: var(--sapContent_LabelColor); font-size: 0.75rem; }
+.dp-content { padding: 1rem 2rem; display: flex; flex-direction: column; gap: 1rem; }
+.dp-footer {
+	position: fixed; left: 0.5rem; right: 0.5rem; bottom: 0.5rem; z-index: 30;
+	min-height: 3rem; padding: 0.375rem 0.75rem; border-radius: 0.75rem;
+	display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem;
+	background: var(--sapTile_Background); box-shadow: var(--sapContent_Shadow2);
+}
+.spacer { flex: 1; }
+.preview-tag { font-size: 0.75rem; color: var(--sapContent_LabelColor); border: 1px dashed var(--sapList_BorderColor); border-radius: 0.5rem; padding: 0.125rem 0.5rem; }
+
+/* Buttons */
+.btn {
+	display: inline-flex; align-items: center; justify-content: center; gap: 0.375rem;
+	min-height: 2.25rem; padding: 0 0.75rem; border-radius: 0.5rem;
+	border: 1px solid var(--sapButton_BorderColor);
+	background: var(--sapButton_Background); color: var(--sapButton_TextColor);
+	font-weight: 600; cursor: pointer; white-space: nowrap;
+	transition: background .15s, transform .1s;
+}
+.btn:hover { background: var(--sapButton_Hover_Background); }
+.btn:active { transform: scale(.98); }
+.btn:focus-visible { outline: 2px solid var(--sapContent_FocusColor); outline-offset: 2px; }
+.btn[disabled] { opacity: .4; cursor: default; transform: none; }
+.btn.tr { border-color: transparent; background: transparent; }
+.btn.tr:hover { background: var(--sapButton_Hover_Background); }
+.btn.emph { border-color: var(--sapButton_Emphasized_Background); background: var(--sapButton_Emphasized_Background); color: var(--sapButton_Emphasized_TextColor); }
+.btn.emph:hover { background: var(--sapButton_Emphasized_Hover_Background); }
+.btn.Accept { border-color: var(--sapButton_Accept_BorderColor); background: var(--sapButton_Accept_Background); color: var(--sapButton_Accept_TextColor); }
+.btn.Reject { border-color: var(--sapButton_Reject_BorderColor); background: var(--sapButton_Reject_Background); color: var(--sapButton_Reject_TextColor); }
+.btn.neg { border-color: var(--sapNegativeElementColor); background: var(--sapNegativeElementColor); color: var(--onInv); }
+.btn.crit { border-color: var(--sapCriticalElementColor); background: var(--sapCriticalElementColor); color: var(--onInv); }
+.btn.wide { width: 100%; }
+.btn-icon { width: 2.25rem; padding: 0; }
+
+/* ObjectStatus */
+.os { display: inline-flex; align-items: center; gap: 0.25rem; font-weight: 600; font-size: 0.875rem; color: var(--sapNeutralTextColor); }
+.os[data-vs="Success"] { color: var(--sapPositiveTextColor); }
+.os[data-vs="Error"] { color: var(--sapNegativeTextColor); }
+.os[data-vs="Warning"] { color: var(--sapCriticalTextColor); }
+.os[data-vs="Information"] { color: var(--sapInformativeTextColor); }
+.os.inv { padding: 0.125rem 0.5rem; border-radius: 0.375rem; color: var(--onInv); background: var(--sapNeutralElementColor); }
+.os.inv[data-vs="Success"] { background: var(--sapPositiveElementColor); }
+.os.inv[data-vs="Error"] { background: var(--sapNegativeElementColor); }
+.os.inv[data-vs="Warning"] { background: var(--sapCriticalElementColor); }
+.os.inv[data-vs="Information"] { background: var(--sapInformativeElementColor); }
+.os.big { font-size: 1.125rem; padding: 0.375rem 0.75rem; }
+.os.big .ico { width: 1.25rem; height: 1.25rem; }
+.live[data-vs="Information"] .ico { animation: vgPulse 1.2s ease-in-out infinite; }
+
+/* Card */
+.card { background: var(--sapTile_Background); border-radius: 1rem; box-shadow: var(--sapContent_Shadow0); min-width: 0; display: flex; flex-direction: column; }
+.card-h { display: flex; align-items: flex-start; gap: 0.75rem; padding: 1rem 1rem 0.5rem; }
+.card-ic { width: 2.25rem; height: 2.25rem; border-radius: 50%; flex: none; display: flex; align-items: center; justify-content: center; background: color-mix(in srgb, var(--sapBrandColor) 16%, transparent); color: var(--sapBrandColor); }
+.card-ic .ico { width: 1.125rem; height: 1.125rem; }
+.card-tt { flex: 1; min-width: 0; }
+.card-t { font-weight: 700; font-size: 1rem; color: var(--sapTitleColor); }
+.card-st { color: var(--sapContent_LabelColor); font-size: 0.875rem; }
+.card-status { color: var(--sapContent_LabelColor); font-size: 0.875rem; white-space: nowrap; }
+.card-b { padding: 0.5rem 1rem 1rem; flex: 1; display: flex; flex-direction: column; gap: 0.5rem; }
+.grid3 { display: grid; gap: 1rem; grid-template-columns: repeat(3, minmax(0, 1fr)); }
+@media (max-width: 1100px) { .grid3 { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 700px) { .grid3 { grid-template-columns: minmax(0, 1fr); } }
+
+/* Tabs (IconTabBar inline) */
+.tabs { display: flex; gap: 1.5rem; padding: 0 1rem; border-bottom: 1px solid var(--sapList_BorderColor); }
+.tab { background: none; border: 0; padding: 0.75rem 0 0.625rem; color: var(--sapContent_LabelColor); font-weight: 600; cursor: pointer; border-bottom: 3px solid transparent; }
+.tab[aria-selected="true"] { color: var(--sapBrandColor); border-bottom-color: var(--sapBrandColor); }
+.tab:focus-visible { outline: 2px solid var(--sapContent_FocusColor); outline-offset: 2px; }
+
+/* ProgressIndicator */
+.pi { position: relative; height: 1.25rem; border-radius: 0.625rem; background: var(--sapField_Background); border: 1px solid var(--sapList_BorderColor); overflow: hidden; }
+.pi > i { position: absolute; left: 0; top: 0; bottom: 0; background: var(--sapNeutralElementColor); border-radius: 0.625rem; transition: width .6s ease; }
+.pi[data-vs="Success"] > i { background: var(--sapPositiveElementColor); }
+.pi[data-vs="Error"] > i { background: var(--sapNegativeElementColor); }
+.pi[data-vs="Warning"] > i { background: var(--sapCriticalElementColor); }
+.pi[data-vs="Information"] > i { background: var(--sapInformativeElementColor); }
+.pi > b { position: relative; display: block; text-align: center; font-size: 0.75rem; line-height: 1.125rem; font-weight: 600; text-shadow: 0 0 3px var(--sapField_Background), 0 0 3px var(--sapField_Background); }
+
+/* Form */
+.form { display: grid; grid-template-columns: minmax(7rem, auto) 1fr; gap: 0.375rem 1rem; margin: 0; }
+.form dt { color: var(--sapContent_LabelColor); }
+.form dd { margin: 0; text-align: right; font-weight: 500; }
+.num-xl { font-size: 2.25rem; font-weight: 700; line-height: 2.75rem; letter-spacing: -0.02em; }
+.num-xl small { font-size: 1rem; font-weight: 400; color: var(--sapContent_LabelColor); margin-left: 0.25rem; }
+.num-m { font-size: 1.125rem; font-weight: 700; }
+.num-m[data-vs="Error"] { color: var(--sapNegativeTextColor); }
+.row { display: flex; justify-content: space-between; gap: 1rem; flex-wrap: wrap; }
+.sep { display: flex; align-items: center; justify-content: space-between; gap: 0.5rem; padding-top: 0.75rem; margin-top: 0.25rem; border-top: 1px solid var(--sapList_BorderColor); }
+.sep h3 { margin: 0; font-size: 0.875rem; font-weight: 700; }
+.end { display: flex; justify-content: flex-end; gap: 0.5rem; flex-wrap: wrap; margin-top: auto; padding-top: 0.25rem; }
+
+/* Checks */
+.checks { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 0.75rem 0.5rem; margin-top: 0.5rem; }
+@media (max-width: 420px) { .checks { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+.chk { display: flex; flex-direction: column; align-items: center; gap: 0.25rem; text-align: center; }
+.chk .ico { width: 2rem; height: 2rem; animation: vgPop .45s cubic-bezier(.2,.8,.2,1) both; }
+.chk[data-vs="Success"] .ico { color: var(--sapPositiveElementColor); }
+.chk[data-vs="Error"] .ico { color: var(--sapNegativeElementColor); }
+.chk-l { font-weight: 600; font-size: 0.8125rem; }
+
+/* List */
+.list { list-style: none; margin: 0; padding: 0 0 0.5rem; }
+.li { position: relative; display: flex; align-items: flex-start; gap: 0.75rem; padding: 0.75rem 1rem 0.75rem 1.25rem; border-top: 1px solid var(--sapList_BorderColor); }
+.li:first-child { border-top: 0; }
+.li::before { content: ""; position: absolute; left: 0; top: 0; bottom: 0; width: 0.375rem; background: var(--hl, transparent); }
+.li[data-vs="Error"] { --hl: var(--sapNegativeElementColor); }
+.li[data-vs="Warning"] { --hl: var(--sapCriticalElementColor); }
+.li.nav { cursor: pointer; }
+.li.nav:hover { background: var(--sapList_Hover_Background); }
+.li .ico { width: 1.25rem; height: 1.25rem; margin-top: 0.0625rem; color: var(--hl); }
+.li-tx { flex: 1; min-width: 0; }
+.li-t { font-weight: 600; }
+.li-d { color: var(--sapContent_LabelColor); font-size: 0.875rem; }
+.li-info { font-size: 0.75rem; font-weight: 700; }
+.li-chev { color: var(--sapContent_LabelColor); }
+.nodata { padding: 1.25rem 1rem; text-align: center; color: var(--sapPositiveTextColor); font-weight: 600; }
+
+/* Table */
+.tblwrap { overflow-x: auto; }
+.tbl { width: 100%; border-collapse: collapse; min-width: 860px; }
+.tbl th { text-align: left; font-weight: 600; font-size: 0.875rem; color: var(--sapContent_LabelColor); padding: 0.625rem 0.75rem; border-bottom: 1px solid var(--sapList_BorderColor); }
+.tbl td { padding: 0.625rem 0.75rem; border-bottom: 1px solid var(--sapList_BorderColor); vertical-align: middle; }
+.tbl tr.r { cursor: pointer; position: relative; }
+.tbl tr.r:hover td { background: var(--sapList_Hover_Background); }
+.tbl td:first-child { border-left: 0.375rem solid var(--hl, transparent); }
+.tbl tr[data-vs="Success"] { --hl: var(--sapPositiveElementColor); }
+.tbl tr[data-vs="Warning"] { --hl: var(--sapCriticalElementColor); }
+.tbl tr[data-vs="Error"] { --hl: var(--sapNegativeElementColor); }
+.tbl tr[data-vs="Information"] { --hl: var(--sapInformativeElementColor); }
+.tbl .e { text-align: right; }
+.oi-t { font-weight: 700; }
+.oi-s { color: var(--sapContent_LabelColor); font-size: 0.8125rem; }
+
+/* Popover / dialogs */
+.pop {
+	position: fixed; z-index: 50; width: 23rem; max-width: calc(100vw - 1rem); max-height: calc(100vh - 1rem);
+	background: var(--sapGroup_ContentBackgroundColor); border-radius: 0.75rem; box-shadow: var(--sapContent_Shadow2);
+	display: flex; flex-direction: column; animation: vgRise .2s both;
+}
+.pop-h { display: flex; align-items: center; justify-content: space-between; gap: 0.5rem; padding: 0.75rem 1rem; border-bottom: 1px solid var(--sapList_BorderColor); font-weight: 700; }
+.pop-b { padding: 0.75rem 1rem; overflow-y: auto; display: flex; flex-direction: column; gap: 0.5rem; }
+.pop-f { display: flex; justify-content: flex-end; gap: 0.5rem; padding: 0.5rem 1rem 0.75rem; border-top: 1px solid var(--sapList_BorderColor); }
+@media (max-width: 600px) {
+	.pop { left: 0 !important; right: 0; bottom: 0; top: auto !important; width: 100%; max-width: none; border-radius: 1rem 1rem 0 0; max-height: 85vh; }
+}
+.strip { display: flex; gap: 0.5rem; align-items: flex-start; padding: 0.5rem 0.75rem; border-radius: 0.5rem; font-size: 0.875rem; border: 1px solid; }
+.strip .ico { margin-top: 0.125rem; }
+.strip[data-vs="Error"] { border-color: var(--sapNegativeElementColor); background: color-mix(in srgb, var(--sapNegativeElementColor) 12%, transparent); }
+.strip[data-vs="Warning"] { border-color: var(--sapCriticalElementColor); background: color-mix(in srgb, var(--sapCriticalElementColor) 12%, transparent); }
+.strip[data-vs="Information"] { border-color: var(--sapInformativeElementColor); background: color-mix(in srgb, var(--sapInformativeElementColor) 12%, transparent); }
+.field-l { color: var(--sapContent_LabelColor); font-size: 0.875rem; margin-top: 0.25rem; }
+.sel { width: 100%; min-height: 2.25rem; padding: 0 0.5rem; border-radius: 0.5rem; border: 1px solid var(--sapField_BorderColor); background: var(--sapField_Background); color: var(--sapTextColor); }
+.sld { width: 100%; accent-color: var(--sapBrandColor); }
+.sel:disabled, .sld:disabled { opacity: .45; }
+.scrim { position: fixed; inset: 0; z-index: 60; background: rgba(0, 0, 0, .45); display: flex; align-items: center; justify-content: center; padding: 1rem; }
+.dlg { width: 26rem; max-width: 100%; background: var(--sapGroup_ContentBackgroundColor); border-radius: 0.75rem; box-shadow: var(--sapContent_Shadow2); animation: vgRise .2s both; }
+.dlg .pop-h { border-top: 0.25rem solid var(--sapInformativeElementColor); border-radius: 0.75rem 0.75rem 0 0; }
+.toast { position: fixed; left: 50%; bottom: 5rem; transform: translateX(-50%); z-index: 70; padding: 0.75rem 1.25rem; border-radius: 0.5rem; background: #2b3540; color: #fff; box-shadow: var(--sapContent_Shadow2); animation: vgRise .25s both; max-width: calc(100vw - 2rem); }
+.msgpop { width: 26rem; }
+.msgpop .li { padding-left: 1.25rem; }
+
+@keyframes vgRise { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+.toast { animation-name: vgToast; }
+@keyframes vgToast { from { opacity: 0; transform: translate(-50%, 8px); } to { opacity: 1; transform: translate(-50%, 0); } }
+
+@media (max-width: 700px) {
+	.dp-title, .dp-header, .dp-content { padding-left: 1rem; padding-right: 1rem; }
+	.kpis { gap: 0.75rem 1.5rem; }
+	.kpi { min-width: calc(50% - 0.75rem); }
+	.dp-actions .btn .txt { display: none; }
+	.dp-actions .btn.emph .txt { display: inline; }
+}
+@media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation: none !important; transition: none !important; } }
+@media (max-width: 600px) {
+	.dp-footer .preview-tag, .dp-footer > .lbl { display: none; }
+	.dp-footer { flex-wrap: nowrap; }
+	.dp-footer .btn.emph { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+}
+
+/* ==========================================================================
+   Gestão de Vagões - estilos
+   Cores vêm dos parâmetros do tema SAP (Horizon / Horizon Dark), com fallback.
+   ========================================================================== */
+
+/* ---------- Layout da página ---------- */
+.vgContent > .vgCard,
+.vgContent > .vgGrid { margin-bottom: 1rem; }
+.vgGrid { margin-left: -0.5rem; margin-right: -0.5rem; width: calc(100% + 1rem) !important; }
+.vgGrid .sapFCard { height: 100%; }
+.vgKpis { gap: 0.75rem 3rem; padding-top: 0.25rem; }
+.vgKpi { min-width: 8rem; }
+.vgKpi .sapMLabel { margin-bottom: 0.25rem; }
+.vgKpiValue .sapMObjectNumberText { font-size: 1.75rem; line-height: 2rem; }
+.vgKpiValue .sapMObjectNumberUnit { font-size: 1rem; }
+.vgKpiSub { color: var(--sapContent_LabelColor); font-size: var(--sapFontSmallSize); }
+.vgKpiStatus .sapMObjectStatusText { font-size: 1.125rem; font-weight: bold; line-height: 2rem; }
+.vgHuge .sapMObjectNumberText { font-size: 2.25rem; line-height: 2.75rem; letter-spacing: -0.02em; }
+.vgBigStatus { font-size: 1.125rem; padding: 0.375rem 0.75rem; }
+.vgBigStatus .sapMObjectStatusText,
+.vgBigStatus .sapMObjectStatusIcon { font-size: 1.125rem; }
+.vgChecks { gap: 1rem 0.5rem; }
+.vgCheck { width: calc(25% - 0.5rem); min-width: 5.5rem; gap: 0.25rem; }
+.vgCheckIcon { animation: vgPop 0.45s cubic-bezier(.2,.8,.2,1) both; }
+.vgCheckLabel { font-weight: 600; }
+.vgForm .sapUiFormCLElement { margin-bottom: 0.125rem; }
+.vgFatBar { padding: 0; border-top: 1px solid var(--sapGroup_TitleBorderColor, var(--sapList_BorderColor)); }
+.vgTabs .sapMITBHead { padding-left: 0.5rem; }
+.vgTable { margin-top: 0.25rem; }
+.vgPopVazao .sapMObjectNumberText { font-size: 1.5rem; }
+.vgLive.sapMObjectStatusInformation .sapMObjectStatusIcon { animation: vgPulse 1.2s ease-in-out infinite; }
+
+/* ==========================================================================
+   Estação de carregamento (controle vagoes.dashboard.control.LoadingStation)
+   ========================================================================== */
+.vgSt {
+	--vg-grain: #e3a73b;
+	--vg-grain-hi: #f6cd73;
+	--vg-grain-lo: #b07a1c;
+	--vg-grain-text: #f6cd73;
+	--vg-pos: var(--sapPositiveElementColor, #5dc122);
+	--vg-neg: var(--sapNegativeElementColor, #ff5c5c);
+	--vg-crit: var(--sapCriticalElementColor, #ff9a3d);
+	--vg-info: var(--sapInformativeElementColor, #4db1ff);
+	--vg-pos-t: var(--sapPositiveTextColor, #5dc122);
+	--vg-neg-t: var(--sapNegativeTextColor, #ff8888);
+	--vg-crit-t: var(--sapCriticalTextColor, #ffab1d);
+	--vg-info-t: var(--sapInformativeTextColor, #4db1ff);
+	--vg-sel: var(--sapContent_FocusColor, #4db1ff);
+	--vg-surface: var(--sapTile_Background, #1d232a);
+	--vg-surface-2: var(--sapBackgroundColor, #12171c);
+	--vg-line: var(--sapList_BorderColor, #34404d);
+	--vg-text: var(--sapTextColor, #eaecee);
+	--vg-label: var(--sapContent_LabelColor, #a9b4be);
+	--vg-steel: #7d8a99;
+	--vg-steel-dark: #3b4652;
+	--vg-silo-bg: #161c22;
+	--vg-shadow: 0 6px 18px rgba(0, 0, 0, .35);
+	display: block;
+	position: relative;
+	font-family: var(--sapFontFamily, "72", "72full", Arial, Helvetica, sans-serif);
+	color: var(--vg-text);
+}
+/* tema claro */
+.sapUiTheme-sap_horizon .vgSt,
+.vgSt.vgSt--light {
+	--vg-grain-text: #8a5a00;
+	--vg-steel: #8b97a4;
+	--vg-steel-dark: #c4ccd5;
+	--vg-silo-bg: #eef1f4;
+	--vg-shadow: 0 4px 14px rgba(34, 53, 72, .14);
+}
+
+.vgSt__scroll {
+	overflow-x: auto;
+	overflow-y: hidden;
+	padding: 10px 0 2px;
+	scrollbar-width: thin;
+	scroll-behavior: smooth;
+}
+.vgSt__track { position: relative; margin: 0 auto; }
+.vgSt__track > span,
+.vgSt__track > button,
+.vgSt__track > svg { position: absolute; }
+
+/* pórtico e trilho */
+.vgSt__beam {
+	height: 10px;
+	border-radius: 3px;
+	background: linear-gradient(180deg, var(--vg-steel) 0, var(--vg-steel-dark) 100%);
+	z-index: 1;
+}
+.vgSt__leg {
+	width: 10px;
+	background: linear-gradient(90deg, var(--vg-steel-dark), var(--vg-steel), var(--vg-steel-dark));
+	border-radius: 2px;
+	opacity: .8;
+	z-index: 0;
+}
+.vgSt__rail {
+	left: 0;
+	height: 12px;
+	background-image:
+		linear-gradient(180deg, transparent 0 2px, var(--vg-steel) 2px 6px, transparent 6px),
+		repeating-linear-gradient(90deg, var(--vg-steel-dark) 0 10px, transparent 10px 28px);
+	background-size: 100% 100%, 28px 100%;
+	z-index: 0;
+}
+.vgSt__wrap.is-moving .vgSt__rail { animation: vgTies .9s linear infinite; }
+
+/* ---------- linhas de fluxo ---------- */
+.vgSt__flows { left: 0; pointer-events: none; z-index: 1; overflow: visible; }
+.vgFlow { opacity: 0; transition: opacity .4s ease; }
+.vgFlow.is-on { opacity: 1; }
+.vgFlow__base {
+	fill: none;
+	stroke: color-mix(in srgb, var(--vg-grain) 26%, transparent);
+	stroke-width: 12;
+	stroke-linecap: round;
+	transition: stroke .3s;
+}
+.vgFlow__dash {
+	fill: none;
+	stroke: var(--vg-grain);
+	stroke-width: 3;
+	stroke-linecap: round;
+	stroke-dasharray: 1 9;
+	animation: vgDash .45s linear infinite;
+}
+.vgFlow__grain { fill: var(--vg-grain-hi); }
+.vgFlow.is-sel .vgFlow__base { stroke: color-mix(in srgb, var(--vg-sel) 38%, transparent); }
+.vgFlow.is-div .vgFlow__base { stroke: color-mix(in srgb, var(--vg-neg) 45%, transparent); }
+
+/* ---------- silos e cones (bocas) ---------- */
+.vgSilo {
+	top: 0;
+	z-index: 2;
+	margin: 0;
+	padding: 0;
+	border: 0;
+	background: none;
+	color: inherit;
+	font: inherit;
+	text-align: center;
+	cursor: pointer;
+	border-radius: 14px;
+	transition: transform .3s cubic-bezier(.2,.8,.2,1);
+	-webkit-tap-highlight-color: transparent;
+}
+.vgSilo > span,
+.vgSilo__body > span { position: absolute; display: block; box-sizing: border-box; }
+.vgSilo:hover { transform: translateY(-2px); }
+.vgSilo:focus-visible { outline: 2px solid var(--vg-sel); outline-offset: 2px; }
+
+.vgSilo__label {
+	left: 0; right: 0; top: 0; height: 26px;
+	display: flex !important; align-items: center; justify-content: center; gap: 6px;
+	font-size: 12px; white-space: nowrap;
+}
+.vgSilo__name { font-size: 15px; font-weight: 700; }
+.vgSilo__silo { color: var(--vg-label); }
+.vgSilo__pill {
+	font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 999px;
+	color: var(--vg-label);
+	background: color-mix(in srgb, var(--vg-label) 16%, transparent);
+}
+.vgSilo.is-ativa .vgSilo__pill { color: var(--vg-pos-t); background: color-mix(in srgb, var(--vg-pos) 18%, transparent); }
+.vgSilo.is-manutencao .vgSilo__pill { color: var(--vg-crit-t); background: color-mix(in srgb, var(--vg-crit) 18%, transparent); }
+.vgSilo.is-aguardandoVagao .vgSilo__pill { color: var(--vg-info-t); background: color-mix(in srgb, var(--vg-info) 18%, transparent); }
+.vgSilo.is-siloVazio .vgSilo__pill { color: var(--vg-neg-t); background: color-mix(in srgb, var(--vg-neg) 18%, transparent); }
+
+.vgSilo__body {
+	left: 50%;
+	overflow: hidden;
+	border: 2px solid var(--vg-steel);
+	border-bottom: 0;
+	border-radius: 16px 16px 2px 2px;
+	background:
+		repeating-linear-gradient(90deg, rgba(127, 140, 155, .10) 0 1px, transparent 1px 16px),
+		var(--vg-silo-bg);
+	transition: border-color .3s, box-shadow .3s;
+}
+.vgSilo__level {
+	left: 0; right: 0; bottom: 0;
+	background:
+		radial-gradient(circle at 30% 40%, rgba(0, 0, 0, .14) 1px, transparent 1.6px) 0 0 / 7px 7px,
+		linear-gradient(180deg, var(--vg-grain-hi) 0, var(--vg-grain) 26%, var(--vg-grain-lo) 100%);
+	border-top: 2px solid var(--vg-grain-hi);
+	transition: height 1s cubic-bezier(.2,.8,.2,1);
+}
+.vgSilo.is-flowing .vgSilo__level::after {
+	content: ""; position: absolute; left: 0; right: 0; top: 0; height: 6px;
+	background: linear-gradient(90deg, transparent, rgba(255, 255, 255, .55), transparent);
+	background-size: 50% 100%; background-repeat: no-repeat;
+	animation: vgShimmer 1.8s linear infinite;
+}
+.vgSilo__tick { left: 0; width: 9px; height: 1px; background: var(--vg-steel); }
+.vgSilo__min { left: 0; right: 0; height: 0; border-top: 1px dashed var(--vg-neg); }
+.vgSilo__info {
+	left: 50%; top: 50%; transform: translate(-50%, -50%);
+	display: flex !important; flex-direction: column; align-items: center; gap: 1px;
+	min-width: 92px; padding: 5px 8px; border-radius: 10px;
+	background: color-mix(in srgb, var(--vg-surface) 86%, transparent);
+	box-shadow: 0 2px 8px rgba(0, 0, 0, .25);
+	line-height: 1.15;
+}
+.vgSilo__prod { font-size: 10px; color: var(--vg-label); font-weight: 600; white-space: nowrap; }
+.vgSilo__pct { font-size: 20px; font-weight: 700; letter-spacing: -0.02em; }
+.vgSilo__stock { font-size: 12px; font-weight: 600; }
+.vgSilo__umid { font-size: 10px; color: var(--vg-label); white-space: nowrap; }
+.vgSilo__alert {
+	top: 6px; right: 6px; width: 18px; height: 18px; border-radius: 50%;
+	display: none !important; align-items: center; justify-content: center;
+	background: var(--vg-crit); color: #111; font-size: 12px; font-weight: 800; line-height: 18px;
+}
+.vgSilo.has-alert .vgSilo__alert { display: flex !important; animation: vgPulse 1.2s ease-in-out infinite; }
+.vgSilo.is-div .vgSilo__alert,
+.vgSilo.is-siloVazio .vgSilo__alert { background: var(--vg-neg); color: #fff; }
+.vgSilo.is-low .vgSilo__body { border-color: var(--vg-crit); }
+.vgSilo.is-div .vgSilo__body { border-color: var(--vg-neg); box-shadow: 0 0 0 3px color-mix(in srgb, var(--vg-neg) 30%, transparent); }
+.vgSilo.is-sel .vgSilo__body { border-color: var(--vg-sel); box-shadow: 0 0 0 3px color-mix(in srgb, var(--vg-sel) 28%, transparent); }
+.vgSilo.is-manutencao .vgSilo__body,
+.vgSilo.is-manutencao .vgSilo__cone { filter: saturate(.35); }
+
+.vgSilo__cone {
+	left: 50%;
+	clip-path: polygon(0 0, 100% 0, 59% 100%, 41% 100%);
+	background: var(--vg-steel);
+}
+.vgSilo__coneFill,
+.vgSilo__coneFlow {
+	position: absolute; top: 0; bottom: 0; left: 2px; right: 2px;
+	clip-path: polygon(0 0, 100% 0, 59.5% 100%, 40.5% 100%);
+}
+.vgSilo__coneFill {
+	background:
+		radial-gradient(circle at 30% 40%, rgba(0, 0, 0, .14) 1px, transparent 1.6px) 0 0 / 7px 7px,
+		linear-gradient(180deg, var(--vg-grain-lo), var(--vg-grain) 70%, var(--vg-grain-hi));
+	transition: opacity .6s;
+}
+.vgSilo__coneFlow {
+	opacity: 0;
+	background: repeating-linear-gradient(180deg, transparent 0 7px, rgba(255, 255, 255, .28) 7px 10px);
+	background-size: 100% 20px;
+	transition: opacity .4s;
+}
+.vgSilo.is-flowing .vgSilo__coneFlow { opacity: 1; animation: vgDown .5s linear infinite; }
+
+.vgSilo__gate {
+	left: 50%; width: 36px; margin-left: -18px;
+	border-radius: 0 0 5px 5px;
+	background: var(--vg-steel-dark);
+	border: 1px solid var(--vg-steel);
+	overflow: hidden;
+}
+.vgSilo__gateBlade {
+	position: absolute; top: 2px; bottom: 2px; left: 50%;
+	transform: translateX(-50%);
+	border-radius: 2px;
+	background: var(--vg-grain);
+	transition: width .5s ease;
+}
+.vgSilo.is-manutencao .vgSilo__gate {
+	background: repeating-linear-gradient(45deg, var(--vg-crit) 0 5px, #1b1b1b 5px 10px);
+}
+
+.vgSilo__chip {
+	width: 64px; padding: 4px 2px 5px;
+	display: flex !important; flex-direction: column; align-items: center; gap: 1px;
+	border-radius: 9px;
+	background: var(--vg-surface);
+	border: 1px solid var(--vg-line);
+	line-height: 1.15;
+	box-shadow: var(--vg-shadow);
+	transition: border-color .3s;
+}
+.vgSilo__chip--l { left: 0; }
+.vgSilo__chip--r { right: 0; }
+.vgSilo__chipK { font-size: 9px; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; color: var(--vg-label); }
+.vgSilo__chipV { font-size: 15px; font-weight: 700; }
+.vgSilo__chipU { font-size: 10px; color: var(--vg-label); }
+.vgSilo__bar { position: relative; width: 44px; height: 4px; margin-top: 2px; border-radius: 2px; background: var(--vg-line); overflow: hidden; }
+.vgSilo__bar > span { position: absolute; left: 0; top: 0; bottom: 0; background: var(--vg-info); border-radius: 2px; transition: width .4s; }
+.vgSilo.is-flowing .vgSilo__chip--r { border-color: var(--vg-grain); }
+.vgSilo.is-flowing .vgSilo__chip--r .vgSilo__chipV { color: var(--vg-grain-text); }
+
+.vgSilo__dest {
+	left: 50%; margin-left: 10px;
+	padding: 2px 9px; border-radius: 999px;
+	font-size: 11px; font-weight: 700; white-space: nowrap;
+	color: var(--vg-label);
+	background: var(--vg-surface);
+	border: 1px solid var(--vg-line);
+	transition: color .3s, border-color .3s;
+}
+.vgSilo.is-flowing .vgSilo__dest { color: var(--vg-text); border-color: var(--vg-grain); }
+.vgSilo.is-sel .vgSilo__dest { border-color: var(--vg-sel); color: var(--vg-sel); }
+.vgSilo:not(.is-flowing) .vgSilo__dest { margin-left: 0; transform: translateX(-50%); }
+
+/* ---------- locomotiva ---------- */
+.vgLoco {
+	z-index: 2;
+	box-sizing: border-box;
+	padding: 14px 14px 12px 22px;
+	border-radius: 34px 12px 10px 10px;
+	border: 1px solid var(--vg-line);
+	background: linear-gradient(180deg, var(--vg-surface) 0, var(--vg-surface) 78%, var(--vg-grain) 78%, var(--vg-grain) 84%, var(--vg-surface) 84%);
+	box-shadow: var(--vg-shadow);
+	display: flex !important; flex-direction: column; gap: 4px;
+}
+.vgLoco.is-run { animation: vgBob 1.6s ease-in-out infinite; }
+.vgLoco__cab {
+	height: 46px; margin: 0 0 6px 6px; border-radius: 20px 8px 6px 6px;
+	background: var(--vg-surface-2); border: 1px solid var(--vg-line);
+	position: relative; display: block;
+}
+.vgLoco__win { position: absolute; left: 10px; top: 9px; width: 46px; height: 22px; border-radius: 10px 4px 4px 4px; background: color-mix(in srgb, var(--vg-info) 35%, transparent); }
+.vgLoco__light {
+	position: absolute; left: 8px; top: 64px; width: 10px; height: 10px; border-radius: 50%;
+	background: #ffd166; box-shadow: 0 0 14px #ffd166;
+}
+.vgLoco.is-run .vgLoco__light { animation: vgPulse 1.2s ease-in-out infinite; }
+.vgLoco__k { font-size: 10px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--vg-label); }
+.vgLoco__t { font-size: 15px; font-weight: 700; }
+.vgLoco__st { font-size: 11px; color: var(--vg-label); }
+.vgLoco__grill { margin-top: auto; height: 14px; border-radius: 4px; background: repeating-linear-gradient(90deg, var(--vg-line) 0 3px, transparent 3px 7px); }
+
+/* ---------- truques / rodas ---------- */
+.vgBogie { width: 52px; height: 26px; z-index: 1; display: flex !important; justify-content: space-between; align-items: flex-end; }
+.vgBogie::before { content: ""; position: absolute; left: 4px; right: 4px; top: 7px; height: 6px; border-radius: 3px; background: var(--vg-steel-dark); }
+.vgWheel {
+	position: relative; display: block; width: 24px; height: 24px; box-sizing: border-box;
+	border-radius: 50%; border: 3px solid var(--vg-steel); background: var(--vg-surface-2);
+}
+.vgWheel__spoke { position: absolute; left: 50%; top: 2px; bottom: 2px; width: 2px; margin-left: -1px; background: var(--vg-steel); }
+.vgWheel__spoke--b { transform: rotate(90deg); }
+.vgSt__wrap.is-moving .vgWheel { animation: vgSpin 1.1s linear infinite; }
+
+/* ---------- vagões ---------- */
+.vgWag {
+	z-index: 2;
+	margin: 0; padding: 0;
+	box-sizing: border-box;
+	display: flex; flex-direction: column;
+	overflow: hidden;
+	text-align: left;
+	font: inherit; color: inherit;
+	cursor: pointer;
+	border-radius: 12px;
+	border: 1px solid var(--vg-line);
+	background: var(--vg-surface);
+	box-shadow: var(--vg-shadow);
+	transition: transform .4s cubic-bezier(.2,.8,.2,1), border-color .3s, box-shadow .3s;
+	-webkit-tap-highlight-color: transparent;
+}
+.vgWag > span { display: flex; box-sizing: border-box; }
+.vgWag:hover { transform: translateY(-3px); }
+.vgWag:focus-visible { outline: 2px solid var(--vg-sel); outline-offset: 3px; }
+
+.vgWag__notches { gap: 4px; padding: 7px 10px; background: var(--vg-surface-2); border-bottom: 1px solid var(--vg-line); }
+.vgWag__notches > span { flex: 1; height: 6px; border-radius: 3px; background: var(--vg-line); transition: background .3s; }
+.vgWag__notches > span.is-hist { background: color-mix(in srgb, var(--vg-grain) 45%, transparent); }
+.vgWag__notches > span.is-on { background: var(--vg-grain); box-shadow: 0 0 10px color-mix(in srgb, var(--vg-grain) 80%, transparent); animation: vgPulse .9s ease-in-out infinite; }
+
+.vgWag__head { justify-content: space-between; align-items: center; gap: 6px; padding: 9px 11px 0; }
+.vgWag__num { font-size: 15px; font-weight: 700; white-space: nowrap; }
+.vgWag__st { display: inline-flex; align-items: center; gap: 5px; font-size: 10px; font-weight: 700; text-transform: uppercase; white-space: nowrap; color: var(--vg-label); }
+.vgWag__dot { width: 7px; height: 7px; border-radius: 50%; background: currentColor; }
+.vgWag__id { padding: 2px 11px 0; font-size: 12px; color: var(--vg-label); font-family: "72Mono", "Courier New", monospace; }
+
+.vgWag__hopper {
+	position: relative;
+	height: 64px; margin: 9px 11px 0;
+	background: var(--vg-steel);
+	clip-path: polygon(0 0, 100% 0, 88% 100%, 12% 100%);
+}
+.vgWag__hopper::before {
+	content: ""; position: absolute; inset: 0 2px 2px 2px;
+	background: var(--vg-silo-bg);
+	clip-path: polygon(0 0, 100% 0, 88% 100%, 12% 100%);
+}
+.vgWag__fill {
+	position: absolute; left: 0; right: 0; bottom: 0;
+	background:
+		repeating-linear-gradient(45deg, rgba(255, 255, 255, .15) 0 6px, transparent 6px 12px) 0 0 / 24px 100%,
+		linear-gradient(180deg, var(--vg-grain-hi), var(--vg-grain) 35%, var(--vg-grain-lo));
+	transition: height .9s cubic-bezier(.2,.8,.2,1);
+}
+.vgWag__pct {
+	position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%);
+	padding: 1px 7px; border-radius: 6px;
+	font-size: 15px; font-weight: 700;
+	background: color-mix(in srgb, var(--vg-surface) 82%, transparent);
+}
+.vgWag__w { justify-content: space-between; padding: 8px 11px 0; font-size: 13px; }
+.vgWag__carga { font-weight: 700; }
+.vgWag__lim { color: var(--vg-label); }
+.vgWag__vist {
+	align-self: flex-start; align-items: center; gap: 6px;
+	margin: 8px 11px 0; padding: 3px 9px; border-radius: 999px;
+	font-size: 12px; font-weight: 700;
+}
+.vgWag__vdot { width: 8px; height: 8px; border-radius: 50%; background: currentColor; }
+.vgWag__vist.is-ok { color: var(--vg-pos-t); background: color-mix(in srgb, var(--vg-pos) 16%, transparent); }
+.vgWag__vist.is-nok { color: var(--vg-neg-t); background: color-mix(in srgb, var(--vg-neg) 16%, transparent); }
+.vgWag__vist.is-nok .vgWag__vdot { animation: vgPulse 1.1s ease-in-out infinite; }
+.vgWag__bocas { padding: 7px 11px 10px; font-size: 12px; color: var(--vg-label); }
+
+/* status do vagão */
+.vgWag.st-carregando { border-color: var(--vg-grain); transform: translateY(-5px); animation: vgRingGrain 1.6s ease-out infinite; }
+.vgWag.st-carregando .vgWag__st { color: var(--vg-grain-text); }
+.vgWag.st-carregando .vgWag__dot { animation: vgPulse .9s ease-in-out infinite; }
+.vgWag.st-carregando .vgWag__fill { animation: vgStripes .6s linear infinite; }
+.vgWag.st-carregado .vgWag__st { color: var(--vg-pos-t); }
+.vgWag.st-parcial .vgWag__st { color: var(--vg-crit-t); }
+.vgWag.st-excesso .vgWag__st,
+.vgWag.st-bloqueado .vgWag__st { color: var(--vg-neg-t); }
+.vgWag.is-over { border-color: var(--vg-neg); }
+.vgWag.is-over .vgWag__fill { background: repeating-linear-gradient(45deg, rgba(255, 255, 255, .18) 0 6px, transparent 6px 12px), var(--vg-neg); }
+.vgWag.is-blocked { border-color: color-mix(in srgb, var(--vg-neg) 70%, transparent); animation: vgRingNeg 2.2s ease-out infinite; }
+.vgWag.is-blocked .vgWag__hopper::after {
+	content: ""; position: absolute; inset: 0;
+	background: repeating-linear-gradient(45deg, color-mix(in srgb, var(--vg-neg) 30%, transparent) 0 6px, transparent 6px 12px);
+}
+.vgWag.is-sel {
+	z-index: 3;
+	border: 2px solid var(--vg-sel);
+	transform: translateY(-10px) scale(1.03);
+	box-shadow: 0 0 0 4px color-mix(in srgb, var(--vg-sel) 25%, transparent), 0 18px 36px rgba(0, 0, 0, .4);
+}
+
+/* legenda */
+.vgSt__legend {
+	display: flex; flex-wrap: wrap; gap: 6px 18px;
+	padding: 6px 16px 14px;
+	font-size: 12px; color: var(--vg-label);
+}
+.vgSt__legend > span { display: inline-flex; align-items: center; gap: 6px; }
+.vgLeg { display: inline-block; width: 10px; height: 10px; border-radius: 50%; }
+.vgLeg--ok { background: var(--vg-pos); }
+.vgLeg--nok { background: var(--vg-neg); }
+.vgLeg--load { background: transparent; border: 2px solid var(--vg-grain); border-radius: 3px; box-sizing: border-box; }
+.vgLeg--flow { width: 20px; height: 4px; border-radius: 2px; background: repeating-linear-gradient(90deg, var(--vg-grain) 0 3px, transparent 3px 7px); }
+.vgLeg--min { width: 20px; height: 0; border-radius: 0; border-top: 1px dashed var(--vg-neg); }
+.vgLeg--sel { background: transparent; border: 2px solid var(--vg-sel); border-radius: 3px; box-sizing: border-box; }
+
+/* pausa: congela todas as animações */
+.vgSt__wrap.is-paused *,
+.vgSt__wrap.is-paused *::before,
+.vgSt__wrap.is-paused *::after { animation-play-state: paused !important; }
+
+@media (prefers-reduced-motion: reduce) {
+	.vgSt *, .vgSt *::before, .vgSt *::after { animation: none !important; transition: none !important; }
+	.vgFlow__grain { display: none; }
+}
+
+/* ---------- keyframes ---------- */
+@keyframes vgDash { to { stroke-dashoffset: -10; } }
+@keyframes vgDown { to { background-position: 0 20px; } }
+@keyframes vgStripes { to { background-position: 24px 0, 0 0; } }
+@keyframes vgTies { to { background-position: 0 0, -28px 0; } }
+@keyframes vgSpin { to { transform: rotate(-360deg); } }
+@keyframes vgBob { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-2px); } }
+@keyframes vgPulse { 0%, 100% { opacity: 1; } 50% { opacity: .35; } }
+@keyframes vgPop { 0% { opacity: 0; transform: scale(.5); } 70% { transform: scale(1.1); } 100% { opacity: 1; transform: scale(1); } }
+@keyframes vgShimmer { from { background-position: -100% 0; } to { background-position: 200% 0; } }
+@keyframes vgRingGrain {
+	0% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--vg-grain) 55%, transparent), var(--vg-shadow); }
+	70% { box-shadow: 0 0 0 14px color-mix(in srgb, var(--vg-grain) 0%, transparent), var(--vg-shadow); }
+	100% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--vg-grain) 0%, transparent), var(--vg-shadow); }
+}
+@keyframes vgRingNeg {
+	0% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--vg-neg) 50%, transparent), var(--vg-shadow); }
+	70% { box-shadow: 0 0 0 10px color-mix(in srgb, var(--vg-neg) 0%, transparent), var(--vg-shadow); }
+	100% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--vg-neg) 0%, transparent), var(--vg-shadow); }
+}
+
+</style>
+</head>
+<body>
+<div class="dp">
+	<section class="dp-title">
+		<div class="dp-heading">
+			<h1 data-t="composicao.titulo"></h1>
+			<span class="os inv live" data-state="view.liveState"><span data-icon="view.liveIcon"></span><span data-t="view.liveText"></span></span>
+			<div class="dp-sub" data-t="composicao.subtitulo"></div>
+		</div>
+		<div class="dp-actions">
+			<button type="button" class="btn tr" id="btnSim" data-en="!fatura.emitida"><span data-icon="view.simIcone"></span><span class="txt" data-t="view.simTexto"></span></button>
+			<button type="button" class="btn tr btn-icon" id="btnTema" data-i18n-title="acaoTema" data-i18n-aria="acaoTema"><span data-icon-static="palette"></span></button>
+			<button type="button" class="btn emph" id="btnFatTop" data-en="fatura.podeEmitir"><span data-icon-static="paper-plane"></span><span class="txt" data-i18n="acaoEmitirFatura"></span></button>
+		</div>
+	</section>
+
+	<section class="dp-header">
+		<div class="kpis">
+			<div class="kpi"><span class="lbl" data-i18n="kpiVazao"></span><span class="kpi-v" style="color:var(--sapInformativeTextColor)"><span data-t="kpi.vazaoTxt"></span><small>t/h</small></span></div>
+			<div class="kpi"><span class="lbl" data-i18n="kpiTotal"></span><span class="kpi-v"><span data-t="kpi.totalTxt"></span><small>t</small></span><span class="kpi-s" data-t="kpi.totalPctTxt"></span></div>
+			<div class="kpi"><span class="lbl" data-i18n="kpiVistoriados"></span><span class="kpi-v os" style="font-size:1.75rem" data-state="kpi.vistState" data-t="kpi.vistTxt"></span></div>
+			<div class="kpi"><span class="lbl" data-i18n="kpiEta"></span><span class="kpi-v" data-t="kpi.etaTxt"></span></div>
+			<div class="kpi"><span class="lbl" data-i18n="kpiPendencias"></span><span class="os" style="font-size:1.125rem;line-height:2rem" data-state="kpi.pendState" data-t="kpi.pendTxt"></span></div>
+		</div>
+	</section>
+
+	<main class="dp-content">
+		<section class="card">
+			<div class="card-h">
+				<span class="card-ic"><span data-icon-static="factory"></span></span>
+				<div class="card-tt"><div class="card-t" data-t="composicao.estacaoTitulo"></div><div class="card-st" data-t="composicao.estacaoSub"></div></div>
+			</div>
+			<div class="tabs" role="tablist">
+				<button type="button" class="tab" role="tab" aria-selected="true" data-tab="visual" data-i18n="tabVisual"></button>
+				<button type="button" class="tab" role="tab" aria-selected="false" data-tab="tabela" data-i18n="tabTabela"></button>
+			</div>
+			<div data-pane="visual"><div class="vgSt" id="station" role="region" data-i18n-aria="cardEstacao"></div></div>
+			<div data-pane="tabela" hidden><div class="tblwrap"><table class="tbl"><thead><tr>
+				<th data-i18n="colBoca"></th><th data-i18n="colSiloProduto"></th><th data-i18n="colStatus"></th><th class="e" data-i18n="colVazao"></th><th class="e" data-i18n="colComporta"></th><th style="width:13rem" data-i18n="colNivel"></th><th data-i18n="colDestino"></th><th class="e" data-i18n="colTurno"></th>
+			</tr></thead><tbody id="tblBocas"></tbody></table></div></div>
+		</section>
+
+		<div class="grid3">
+			<section class="card">
+				<div class="card-h">
+					<span class="card-ic"><span data-icon-static="inspection"></span></span>
+					<div class="card-tt"><div class="card-t" data-i18n="cardVistoria"></div><div class="card-st" data-t="sel.titulo"></div></div>
+					<span class="card-status" data-t="kpi.vistTxt"></span>
+				</div>
+				<div class="card-b">
+					<div><span class="os inv big" data-state="sel.vistState"><span data-icon="sel.vistIcon"></span><span data-t="sel.vistText"></span></span></div>
+					<div class="checks" id="checks"></div>
+					<div class="end"><button type="button" class="btn Accept" id="btnVist" data-if="sel.podeVistoriar"><span data-icon-static="complete"></span><span data-i18n="acaoConcluirVistoria"></span></button></div>
+				</div>
+			</section>
+
+			<section class="card">
+				<div class="card-h">
+					<span class="card-ic"><span data-icon-static="shipping-status"></span></span>
+					<div class="card-tt"><div class="card-t" data-i18n="cardDetalhe"></div><div class="card-st" data-t="sel.titulo"></div></div>
+					<span class="card-status" data-t="sel.statusText"></span>
+				</div>
+				<div class="card-b">
+					<dl class="form">
+						<dt data-i18n="lblStatus"></dt><dd><span class="os" data-state="sel.statusState" data-t="sel.statusText"></span></dd>
+						<dt data-i18n="lblVistoria"></dt><dd><span class="os" data-state="sel.vistState" data-t="sel.vistText"></span></dd>
+						<dt data-i18n="lblCarga"></dt><dd><span class="num-m" data-state="sel.cargaState"><span data-t="sel.cargaTxt"></span> t</span></dd>
+						<dt data-i18n="lblLimite"></dt><dd data-t="sel.limiteTxt"></dd>
+						<dt data-i18n="lblTara"></dt><dd data-t="sel.taraTxt"></dd>
+						<dt data-i18n="lblBruto"></dt><dd data-t="sel.brutoTxt"></dd>
+						<dt data-i18n="lblBocas"></dt><dd data-t="sel.bocasTxt"></dd>
+						<dt data-i18n="lblEtaVagao"></dt><dd data-t="sel.etaTxt"></dd>
+					</dl>
+					<div class="pi" data-state="sel.statusState"><i data-w="sel.pct"></i><b data-t="sel.pctTxt"></b></div>
+					<div class="end"><button type="button" class="btn Reject" id="btnExcesso" data-if="sel.podeRetirar"><span data-icon-static="less"></span><span data-t="sel.retirarTxt"></span></button></div>
+				</div>
+			</section>
+
+			<section class="card">
+				<div class="card-h">
+					<span class="card-ic"><span data-icon-static="measure"></span></span>
+					<div class="card-tt"><div class="card-t" data-i18n="cardTotais"></div><div class="card-st" data-t="composicao.titulo"></div></div>
+				</div>
+				<div class="card-b">
+					<span class="lbl" data-i18n="lblTotalComposicao"></span>
+					<span class="num-xl"><span data-t="kpi.totalTxt"></span><small>t</small></span>
+					<div class="pi" data-vs="Information"><i data-w="kpi.totalPct"></i><b data-t="kpi.totalPctTxt"></b></div>
+					<div class="row">
+						<div><div class="lbl" data-t="sel.tituloCurto"></div><span class="num-m" data-state="sel.cargaState"><span data-t="sel.cargaTxt"></span> t</span></div>
+						<div style="text-align:right"><div class="lbl" data-i18n="lblMedia"></div><span class="num-m"><span data-t="kpi.mediaTxt"></span> t</span></div>
+					</div>
+					<div class="sep"><h3 data-i18n="cardFatura"></h3><span class="os inv" data-state="fatura.statusState" data-t="fatura.statusText"></span></div>
+					<dl class="form">
+						<dt data-i18n="fat.nf"></dt><dd data-t="fatura.numeroTxt"></dd>
+						<dt data-i18n="fat.vagoes"></dt><dd data-t="fatura.vagoesTxt"></dd>
+						<dt data-i18n="fat.peso"></dt><dd data-t="fatura.pesoTxt"></dd>
+					</dl>
+					<button type="button" class="btn emph wide" id="btnFatCard" data-en="fatura.podeEmitir"><span data-icon="fatura.botaoIcone"></span><span data-t="fatura.botaoTexto"></span></button>
+				</div>
+			</section>
+		</div>
+
+		<section class="card">
+			<div class="card-h">
+				<span class="card-ic"><span data-icon-static="alert"></span></span>
+				<div class="card-tt"><div class="card-t" data-i18n="cardValidacoes"></div><div class="card-st" data-t="view.resumoValidacoes"></div></div>
+			</div>
+			<ul class="list" id="valList"></ul>
+		</section>
+	</main>
+</div>
+
+<footer class="dp-footer">
+	<button type="button" class="btn" id="btnMsgs" data-if="view.temMsgs" data-i18n-title="mensagens"><span data-icon-static="message-popup"></span><span data-t="view.nMsgsTxt"></span></button>
+	<span class="lbl" data-t="view.ultimaAtualizacao"></span>
+	<span class="preview-tag">Prévia HTML do protótipo SAPUI5</span>
+	<span class="spacer"></span>
+	<button type="button" class="btn emph" id="btnFatFoot" data-en="fatura.podeEmitir"><span data-icon="fatura.botaoIcone"></span><span data-t="fatura.botaoTexto"></span></button>
+</footer>
+
+<div class="pop" id="bocaPop" role="dialog" aria-modal="false" aria-labelledby="bocaPopT" hidden>
+	<div class="pop-h"><span id="bocaPopT" data-t="bocaSel.titulo"></span><button type="button" class="btn tr btn-icon" id="bocaPopX" data-i18n-aria="fechar"><span data-icon-static="decline"></span></button></div>
+	<div class="pop-b">
+		<div class="row" style="align-items:center">
+			<span class="os inv" data-state="bocaSel.statusState"><span data-icon="bocaSel.statusIcon"></span><span data-t="bocaSel.statusText"></span></span>
+			<span class="num-m" style="font-size:1.5rem"><span data-t="bocaSel.vazaoTxt"></span> <small class="lbl">t/h</small></span>
+		</div>
+		<div class="strip" data-if="bocaSel.temAlerta" data-state="bocaSel.alertaTipo"><span data-icon-static="alert"></span><span data-t="bocaSel.alertaTxt"></span></div>
+		<dl class="form">
+			<dt data-i18n="pop.produto"></dt><dd data-t="bocaSel.produto"></dd>
+			<dt data-i18n="pop.umidade"></dt><dd data-t="bocaSel.umidadeTxt"></dd>
+			<dt data-i18n="pop.nominal"></dt><dd data-t="bocaSel.nominalTxt"></dd>
+			<dt data-i18n="colDestino"></dt><dd data-t="bocaSel.destinoTxt"></dd>
+			<dt data-i18n="pop.eta"></dt><dd data-t="bocaSel.etaTxt"></dd>
+			<dt data-i18n="pop.turno"></dt><dd><span data-t="bocaSel.turnoTxt"></span> t</dd>
+		</dl>
+		<span class="field-l" data-i18n="pop.nivel"></span>
+		<div class="pi" data-state="bocaSel.nivelState"><i data-w="bocaSel.nivelPct"></i><b data-t="bocaSel.nivelTxt"></b></div>
+		<label class="field-l" for="sldAbertura" data-t="bocaSel.aberturaLabel"></label>
+		<input type="range" class="sld" id="sldAbertura" min="0" max="100" step="5" data-en="bocaSel.podeOperar">
+		<label class="field-l" for="selDestino" data-i18n="pop.destino"></label>
+		<select class="sel" id="selDestino" data-en="bocaSel.podeOperar"></select>
+	</div>
+	<div class="pop-f">
+		<button type="button" class="btn" id="bocaAcao" data-en="bocaSel.podeOperar" data-btype="bocaSel.acaoTipo"><span data-icon="bocaSel.acaoIcone"></span><span data-t="bocaSel.acaoTexto"></span></button>
+		<button type="button" class="btn" id="bocaFechar" data-i18n="fechar"></button>
+	</div>
+</div>
+
+<div class="pop msgpop" id="msgPop" role="dialog" hidden>
+	<div class="pop-h"><span data-i18n="mensagens"></span><button type="button" class="btn tr btn-icon" id="msgPopX" data-i18n-aria="fechar"><span data-icon-static="decline"></span></button></div>
+	<ul class="list" id="msgList" style="overflow-y:auto;max-height:60vh"></ul>
+</div>
+
+<div class="scrim" id="dlg" hidden>
+	<div class="dlg" role="alertdialog" aria-modal="true" aria-labelledby="dlgT" aria-describedby="dlgTx">
+		<div class="pop-h"><span id="dlgT" data-i18n="fat.confirmTitulo"></span></div>
+		<div class="pop-b"><p id="dlgTx" style="margin:0"></p></div>
+		<div class="pop-f"><button type="button" class="btn emph" id="dlgOk">OK</button><button type="button" class="btn" id="dlgCancel">Cancelar</button></div>
+	</div>
+</div>
+<div class="toast" id="toast" role="status" hidden></div>
+
+<script>
+/* ---- shim mínimo de sap.ui.define para reaproveitar os módulos do projeto UI5 ---- */
+var __mods = {}, __cur;
+window.sap = { ui: { define: function (deps, fn) { __mods[__cur] = fn.apply(null, deps.map(function (d) { return __mods[d.split("/").pop()]; })); } } };
+</script>
+<script>__cur = "Regras";
+/**
+ * Regras de negócio e montagem do modelo de visualização (view model).
+ *
+ * Módulo puro (sem dependências de controles UI5): recebe o estado bruto
+ * (vindo hoje do mockData.json e, no futuro, do backend/OData) e devolve um
+ * objeto pronto para binding na view. Todos os textos vêm do i18n pela função
+ * t(chave, [args]) recebida como parâmetro.
+ *
+ * Para a implementação definitiva, mova as regras de validação/fatura para o
+ * backend e mantenha aqui apenas a preparação dos dados de tela.
+ */
+sap.ui.define([], function () {
+	"use strict";
+
+	var NF1 = new Intl.NumberFormat("pt-BR", { minimumFractionDigits: 1, maximumFractionDigits: 1 });
+	var NF0 = new Intl.NumberFormat("pt-BR", { maximumFractionDigits: 0 });
+
+	var CHECKLIST = ["limpeza", "escotilhas", "comportas", "rodeiros"];
+
+	/** Status do vagão -> sap.ui.core.ValueState */
+	var ESTADO_VAGAO = {
+		bloqueado: "Error",
+		excesso: "Error",
+		carregando: "Information",
+		carregado: "Success",
+		parcial: "Warning",
+		aguardando: "None"
+	};
+
+	/** Status da boca -> ValueState e ícone */
+	var ESTADO_BOCA = {
+		ativa: "Success",
+		parada: "None",
+		manutencao: "Warning",
+		aguardandoVagao: "Information",
+		siloVazio: "Error"
+	};
+	var ICONE_BOCA = {
+		ativa: "sap-icon://media-play",
+		parada: "sap-icon://media-pause",
+		manutencao: "sap-icon://wrench",
+		aguardandoVagao: "sap-icon://pending",
+		siloVazio: "sap-icon://error"
+	};
+
+	function f1(v) { return NF1.format(v || 0); }
+	function f0(v) { return NF0.format(v || 0); }
+	function pad(n) { return String(n).padStart(2, "0"); }
+
+	/** minutos -> "mm:ss" ou "1h05" */
+	function duracao(min) {
+		if (!isFinite(min) || min <= 0) {
+			return "—";
+		}
+		var s = Math.round(min * 60);
+		var h = Math.floor(s / 3600);
+		var m = Math.floor((s % 3600) / 60);
+		var ss = s % 60;
+		return h ? h + "h" + pad(m) : pad(m) + ":" + pad(ss);
+	}
+
+	function hora(d) {
+		return pad(d.getHours()) + ":" + pad(d.getMinutes()) + ":" + pad(d.getSeconds());
+	}
+
+	var Regras = {
+
+		formatar: { f1: f1, f0: f0, pad: pad, duracao: duracao },
+
+		/** Carga-alvo de um vagão (limite menos margem de segurança). */
+		alvo: function (oComposicao) {
+			return Math.round((oComposicao.limiteVagao - oComposicao.margemAlvo) * 10) / 10;
+		},
+
+		/** Vagão pode receber grão? (vistoriado e abaixo da carga-alvo) */
+		disponivel: function (oVagao, oComposicao) {
+			return !!oVagao && oVagao.vistoriado && oVagao.carga < Regras.alvo(oComposicao) - 0.05;
+		},
+
+		/** Próximo vagão disponível depois da posição informada (circular). */
+		proximoVagao: function (oState, iAposPos) {
+			var c = oState.composicao;
+			var aDisp = oState.vagoes.filter(function (w) { return Regras.disponivel(w, c); });
+			return aDisp.filter(function (w) { return w.pos > iAposPos; })[0] || aDisp[0] || null;
+		},
+
+		statusVagao: function (oVagao, oComposicao, mDestinosAtivos) {
+			if (!oVagao.vistoriado) { return "bloqueado"; }
+			if (oVagao.carga > oComposicao.limiteVagao) { return "excesso"; }
+			if (mDestinosAtivos[oVagao.pos]) { return "carregando"; }
+			if (oVagao.carga >= oComposicao.limiteVagao * 0.94) { return "carregado"; }
+			if (oVagao.carga > 0) { return "parcial"; }
+			return "aguardando";
+		},
+
+		/**
+		 * Monta o view model completo.
+		 * @param {object} s  estado bruto
+		 * @param {object} ui estado de tela { sel: índice do vagão, bocaSel: índice da boca }
+		 * @param {function} t função de textos i18n: t(chave, aArgs)
+		 */
+		montarViewModel: function (s, ui, t) {
+			var c = s.composicao;
+			var LIM = c.limiteVagao;
+			var ALVO = Regras.alvo(c);
+			var bEmitida = !!s.fatura.emitida;
+			var bRodando = !!s.simulacao.rodando && !bEmitida;
+
+			var aAtivas = s.bocas.filter(function (b) { return b.status === "ativa" && b.destino != null; });
+			var mDestinos = {};
+			var mVazaoPorVagao = {};
+			aAtivas.forEach(function (b) {
+				(mDestinos[b.destino] = mDestinos[b.destino] || []).push(b.n);
+				mVazaoPorVagao[b.destino] = (mVazaoPorVagao[b.destino] || 0) + b.vazao;
+			});
+
+			/* ---------------- Vagões ---------------- */
+			var aVagoes = s.vagoes.map(function (w, i) {
+				var sSt = Regras.statusVagao(w, c, mDestinos);
+				var iPct = Math.round(w.carga / LIM * 100);
+				var sLabel = pad(w.pos);
+				var nVazao = mVazaoPorVagao[w.pos] || 0;
+				return {
+					index: i,
+					pos: w.pos,
+					label: sLabel,
+					id: w.id,
+					titulo: t("vagaoN", [sLabel]) + " · " + w.id,
+					tituloCurto: t("vagaoN", [sLabel]),
+					vistoriado: w.vistoriado,
+					vistText: t(w.vistoriado ? "vistoriado" : "naoVistoriado"),
+					vistState: w.vistoriado ? "Success" : "Error",
+					vistIcon: w.vistoriado ? "sap-icon://shield" : "sap-icon://locked",
+					carga: w.carga,
+					cargaTxt: f1(w.carga),
+					cargaState: w.carga > LIM ? "Error" : "None",
+					limiteTxt: f1(LIM) + " t",
+					taraTxt: f1(c.taraVagao) + " t",
+					brutoTxt: f1(w.carga + c.taraVagao) + " t",
+					pct: Math.max(0, Math.min(100, iPct)),
+					pctTxt: iPct + "%",
+					statusKey: sSt,
+					statusText: t("st." + sSt),
+					statusState: ESTADO_VAGAO[sSt],
+					carregando: sSt === "carregando",
+					excesso: w.carga > LIM,
+					bocasHist: w.bocas.slice(),
+					bocasAtivas: mDestinos[w.pos] || [],
+					bocasTxt: w.bocas.length ? w.bocas.map(function (n) { return "B" + n; }).join(" · ") : "—",
+					etaTxt: nVazao > 0 ? duracao(Math.max(0, ALVO - w.carga) / nVazao * 60) : "—",
+					checks: CHECKLIST.map(function (k) {
+						var bOk = !!w.checklist[k];
+						return {
+							key: k,
+							label: t("check." + k),
+							ok: bOk,
+							text: t(bOk ? "checkOk" : "checkReprovado"),
+							state: bOk ? "Success" : "Error",
+							icon: bOk ? "sap-icon://sys-enter-2" : "sap-icon://error",
+							iconColor: bOk ? "Positive" : "Negative"
+						};
+					}),
+					podeVistoriar: !w.vistoriado && !bEmitida,
+					podeRetirar: w.carga > LIM && !bEmitida,
+					retirarTxt: t("acaoRetirarExcesso", [f1(Math.max(0, w.carga - LIM))])
+				};
+			});
+
+			/* ---------------- Bocas (cones de descarga) ---------------- */
+			var aBocas = s.bocas.map(function (b, j) {
+				var nNivel = b.capacidade ? b.estoque / b.capacidade * 100 : 0;
+				var iNivel = Math.max(0, Math.min(100, Math.round(nNivel)));
+				var bAtiva = b.status === "ativa" && b.destino != null;
+				var oDest = null;
+				var iDestIndex = -1;
+				s.vagoes.forEach(function (w, i) { if (w.pos === b.destino) { oDest = w; iDestIndex = i; } });
+				var nVzDest = oDest ? (mVazaoPorVagao[oDest.pos] || 0) : 0;
+				var sEta = bAtiva && nVzDest > 0 ? duracao(Math.max(0, ALVO - oDest.carga) / nVzDest * 60) : "—";
+				var bBaixo = nNivel < c.nivelMinimoSiloPct && b.status !== "manutencao" && b.estoque > 0;
+				var bDivergente = bAtiva && b.produto !== c.produto;
+				var sNome = "B" + b.n;
+
+				var sAlerta = "";
+				var sAlertaTipo = "None";
+				if (b.status === "manutencao") { sAlerta = b.os || t("boca.manutencao"); sAlertaTipo = "Warning"; }
+				else if (bDivergente) { sAlerta = t("val.produto.d", [sNome, b.produto, c.produto]); sAlertaTipo = "Error"; }
+				else if (b.status === "siloVazio") { sAlerta = t("pop.alerta.siloVazio"); sAlertaTipo = "Error"; }
+				else if (b.status === "aguardandoVagao") { sAlerta = t("pop.alerta.aguardando"); sAlertaTipo = "Information"; }
+				else if (bBaixo) { sAlerta = t("val.siloBaixo.d", [b.silo, f0(b.estoque) + " t", iNivel]); sAlertaTipo = "Warning"; }
+
+				var bLigada = bAtiva || b.status === "aguardandoVagao";
+				return {
+					index: j,
+					n: b.n,
+					nome: sNome,
+					silo: b.silo,
+					produto: b.produto,
+					titulo: t("pop.titulo", [sNome, b.silo]),
+					status: b.status,
+					statusText: t("boca." + b.status),
+					statusState: ESTADO_BOCA[b.status],
+					statusIcon: ICONE_BOCA[b.status],
+					ativa: bAtiva,
+					manutencao: b.status === "manutencao",
+					vazao: bAtiva ? b.vazao : 0,
+					vazaoTxt: f0(bAtiva ? b.vazao : 0),
+					nominalTxt: f0(b.vazaoNominal) + " t/h",
+					abertura: b.abertura,
+					aberturaTxt: b.abertura + "%",
+					aberturaLabel: t("pop.comporta", [b.abertura]),
+					estoqueTxt: f0(b.estoque) + " t",
+					capacidadeTxt: f0(b.capacidade) + " t",
+					nivelPct: iNivel,
+					nivelTxt: iNivel + "% · " + f0(b.estoque) + " t",
+					nivelState: bBaixo || b.estoque <= 0 ? "Error" : (nNivel < 35 ? "Warning" : "Success"),
+					nivelBaixo: bBaixo,
+					umidadeTxt: t("umidadeTxt", [f1(b.umidade)]),
+					destino: bAtiva ? b.destino : null,
+					destinoIndex: bAtiva ? iDestIndex : -1,
+					destinoKey: b.destino != null ? String(b.destino) : "",
+					destinoLabel: bAtiva ? "V" + pad(b.destino) : "—",
+					destinoTxt: bAtiva ? t("destinoTxt", [pad(b.destino)]) : t("semDestino"),
+					etaTxt: sEta,
+					turnoTxt: f1(b.descarregadoTurno),
+					produtoDivergente: bDivergente,
+					temAlerta: !!sAlerta,
+					alertaTxt: sAlerta,
+					alertaTipo: sAlertaTipo,
+					os: b.os || "",
+					podeOperar: b.status !== "manutencao" && b.status !== "siloVazio" && !bEmitida,
+					ligada: bLigada,
+					acaoTexto: t(bLigada ? "pop.parar" : "pop.iniciar"),
+					acaoTipo: bLigada ? "Reject" : "Accept",
+					acaoIcone: bLigada ? "sap-icon://stop" : "sap-icon://media-play"
+				};
+			});
+
+			/* ---------------- Validações ---------------- */
+			var aVal = [];
+			function add(sType, sTitle, sDesc, iVagao, iBoca) {
+				aVal.push({
+					type: sType,
+					state: sType,
+					title: sTitle,
+					description: sDesc,
+					subtitle: sDesc,
+					infoText: t(sType === "Error" ? "sevErro" : "sevAviso"),
+					icon: sType === "Error" ? "sap-icon://error" : "sap-icon://alert",
+					vagaoIndex: iVagao,
+					bocaIndex: iBoca,
+					navegavel: iVagao >= 0 || iBoca >= 0
+				});
+			}
+			s.vagoes.forEach(function (w, i) {
+				if (!w.vistoriado) {
+					add("Error", t("val.semVistoria.t", [pad(w.pos)]), t("val.semVistoria.d", [w.id]), i, -1);
+				}
+				if (w.carga > LIM) {
+					add("Error", t("val.excesso.t", [pad(w.pos)]),
+						t("val.excesso.d", [f1(w.carga), f1(LIM), f1(w.carga - LIM)]), i, -1);
+				}
+			});
+			aBocas.forEach(function (b) {
+				if (b.produtoDivergente) {
+					add("Error", t("val.produto.t", [b.nome]), t("val.produto.d", [b.nome, b.produto, c.produto]), -1, b.index);
+				}
+			});
+			var nErros = aVal.length;
+			aBocas.forEach(function (b) {
+				if (b.manutencao) {
+					add("Warning", t("val.manut.t", [b.nome]), t("val.manut.d", [b.os || b.silo]), -1, b.index);
+				} else if (b.status === "siloVazio") {
+					add("Warning", t("val.siloVazio.t", [b.nome]), t("val.siloVazio.d", [b.silo]), -1, b.index);
+				} else if (b.nivelBaixo) {
+					add("Warning", t("val.siloBaixo.t", [b.nome]), t("val.siloBaixo.d", [b.silo, b.estoqueTxt, b.nivelPct]), -1, b.index);
+				}
+			});
+			var nAguardando = s.vagoes.filter(function (w) {
+				return w.vistoriado && w.carga === 0 && !mDestinos[w.pos];
+			}).length;
+			if (nAguardando > 0) {
+				add("Warning", nAguardando === 1 ? t("val.aguardando1.t") : t("val.aguardandoN.t", [nAguardando]),
+					t("val.aguardando.d"), -1, -1);
+			}
+			var nAvisos = aVal.length - nErros;
+
+			/* ---------------- Totais / KPIs ---------------- */
+			var nTotal = s.vagoes.reduce(function (a, w) { return a + w.carga; }, 0);
+			var nCap = s.vagoes.length * LIM;
+			var iTotalPct = Math.round(nTotal / nCap * 100);
+			var nCarregados = s.vagoes.filter(function (w) { return w.carga > 0; }).length;
+			var nVist = s.vagoes.filter(function (w) { return w.vistoriado; }).length;
+			var nVazaoTotal = aAtivas.reduce(function (a, b) { return a + b.vazao; }, 0);
+			var nRestante = s.vagoes.reduce(function (a, w) {
+				return a + (w.vistoriado ? Math.max(0, ALVO - w.carga) : 0);
+			}, 0);
+			var sResumoVal = t("resumoVal", [nErros, nAvisos]);
+
+			/* ---------------- Fatura ---------------- */
+			var bPodeEmitir = nErros === 0 && nTotal > 0 && !bEmitida;
+			var sBotao;
+			if (bEmitida) { sBotao = t("fat.botaoEmitida"); }
+			else if (bPodeEmitir) { sBotao = t("acaoEmitirFatura"); }
+			else { sBotao = nErros === 1 ? t("fat.resolva1") : t("fat.resolvaN", [nErros]); }
+
+			var iSel = Math.max(0, Math.min(aVagoes.length - 1, ui.sel || 0));
+			var iBocaSel = Math.max(0, Math.min(aBocas.length - 1, ui.bocaSel || 0));
+
+			return {
+				composicao: {
+					codigo: c.codigo,
+					titulo: t("composicao", [c.codigo]),
+					subtitulo: c.patio,
+					produto: c.produto,
+					estacaoTitulo: t("cardEstacao") + " · " + c.estacao,
+					estacaoSub: t("cardEstacaoSub", [c.produto]),
+					nivelMinimoSiloPct: c.nivelMinimoSiloPct
+				},
+				estacaoTextos: {
+					comporta: t("st.txt.comporta"),
+					vazao: t("st.txt.vazao"),
+					eta: t("st.txt.eta"),
+					bocas: t("st.txt.bocas"),
+					locomotiva: t("st.txt.locomotiva"),
+					tracao: t("st.txt.tracao"),
+					locoMov: t("st.txt.locoMov"),
+					locoParada: t("st.txt.locoParada"),
+					minimo: t("st.txt.minimo"),
+					legVist: t("st.txt.legVist"),
+					legNaoVist: t("st.txt.legNaoVist"),
+					legCarregando: t("st.txt.legCarregando"),
+					legFluxo: t("st.txt.legFluxo"),
+					legSel: t("st.txt.legSel"),
+					legMin: t("st.txt.legMin")
+				},
+				view: {
+					sel: iSel,
+					bocaSel: iBocaSel,
+					running: bRodando,
+					rodandoFlag: !!s.simulacao.rodando,
+					liveText: bEmitida ? t("statusFaturada") : (s.simulacao.rodando ? t("statusAoVivo") : t("statusPausado")),
+					liveState: bEmitida ? "Success" : (bRodando ? "Information" : "None"),
+					liveIcon: bEmitida ? "sap-icon://accept" : (bRodando ? "sap-icon://status-in-process" : "sap-icon://media-pause"),
+					simTexto: s.simulacao.rodando ? t("acaoPausar") : t("acaoRetomar"),
+					simIcone: s.simulacao.rodando ? "sap-icon://media-pause" : "sap-icon://media-play",
+					nErros: nErros,
+					nAvisos: nAvisos,
+					nMsgsTxt: String(aVal.length),
+					temMsgs: aVal.length > 0,
+					temErros: nErros > 0,
+					semPendencias: aVal.length === 0,
+					resumoValidacoes: sResumoVal,
+					ultimaAtualizacao: t("ultimaAtualizacao", [hora(new Date(s.simulacao.ultimaAtualizacao))])
+				},
+				kpi: {
+					vazaoTxt: f0(nVazaoTotal),
+					totalTxt: f1(nTotal),
+					totalPct: Math.min(100, iTotalPct),
+					totalPctTxt: t("pctCapacidade", [iTotalPct, f1(nCap)]),
+					vistTxt: nVist + "/" + s.vagoes.length,
+					vistState: nVist === s.vagoes.length ? "Success" : "Error",
+					etaTxt: nVazaoTotal > 0 ? duracao(nRestante / nVazaoTotal * 60) : "—",
+					mediaTxt: f1(nCarregados ? nTotal / nCarregados : 0),
+					pendTxt: sResumoVal,
+					pendState: nErros ? "Error" : (nAvisos ? "Warning" : "Success"),
+					resumoCurto: t("resumoCurto", [f1(nTotal), f0(nVazaoTotal), sResumoVal])
+				},
+				vagoes: aVagoes,
+				bocas: aBocas,
+				sel: aVagoes[iSel],
+				bocaSel: aBocas[iBocaSel],
+				destinos: s.vagoes.filter(function (w) { return Regras.disponivel(w, c); }).map(function (w) {
+					return { key: String(w.pos), text: t("vagaoN", [pad(w.pos)]) + " · " + f1(w.carga) + " t" };
+				}),
+				validacoes: aVal,
+				fatura: {
+					emitida: bEmitida,
+					podeEmitir: bPodeEmitir,
+					numeroTxt: bEmitida ? s.fatura.numero : t("fat.pendente"),
+					statusText: bEmitida ? t("fat.emitida", [s.fatura.hora]) : (bPodeEmitir ? t("fat.pronta") : t("fat.bloqueada")),
+					statusState: bEmitida ? "Success" : (bPodeEmitir ? "Information" : "Error"),
+					vagoesTxt: t("fat.vagoesTxt", [nCarregados, s.vagoes.length]),
+					pesoTxt: f1(nTotal) + " t",
+					botaoTexto: sBotao,
+					botaoIcone: bEmitida ? "sap-icon://accept" : "sap-icon://paper-plane",
+					nCarregados: nCarregados
+				}
+			};
+		}
+	};
+
+	return Regras;
+});
+
+</script>
+<script>__cur = "Simulador";
+/**
+ * Simulação da operação (somente protótipo).
+ *
+ * Cada função recebe o estado bruto e devolve um NOVO estado (imutável).
+ * Na implementação definitiva:
+ *   - passo()            -> substituir por leitura periódica / WebSocket do backend
+ *   - ações (iniciar, parar, abertura, destino, vistoria, excesso, fatura)
+ *                        -> substituir por chamadas OData (actions/functions)
+ */
+sap.ui.define([
+	"./Regras"
+], function (Regras) {
+	"use strict";
+
+	/** Fator de aceleração: toneladas por tick = vazão (t/h) / FATOR. */
+	var FATOR = 480;
+
+	function clone(o) { return JSON.parse(JSON.stringify(o)); }
+	function r1(v) { return Math.round(v * 10) / 10; }
+	function vagao(s, iPos) { return s.vagoes.filter(function (w) { return w.pos === iPos; })[0]; }
+	function vazaoAlvo(b) { return Math.round(b.vazaoNominal * b.abertura / 100); }
+
+	var Simulador = {
+
+		estadoInicial: function (oMock) {
+			var s = clone(oMock);
+			s.simulacao = { rodando: true, ultimaAtualizacao: new Date().toISOString() };
+			return s;
+		},
+
+		/** Um ciclo de descarga. */
+		passo: function (state) {
+			var s = clone(state);
+			if (!s.simulacao.rodando || s.fatura.emitida) {
+				return s;
+			}
+			var c = s.composicao;
+			var ALVO = Regras.alvo(c);
+
+			// bocas aguardando vagão retomam quando houver vagão disponível
+			s.bocas.forEach(function (b) {
+				if (b.status === "aguardandoVagao") {
+					var oProx = Regras.proximoVagao(s, 0);
+					if (oProx) {
+						b.status = "ativa";
+						b.destino = oProx.pos;
+					}
+				}
+			});
+
+			// descarga
+			var mCarregados = {};
+			s.bocas.forEach(function (b) {
+				if (b.status !== "ativa" || b.destino == null) { return; }
+				var w = vagao(s, b.destino);
+				if (!Regras.disponivel(w, c)) {
+					var oNovo = Regras.proximoVagao(s, b.destino);
+					if (!oNovo) {
+						b.status = "aguardandoVagao";
+						b.destino = null;
+						b.vazao = 0;
+						return;
+					}
+					b.destino = oNovo.pos;
+					w = oNovo;
+				}
+				b.vazao = b.abertura > 0 ? Math.max(0, vazaoAlvo(b) + Math.round(Math.random() * 60 - 30)) : 0;
+				var dt = Math.min(b.estoque, b.vazao / FATOR);
+				b.estoque = Math.max(0, b.estoque - dt);
+				b.descarregadoTurno += dt;
+				w.carga += dt;
+				if (w.bocas.indexOf(b.n) < 0) {
+					w.bocas.push(b.n);
+					w.bocas.sort();
+				}
+				mCarregados[w.pos] = true;
+				if (b.estoque <= 0.01) {
+					b.estoque = 0;
+					b.status = "siloVazio";
+					b.vazao = 0;
+					b.destino = null;
+				}
+			});
+
+			// vagão atingiu a carga-alvo -> bocas seguem para o próximo vagão disponível
+			Object.keys(mCarregados).forEach(function (sPos) {
+				var w = vagao(s, Number(sPos));
+				if (w.carga >= ALVO) {
+					w.carga = ALVO;
+					var oProx = Regras.proximoVagao(s, w.pos);
+					s.bocas.forEach(function (b) {
+						if (b.status === "ativa" && b.destino === w.pos) {
+							if (oProx) {
+								b.destino = oProx.pos;
+							} else {
+								b.status = "aguardandoVagao";
+								b.destino = null;
+								b.vazao = 0;
+							}
+						}
+					});
+				}
+			});
+
+			s.vagoes.forEach(function (w) { w.carga = r1(w.carga); });
+			s.bocas.forEach(function (b) {
+				b.estoque = r1(b.estoque);
+				b.descarregadoTurno = r1(b.descarregadoTurno);
+			});
+			s.simulacao.ultimaAtualizacao = new Date().toISOString();
+			return s;
+		},
+
+		alternarSimulacao: function (state) {
+			var s = clone(state);
+			s.simulacao.rodando = !s.simulacao.rodando;
+			return s;
+		},
+
+		concluirVistoria: function (state, iVagao) {
+			var s = clone(state);
+			var w = s.vagoes[iVagao];
+			w.vistoriado = true;
+			Object.keys(w.checklist).forEach(function (k) { w.checklist[k] = true; });
+			return s;
+		},
+
+		retirarExcesso: function (state, iVagao) {
+			var s = clone(state);
+			var w = s.vagoes[iVagao];
+			w.carga = Math.min(w.carga, s.composicao.limiteVagao);
+			return s;
+		},
+
+		iniciarBoca: function (state, iBoca) {
+			var s = clone(state);
+			var b = s.bocas[iBoca];
+			var c = s.composicao;
+			if (s.fatura.emitida || b.status === "manutencao" || b.status === "siloVazio") {
+				return s;
+			}
+			if (!b.abertura) {
+				b.abertura = 80;
+			}
+			// prioridade: destino escolhido > vagão já em carga > próximo disponível
+			var oDest = b.destino != null && Regras.disponivel(vagao(s, b.destino), c) ? vagao(s, b.destino) : null;
+			if (!oDest) {
+				s.bocas.forEach(function (o) {
+					if (!oDest && o !== b && o.status === "ativa" && o.destino != null && Regras.disponivel(vagao(s, o.destino), c)) {
+						oDest = vagao(s, o.destino);
+					}
+				});
+			}
+			oDest = oDest || Regras.proximoVagao(s, 0);
+			if (oDest) {
+				b.status = "ativa";
+				b.destino = oDest.pos;
+				b.vazao = vazaoAlvo(b);
+			} else {
+				b.status = "aguardandoVagao";
+				b.destino = null;
+				b.vazao = 0;
+			}
+			return s;
+		},
+
+		pararBoca: function (state, iBoca) {
+			var s = clone(state);
+			var b = s.bocas[iBoca];
+			if (b.status === "ativa" || b.status === "aguardandoVagao") {
+				b.status = "parada";
+				b.vazao = 0;
+			}
+			return s;
+		},
+
+		definirAbertura: function (state, iBoca, iAbertura) {
+			var s = clone(state);
+			var b = s.bocas[iBoca];
+			b.abertura = Math.max(0, Math.min(100, Math.round(iAbertura)));
+			if (b.status === "ativa") {
+				b.vazao = vazaoAlvo(b);
+			}
+			return s;
+		},
+
+		definirDestino: function (state, iBoca, iPos) {
+			var s = clone(state);
+			if (Regras.disponivel(vagao(s, iPos), s.composicao)) {
+				s.bocas[iBoca].destino = iPos;
+			}
+			return s;
+		},
+
+		emitirFatura: function (state, sHora) {
+			var s = clone(state);
+			s.fatura.emitida = true;
+			s.fatura.numero = s.fatura.numeroPrevisto;
+			s.fatura.hora = sHora;
+			s.simulacao.rodando = false;
+			s.bocas.forEach(function (b) {
+				if (b.status === "ativa" || b.status === "aguardandoVagao") {
+					b.status = "parada";
+					b.vazao = 0;
+				}
+			});
+			return s;
+		}
+	};
+
+	return Simulador;
+});
+
+</script>
+<script>__cur = "StationDom";
+/**
+ * Desenho da estação de carregamento (silos + cones de descarga + fluxo de
+ * grão + composição), em DOM puro.
+ *
+ * É usado pelo controle UI5 LoadingStation. Fica separado do controle para:
+ *   - atualizar o DOM no lugar a cada ciclo (as animações CSS/SVG não reiniciam);
+ *   - poder ser reaproveitado/testado sem o runtime do UI5.
+ *
+ * API:
+ *   var st = new StationDom(oRootElement, { onWagonPress: fn(i, el), onBocaPress: fn(i, el) });
+ *   st.update({ bocas, vagoes, selectedIndex, running, textos, nivelMinimoPct });
+ *   st.attach(oNovoRoot) / st.detach() / st.destroy()
+ */
+sap.ui.define([], function () {
+	"use strict";
+
+	/* Geometria fixa em px: facilita alinhar cones, linhas de fluxo e vagões. */
+	var G = { pad: 24, locoW: 150, wagonW: 186, gap: 16, unitW: 250, siloW: 132,
+		labelH: 34, siloH: 122, coneH: 60, gateH: 12, flowH: 118, wagonH: 214, bogieH: 30, railH: 12 };
+	G.siloY = G.labelH;
+	G.coneY = G.siloY + G.siloH;
+	G.gateY = G.coneY + G.coneH;
+	G.flowY = G.gateY + G.gateH;
+	G.wagonY = G.flowY + G.flowH;
+	G.bogieY = G.wagonY + G.wagonH + 2;
+	G.railY = G.bogieY + G.bogieH - 8;
+	G.height = G.railY + G.railH + 6;
+
+	var iUid = 0;
+
+	function esc(v) {
+		return String(v == null ? "" : v).replace(/[&<>"']/g, function (ch) {
+			return { "&": "&amp;", "<": "&lt;", ">": "&gt;", "\"": "&quot;", "'": "&#39;" }[ch];
+		});
+	}
+	function txt(el, v) {
+		v = v == null ? "" : String(v);
+		if (el && el.textContent !== v) { el.textContent = v; }
+	}
+	function css(el, prop, v) {
+		if (el && el.style[prop] !== v) { el.style[prop] = v; }
+	}
+	function cls(el, base, aMods) {
+		if (!el) { return; }
+		var s = [base].concat(aMods.filter(Boolean)).join(" ").trim();
+		if (el.getAttribute("class") !== s) { el.setAttribute("class", s); }
+	}
+	function attr(el, name, v) {
+		if (el && el.getAttribute(name) !== v) { el.setAttribute(name, v); }
+	}
+	function ref(el, r) { return el.querySelector("[data-vg-r=\"" + r + "\"]"); }
+
+	function wheel() {
+		return "<span class=\"vgWheel\"><span class=\"vgWheel__spoke\"></span><span class=\"vgWheel__spoke vgWheel__spoke--b\"></span></span>";
+	}
+	function bogie(x) {
+		return "<span class=\"vgBogie\" style=\"left:" + x + "px;top:" + G.bogieY + "px\">" + wheel() + wheel() + "</span>";
+	}
+
+	function StationDom(oRoot, mHandlers) {
+		this.h = mHandlers || {};
+		this.id = "vgst" + (++iUid);
+		this.wrap = null;
+		this.nB = -1;
+		this.nW = -1;
+		this.didScroll = false;
+		this._onClick = this._onClick.bind(this);
+		this.root = null;
+		this.attach(oRoot);
+	}
+
+	StationDom.geometria = G;
+
+	StationDom.prototype.attach = function (oRoot) {
+		if (this.root && this.root !== oRoot) {
+			this.root.removeEventListener("click", this._onClick);
+		}
+		if (this.root !== oRoot) {
+			this.root = oRoot;
+			oRoot.addEventListener("click", this._onClick);
+		}
+		if (this.wrap && this.wrap.parentNode !== oRoot) {
+			oRoot.appendChild(this.wrap);
+		}
+	};
+
+	StationDom.prototype.detach = function () {
+		if (this.wrap && this.wrap.parentNode) {
+			this.wrap.parentNode.removeChild(this.wrap);
+		}
+	};
+
+	StationDom.prototype.destroy = function () {
+		this.detach();
+		if (this.root) { this.root.removeEventListener("click", this._onClick); }
+		this.root = null;
+		this.wrap = null;
+	};
+
+	StationDom.prototype._onClick = function (e) {
+		var el = e.target.closest ? e.target.closest("[data-vg-wagon],[data-vg-boca]") : null;
+		if (!el || !this.root || !this.root.contains(el)) { return; }
+		if (el.hasAttribute("data-vg-wagon")) {
+			if (this.h.onWagonPress) { this.h.onWagonPress(Number(el.getAttribute("data-vg-wagon")), el); }
+		} else if (this.h.onBocaPress) {
+			this.h.onBocaPress(Number(el.getAttribute("data-vg-boca")), el);
+		}
+	};
+
+	StationDom.prototype.update = function (d) {
+		if (!this.root || !d || !d.bocas || !d.vagoes) { return; }
+		if (!this.wrap || d.bocas.length !== this.nB || d.vagoes.length !== this.nW) {
+			this._build(d);
+		}
+		if (this.wrap.parentNode !== this.root) {
+			this.root.appendChild(this.wrap);
+		}
+		this._apply(d);
+	};
+
+	StationDom.prototype._geo = function (nW, nB) {
+		var iStart = G.pad + G.locoW + G.gap;
+		var iRegion = nW * (G.wagonW + G.gap) - G.gap;
+		var iSiloRegion = Math.max(iRegion, nB * (G.unitW + 16));
+		var iWidth = iStart + iSiloRegion + G.pad;
+		var iSiloStart = iStart + (iRegion - iSiloRegion) / 2;
+		var g = { width: iWidth, wagonX: [], siloCX: [], siloStart: iSiloStart, siloRegion: iSiloRegion, start: iStart };
+		for (var i = 0; i < nW; i++) { g.wagonX.push(iStart + i * (G.wagonW + G.gap)); }
+		for (var j = 0; j < nB; j++) { g.siloCX.push(Math.round(iSiloStart + iSiloRegion * (j + 0.5) / nB)); }
+		return g;
+	};
+
+	StationDom.prototype._build = function (d) {
+		var nW = d.vagoes.length;
+		var nB = d.bocas.length;
+		var g = this.geo = this._geo(nW, nB);
+		var id = this.id;
+		var tx = d.textos || {};
+		var h = [];
+		var i, j, k;
+
+		h.push("<div class=\"vgSt__scroll\" tabindex=\"-1\"><div class=\"vgSt__track\" style=\"width:" + g.width + "px;height:" + G.height + "px\">");
+
+		// pórtico (viga + pilares)
+		var iBeamL = g.start - G.gap / 2 - 5;
+		var iBeamR = g.width - G.pad + 6;
+		h.push("<span class=\"vgSt__beam\" style=\"left:" + iBeamL + "px;width:" + (iBeamR - iBeamL) + "px;top:" + (G.coneY - 6) + "px\"></span>");
+		h.push("<span class=\"vgSt__leg\" style=\"left:" + iBeamL + "px;top:" + (G.coneY - 6) + "px;height:" + (G.railY - G.coneY + 6) + "px\"></span>");
+		h.push("<span class=\"vgSt__leg\" style=\"left:" + (iBeamR - 10) + "px;top:" + (G.coneY - 6) + "px;height:" + (G.railY - G.coneY + 6) + "px\"></span>");
+
+		// trilho
+		h.push("<span class=\"vgSt__rail\" style=\"top:" + G.railY + "px;width:" + g.width + "px\"></span>");
+
+		// linhas de fluxo (SVG)
+		h.push("<svg class=\"vgSt__flows\" width=\"" + g.width + "\" height=\"" + (G.flowH + 8) + "\" style=\"top:" + (G.flowY - 4) + "px\" aria-hidden=\"true\" focusable=\"false\">");
+		for (j = 0; j < nB; j++) {
+			h.push("<g class=\"vgFlow\" data-vg-flow=\"" + j + "\">" +
+				"<path id=\"" + id + "p" + j + "\" class=\"vgFlow__base\" d=\"M0 0\"></path>" +
+				"<path class=\"vgFlow__dash\" d=\"M0 0\"></path>");
+			for (k = 0; k < 4; k++) {
+				h.push("<circle class=\"vgFlow__grain\" r=\"" + (k % 2 ? 2.2 : 3) + "\"><animateMotion dur=\"1.1s\" repeatCount=\"indefinite\" begin=\"-" + (k * 0.275).toFixed(3) + "s\"><mpath href=\"#" + id + "p" + j + "\"></mpath></animateMotion></circle>");
+			}
+			h.push("</g>");
+		}
+		h.push("</svg>");
+
+		// silos + cones (bocas)
+		for (j = 0; j < nB; j++) {
+			var iLeft = g.siloCX[j] - G.unitW / 2;
+			h.push("<button type=\"button\" class=\"vgSilo\" data-vg-boca=\"" + j + "\" style=\"left:" + iLeft + "px;width:" + G.unitW + "px;height:" + (G.flowY + 30) + "px\">" +
+				"<span class=\"vgSilo__label\"><span class=\"vgSilo__name\" data-vg-r=\"name\"></span><span class=\"vgSilo__silo\" data-vg-r=\"silo\"></span><span class=\"vgSilo__pill\" data-vg-r=\"pill\"></span></span>" +
+				"<span class=\"vgSilo__body\" style=\"top:" + G.siloY + "px;height:" + G.siloH + "px;width:" + G.siloW + "px;margin-left:" + (-G.siloW / 2) + "px\">" +
+					"<span class=\"vgSilo__level\" data-vg-r=\"level\"></span>" +
+					"<span class=\"vgSilo__tick\" style=\"bottom:25%\"></span><span class=\"vgSilo__tick\" style=\"bottom:50%\"></span><span class=\"vgSilo__tick\" style=\"bottom:75%\"></span>" +
+					"<span class=\"vgSilo__min\" data-vg-r=\"min\"></span>" +
+					"<span class=\"vgSilo__info\"><span class=\"vgSilo__prod\" data-vg-r=\"prod\"></span><span class=\"vgSilo__pct\" data-vg-r=\"pct\"></span><span class=\"vgSilo__stock\" data-vg-r=\"stock\"></span><span class=\"vgSilo__umid\" data-vg-r=\"umid\"></span></span>" +
+					"<span class=\"vgSilo__alert\" aria-hidden=\"true\">!</span>" +
+				"</span>" +
+				"<span class=\"vgSilo__cone\" style=\"top:" + G.coneY + "px;height:" + G.coneH + "px;width:" + G.siloW + "px;margin-left:" + (-G.siloW / 2) + "px\"><span class=\"vgSilo__coneFill\" data-vg-r=\"coneFill\"></span><span class=\"vgSilo__coneFlow\"></span></span>" +
+				"<span class=\"vgSilo__gate\" style=\"top:" + G.gateY + "px;height:" + G.gateH + "px\"><span class=\"vgSilo__gateBlade\" data-vg-r=\"gate\"></span></span>" +
+				"<span class=\"vgSilo__chip vgSilo__chip--l\" style=\"top:" + (G.coneY + 10) + "px\"><span class=\"vgSilo__chipK\">" + esc(tx.comporta || "Comporta") + "</span><span class=\"vgSilo__chipV\" data-vg-r=\"ab\"></span><span class=\"vgSilo__bar\"><span data-vg-r=\"abBar\"></span></span></span>" +
+				"<span class=\"vgSilo__chip vgSilo__chip--r\" style=\"top:" + (G.coneY + 10) + "px\"><span class=\"vgSilo__chipK\">" + esc(tx.vazao || "Vazão") + "</span><span class=\"vgSilo__chipV\" data-vg-r=\"vz\"></span><span class=\"vgSilo__chipU\">t/h</span></span>" +
+				"<span class=\"vgSilo__dest\" style=\"top:" + (G.flowY + 6) + "px\" data-vg-r=\"dest\"></span>" +
+				"</button>");
+		}
+
+		// locomotiva
+		h.push("<span class=\"vgLoco\" style=\"left:" + G.pad + "px;top:" + (G.wagonY - 22) + "px;width:" + G.locoW + "px;height:" + (G.wagonH + 22) + "px\">" +
+			"<span class=\"vgLoco__cab\"><span class=\"vgLoco__win\"></span></span>" +
+			"<span class=\"vgLoco__light\"></span>" +
+			"<span class=\"vgLoco__k\">" + esc(tx.tracao || "") + "</span>" +
+			"<span class=\"vgLoco__t\">" + esc(tx.locomotiva || "") + "</span>" +
+			"<span class=\"vgLoco__st\" data-vg-r=\"locoSt\"></span>" +
+			"<span class=\"vgLoco__grill\"></span>" +
+			"</span>");
+		h.push(bogie(G.pad + 8));
+		h.push(bogie(G.pad + G.locoW - 8 - 52));
+
+		// vagões
+		for (i = 0; i < nW; i++) {
+			var x = g.wagonX[i];
+			var aN = [];
+			for (j = 0; j < nB; j++) { aN.push("<span data-vg-n=\"" + j + "\"></span>"); }
+			h.push("<button type=\"button\" class=\"vgWag\" data-vg-wagon=\"" + i + "\" style=\"left:" + x + "px;top:" + G.wagonY + "px;width:" + G.wagonW + "px;height:" + G.wagonH + "px\">" +
+				"<span class=\"vgWag__notches\">" + aN.join("") + "</span>" +
+				"<span class=\"vgWag__head\"><span class=\"vgWag__num\" data-vg-r=\"num\"></span><span class=\"vgWag__st\"><span class=\"vgWag__dot\"></span><span data-vg-r=\"st\"></span></span></span>" +
+				"<span class=\"vgWag__id\" data-vg-r=\"id\"></span>" +
+				"<span class=\"vgWag__hopper\"><span class=\"vgWag__fill\" data-vg-r=\"fill\"></span><span class=\"vgWag__pct\" data-vg-r=\"pct\"></span></span>" +
+				"<span class=\"vgWag__w\"><span class=\"vgWag__carga\" data-vg-r=\"carga\"></span><span class=\"vgWag__lim\" data-vg-r=\"lim\"></span></span>" +
+				"<span class=\"vgWag__vist\" data-vg-r=\"vist\"><span class=\"vgWag__vdot\"></span><span data-vg-r=\"vistT\"></span></span>" +
+				"<span class=\"vgWag__bocas\" data-vg-r=\"bocas\"></span>" +
+				"</button>");
+			h.push(bogie(x + 10));
+			h.push(bogie(x + G.wagonW - 10 - 52));
+		}
+
+		h.push("</div></div>");
+
+		// legenda
+		h.push("<div class=\"vgSt__legend\" aria-hidden=\"true\">" +
+			"<span><i class=\"vgLeg vgLeg--ok\"></i>" + esc(tx.legVist) + "</span>" +
+			"<span><i class=\"vgLeg vgLeg--nok\"></i>" + esc(tx.legNaoVist) + "</span>" +
+			"<span><i class=\"vgLeg vgLeg--load\"></i>" + esc(tx.legCarregando) + "</span>" +
+			"<span><i class=\"vgLeg vgLeg--flow\"></i>" + esc(tx.legFluxo) + "</span>" +
+			"<span><i class=\"vgLeg vgLeg--sel\"></i>" + esc(tx.legSel) + "</span>" +
+			"<span><i class=\"vgLeg vgLeg--min\"></i>" + esc(tx.legMin) + "</span>" +
+			"</div>");
+
+		var oWrap = document.createElement("div");
+		oWrap.className = "vgSt__wrap";
+		oWrap.innerHTML = h.join("");
+		if (this.wrap && this.wrap.parentNode) { this.wrap.parentNode.removeChild(this.wrap); }
+		this.wrap = oWrap;
+		this.root.appendChild(oWrap);
+
+		this.scroller = oWrap.querySelector(".vgSt__scroll");
+		this.svg = oWrap.querySelector("svg");
+		this.loco = { el: oWrap.querySelector(".vgLoco"), st: ref(oWrap, "locoSt") };
+		this.silos = Array.prototype.map.call(oWrap.querySelectorAll(".vgSilo"), function (el) {
+			return { el: el, name: ref(el, "name"), silo: ref(el, "silo"), pill: ref(el, "pill"), level: ref(el, "level"),
+				min: ref(el, "min"), prod: ref(el, "prod"), pct: ref(el, "pct"), stock: ref(el, "stock"), umid: ref(el, "umid"),
+				coneFill: ref(el, "coneFill"), gate: ref(el, "gate"), ab: ref(el, "ab"), abBar: ref(el, "abBar"),
+				vz: ref(el, "vz"), dest: ref(el, "dest") };
+		});
+		this.flows = Array.prototype.map.call(oWrap.querySelectorAll(".vgFlow"), function (el) {
+			var aP = el.querySelectorAll("path");
+			return { g: el, base: aP[0], dash: aP[1], d: "" };
+		});
+		this.wagons = Array.prototype.map.call(oWrap.querySelectorAll(".vgWag"), function (el) {
+			return { el: el, num: ref(el, "num"), st: ref(el, "st"), id: ref(el, "id"), fill: ref(el, "fill"), pct: ref(el, "pct"),
+				carga: ref(el, "carga"), lim: ref(el, "lim"), vist: ref(el, "vist"), vistT: ref(el, "vistT"), bocas: ref(el, "bocas"),
+				notches: Array.prototype.slice.call(el.querySelectorAll("[data-vg-n]")) };
+		});
+		this.nB = nB;
+		this.nW = nW;
+		this.didScroll = false;
+	};
+
+	StationDom.prototype._apply = function (d) {
+		var that = this;
+		var g = this.geo;
+		var tx = d.textos || {};
+		var iSel = d.selectedIndex;
+		var bAlgumaAtiva = d.bocas.some(function (b) { return b.ativa; });
+		var bMove = !!d.running && bAlgumaAtiva;
+
+		cls(this.wrap, "vgSt__wrap", [!d.running && "is-paused", bMove && "is-moving"]);
+		if (this.svg && this.svg.pauseAnimations) {
+			if (d.running) { this.svg.unpauseAnimations(); } else { this.svg.pauseAnimations(); }
+		}
+
+		// bocas alimentando cada vagão (para espaçar as linhas na chegada)
+		var mFeed = {};
+		d.bocas.forEach(function (b, j) {
+			if (b.ativa && b.destinoIndex >= 0) { (mFeed[b.destinoIndex] = mFeed[b.destinoIndex] || []).push(j); }
+		});
+
+		d.bocas.forEach(function (b, j) {
+			var r = that.silos[j];
+			var bSel = b.ativa && b.destinoIndex === iSel;
+			cls(r.el, "vgSilo", ["is-" + b.status, b.ativa && "is-flowing", bSel && "is-sel",
+				(b.nivelBaixo || b.status === "siloVazio") && "is-low", b.produtoDivergente && "is-div", b.temAlerta && "has-alert"]);
+			txt(r.name, b.nome);
+			txt(r.silo, b.silo);
+			txt(r.pill, b.statusText);
+			css(r.level, "height", b.nivelPct + "%");
+			css(r.coneFill, "opacity", b.nivelPct > 0 ? "1" : "0");
+			css(r.min, "bottom", (d.nivelMinimoPct || 0) + "%");
+			txt(r.prod, b.produto);
+			txt(r.pct, b.nivelPct + "%");
+			txt(r.stock, b.estoqueTxt);
+			txt(r.umid, b.umidadeTxt);
+			txt(r.ab, b.aberturaTxt);
+			css(r.abBar, "width", b.abertura + "%");
+			txt(r.vz, b.vazaoTxt);
+			css(r.gate, "width", (b.ativa ? Math.max(18, b.abertura) : 0) + "%");
+			txt(r.dest, b.ativa ? ("→ " + b.destinoLabel + " · " + (tx.eta || "ETA") + " " + b.etaTxt) : (b.manutencao && b.os ? b.os.split(" · ")[0] : b.statusText));
+			attr(r.el, "aria-label", b.titulo + ". " + b.statusText + ". " + b.produto + ". " + (tx.vazao || "") + " " + b.vazaoTxt + " t/h. " +
+				(tx.comporta || "") + " " + b.aberturaTxt + ". " + b.nivelTxt + ". " + b.destinoTxt + (b.temAlerta ? ". " + b.alertaTxt : ""));
+
+			var f = that.flows[j];
+			var bOn = b.ativa && b.destinoIndex >= 0 && !!g.wagonX[b.destinoIndex];
+			if (bOn) {
+				var aF = mFeed[b.destinoIndex];
+				var k = aF.indexOf(j);
+				var x0 = g.siloCX[j];
+				var x1 = g.wagonX[b.destinoIndex] + G.wagonW / 2 + (k - (aF.length - 1) / 2) * 20;
+				var y0 = 4;
+				var y1 = G.flowH + 4;
+				var sD = "M" + x0 + " " + y0 + " C" + x0 + " " + Math.round(y0 + G.flowH * 0.62) + " " + x1 + " " + Math.round(y1 - G.flowH * 0.55) + " " + x1 + " " + y1;
+				if (f.d !== sD) {
+					f.base.setAttribute("d", sD);
+					f.dash.setAttribute("d", sD);
+					f.d = sD;
+				}
+			}
+			cls(f.g, "vgFlow", [bOn && "is-on", bSel && "is-sel", b.produtoDivergente && "is-div"]);
+		});
+
+		d.vagoes.forEach(function (w, i) {
+			var r = that.wagons[i];
+			cls(r.el, "vgWag", ["st-" + w.statusKey, i === iSel && "is-sel", !w.vistoriado && "is-blocked", w.excesso && "is-over"]);
+			attr(r.el, "aria-pressed", i === iSel ? "true" : "false");
+			attr(r.el, "aria-label", w.titulo + ". " + w.statusText + ". " + w.vistText + ". " + w.cargaTxt + " t " + w.limiteTxt.replace(" t", "") + ".");
+			txt(r.num, w.tituloCurto);
+			txt(r.st, w.statusText);
+			txt(r.id, w.id);
+			css(r.fill, "height", w.pct + "%");
+			txt(r.pct, w.pctTxt);
+			txt(r.carga, w.cargaTxt + " t");
+			txt(r.lim, "/ " + w.limiteTxt);
+			txt(r.vistT, w.vistText);
+			cls(r.vist, "vgWag__vist", [w.vistoriado ? "is-ok" : "is-nok"]);
+			txt(r.bocas, (tx.bocas || "") + ": " + w.bocasTxt);
+			r.notches.forEach(function (n, j) {
+				var iN = d.bocas[j] && d.bocas[j].n;
+				var bOn = w.bocasAtivas.indexOf(iN) >= 0;
+				var bHist = w.bocasHist.indexOf(iN) >= 0;
+				cls(n, "", [bOn ? "is-on" : (bHist ? "is-hist" : "")]);
+			});
+		});
+
+		cls(this.loco.el, "vgLoco", [bMove && "is-run"]);
+		txt(this.loco.st, bMove ? tx.locoMov : tx.locoParada);
+
+		// primeira exibição: centraliza o vagão em carga (ou o selecionado)
+		if (!this.didScroll && this.scroller && this.scroller.clientWidth > 0) {
+			var iAlvo = iSel;
+			d.bocas.forEach(function (b) { if (b.ativa && b.destinoIndex >= 0) { iAlvo = b.destinoIndex; } });
+			var x = (g.wagonX[iAlvo] || 0) + G.wagonW / 2 - this.scroller.clientWidth / 2;
+			this.scroller.scrollLeft = Math.max(0, x);
+			this.didScroll = true;
+		}
+	};
+
+	return StationDom;
+});
+
+</script>
+<script>
+var I18N_SRC = "# ------------------------------------------------------------\n# Gestão de Vagões - textos (pt-BR)\n# ------------------------------------------------------------\nappTitle=Gestão de Vagões\nappDescription=Dashboard de carregamento e faturamento de composições ferroviárias\n\n# Cabeçalho\ncomposicao=Composição {0}\nstatusAoVivo=Ao vivo\nstatusPausado=Pausado\nstatusFaturada=Faturada\nacaoPausar=Pausar\nacaoRetomar=Retomar\nacaoTema=Alternar tema claro/escuro\nacaoEmitirFatura=Emitir fatura\nultimaAtualizacao=Atualizado às {0}\nmensagens=Mensagens\n\n# KPIs\nkpiVazao=Vazão total\nkpiTotal=Total carregado\nkpiVistoriados=Vagões vistoriados\nkpiEta=Previsão de término\nkpiPendencias=Pendências\npctCapacidade={0}% de {1} t de capacidade\nresumoCurto={0} t carregadas · {1} t/h · {2}\n\n# Estação\ncardEstacao=Estação de carregamento\ncardEstacaoSub={0} · toque em uma boca para operar ou em um vagão para ver detalhes\ntabVisual=Visão da estação\ntabTabela=Tabela de bocas\nst.txt.comporta=Comporta\nst.txt.vazao=Vazão\nst.txt.eta=ETA\nst.txt.bocas=Bocas\nst.txt.locomotiva=Locomotiva\nst.txt.tracao=Tração\nst.txt.locoMov=Avanço lento · 0,8 km/h\nst.txt.locoParada=Parada\nst.txt.minimo=mín.\nst.txt.legVist=Vistoriado\nst.txt.legNaoVist=Não vistoriado\nst.txt.legCarregando=Carregando\nst.txt.legFluxo=Fluxo de grão\nst.txt.legSel=Selecionado\nst.txt.legMin=Nível mínimo do silo\n\n# Tabela de bocas\ncolBoca=Boca\ncolSiloProduto=Produto\ncolStatus=Status\ncolVazao=Vazão\ncolComporta=Comporta\ncolNivel=Nível do silo\ncolDestino=Destino\ncolTurno=No turno\n\n# Vagão\nvagaoN=Vagão {0}\nvistoriado=Vistoriado\nnaoVistoriado=Não vistoriado\ncheck.limpeza=Limpeza\ncheck.escotilhas=Escotilhas\ncheck.comportas=Comportas\ncheck.rodeiros=Rodeiros\ncheckOk=OK\ncheckReprovado=Reprovado\nst.aguardando=Aguardando\nst.carregando=Carregando\nst.parcial=Parcial\nst.carregado=Carregado\nst.excesso=Excesso\nst.bloqueado=Bloqueado\n\n# Bocas\nboca.ativa=Ativa\nboca.parada=Parada\nboca.manutencao=Manutenção\nboca.aguardandoVagao=Aguardando vagão\nboca.siloVazio=Silo vazio\ndestinoTxt=Vagão {0}\nsemDestino=Sem destino\numidadeTxt=Umidade {0}%\n\n# Cards\ncardVistoria=Vistoria\ncardDetalhe=Detalhe do vagão\ncardTotais=Totais e fatura\ncardFatura=Fatura\ncardValidacoes=Validações\nvistoriadosDe={0} vistoriados\n\nlblIdentificacao=Identificação\nlblStatus=Status\nlblVistoria=Vistoria\nlblCarga=Carga líquida\nlblLimite=Limite\nlblTara=Tara\nlblBruto=Peso bruto\nlblBocas=Bocas que descarregaram\nlblEtaVagao=Previsão de término\nlblTotalComposicao=Total da composição\nlblMedia=Média por vagão carregado\n\nacaoConcluirVistoria=Concluir vistoria\nacaoRetirarExcesso=Retirar excesso ({0} t)\nmsgVistoriaOk=Vistoria do vagão {0} concluída. Vagão liberado para carga.\nmsgExcessoOk=Excesso retirado do vagão {0}.\n\n# Validações\nsevErro=ERRO\nsevAviso=AVISO\nval.semVistoria.t=Vagão {0} sem vistoria\nval.semVistoria.d={0} bloqueado para carregamento até a conclusão da vistoria.\nval.excesso.t=Vagão {0} acima do limite\nval.excesso.d={0} t carregadas para limite de {1} t (excesso de {2} t).\nval.produto.t=Boca {0} com produto divergente\nval.produto.d={0} está descarregando {1} em uma composição de {2}.\nval.manut.t=Boca {0} em manutenção\nval.manut.d={0}. Vazão redistribuída entre as bocas ativas.\nval.siloBaixo.t=Silo da boca {0} com nível baixo\nval.siloBaixo.d={0} com {1} ({2}%). Programe o reabastecimento.\nval.siloVazio.t=Silo da boca {0} vazio\nval.siloVazio.d={0} sem estoque. A boca foi parada automaticamente.\nval.aguardando1.t=1 vagão aguardando carga\nval.aguardandoN.t={0} vagões aguardando carga\nval.aguardando.d=A fatura considera apenas os vagões já carregados.\nval.nenhuma=Nenhuma pendência. Composição liberada para faturamento.\nresumoVal={0} erro(s) · {1} aviso(s)\n\n# Fatura\nfat.nf=Nº da NF\nfat.pendente=Pendente\nfat.vagoes=Vagões faturados\nfat.vagoesTxt={0} de {1}\nfat.peso=Peso líquido\nfat.bloqueada=Bloqueada\nfat.pronta=Pronta\nfat.emitida=Emitida às {0}\nfat.resolva1=Resolva 1 pendência\nfat.resolvaN=Resolva {0} pendências\nfat.botaoEmitida=Fatura emitida\nfat.confirmTitulo=Emitir fatura\nfat.confirmTexto=Emitir a NF da composição {0} com {1} t em {2} vagões? As bocas ativas serão paradas.\nfat.ok=NF {0} emitida com sucesso.\n\n# Popover da boca\npop.titulo=Boca {0} · {1}\npop.produto=Produto\npop.umidade=Umidade\npop.nominal=Vazão nominal\npop.eta=Previsão de término do vagão\npop.turno=Descarregado no turno\npop.nivel=Nível do silo\npop.comporta=Abertura da comporta: {0}%\npop.destino=Vagão de destino\npop.iniciar=Iniciar descarga\npop.parar=Parar descarga\npop.alerta.aguardando=Nenhum vagão vistoriado disponível. A boca retoma automaticamente quando houver vagão livre.\npop.alerta.siloVazio=Silo sem estoque. Reabasteça para retomar a descarga.\nfechar=Fechar\n";
+var MOCK = {
+	"composicao": {
+		"codigo": "C-2041",
+		"patio": "Pátio de carregamento · Linha 2",
+		"estacao": "Moega 2",
+		"produto": "Soja em grão",
+		"limiteVagao": 96,
+		"taraVagao": 25.4,
+		"margemAlvo": 0.4,
+		"nivelMinimoSiloPct": 15
+	},
+	"vagoes": [
+		{ "pos": 1, "id": "HFE 718204-3", "vistoriado": true, "checklist": { "limpeza": true, "escotilhas": true, "comportas": true, "rodeiros": true }, "carga": 95.8, "bocas": [1, 2] },
+		{ "pos": 2, "id": "HFE 718311-0", "vistoriado": true, "checklist": { "limpeza": true, "escotilhas": true, "comportas": true, "rodeiros": true }, "carga": 97.4, "bocas": [2, 3] },
+		{ "pos": 3, "id": "HFE 719042-6", "vistoriado": true, "checklist": { "limpeza": true, "escotilhas": true, "comportas": true, "rodeiros": true }, "carga": 95.1, "bocas": [1, 3] },
+		{ "pos": 4, "id": "HFE 719155-1", "vistoriado": true, "checklist": { "limpeza": true, "escotilhas": true, "comportas": true, "rodeiros": true }, "carga": 61.3, "bocas": [1, 2, 3] },
+		{ "pos": 5, "id": "HFE 720018-9", "vistoriado": false, "checklist": { "limpeza": true, "escotilhas": false, "comportas": true, "rodeiros": false }, "carga": 0, "bocas": [] },
+		{ "pos": 6, "id": "HFE 720102-4", "vistoriado": true, "checklist": { "limpeza": true, "escotilhas": true, "comportas": true, "rodeiros": true }, "carga": 0, "bocas": [] },
+		{ "pos": 7, "id": "HFE 720377-2", "vistoriado": false, "checklist": { "limpeza": true, "escotilhas": true, "comportas": false, "rodeiros": true }, "carga": 0, "bocas": [] },
+		{ "pos": 8, "id": "HFE 720490-5", "vistoriado": true, "checklist": { "limpeza": true, "escotilhas": true, "comportas": true, "rodeiros": true }, "carga": 0, "bocas": [] }
+	],
+	"bocas": [
+		{ "n": 1, "silo": "Silo 01", "produto": "Soja em grão", "status": "ativa", "vazaoNominal": 650, "abertura": 95, "vazao": 618, "estoque": 1840, "capacidade": 2500, "umidade": 12.4, "destino": 4, "descarregadoTurno": 412.6, "os": null },
+		{ "n": 2, "silo": "Silo 02", "produto": "Soja em grão", "status": "ativa", "vazaoNominal": 620, "abertura": 90, "vazao": 558, "estoque": 2105, "capacidade": 2500, "umidade": 12.9, "destino": 4, "descarregadoTurno": 389.1, "os": null },
+		{ "n": 3, "silo": "Silo 03", "produto": "Soja em grão", "status": "ativa", "vazaoNominal": 600, "abertura": 70, "vazao": 420, "estoque": 240, "capacidade": 1500, "umidade": 13.1, "destino": 4, "descarregadoTurno": 276.4, "os": null },
+		{ "n": 4, "silo": "Silo 04", "produto": "Milho em grão", "status": "parada", "vazaoNominal": 600, "abertura": 0, "vazao": 0, "estoque": 1320, "capacidade": 2500, "umidade": 13.8, "destino": null, "descarregadoTurno": 0, "os": null },
+		{ "n": 5, "silo": "Silo 05", "produto": "Soja em grão", "status": "manutencao", "vazaoNominal": 650, "abertura": 0, "vazao": 0, "estoque": 980, "capacidade": 2500, "umidade": 12.6, "destino": null, "descarregadoTurno": 0, "os": "OS-4471 · troca do atuador da comporta" }
+	],
+	"fatura": {
+		"emitida": false,
+		"numero": null,
+		"hora": null,
+		"numeroPrevisto": "000.482"
+	}
+}
+;
+(function () {
+	"use strict";
+	var Regras = __mods.Regras, Simulador = __mods.Simulador, StationDom = __mods.StationDom;
+
+	/* ---------- i18n (mesmo arquivo i18n.properties do projeto) ---------- */
+	var DICT = {};
+	I18N_SRC.split(/\r?\n/).forEach(function (l) {
+		var s = l.trim();
+		if (!s || s[0] === "#") { return; }
+		var i = s.indexOf("=");
+		if (i > 0) { DICT[s.slice(0, i).trim()] = s.slice(i + 1).trim(); }
+	});
+	function t(k, a) {
+		var s = DICT[k] != null ? DICT[k] : k;
+		return s.replace(/\{(\d+)\}/g, function (_, n) { return a && a[n] != null ? a[n] : ""; });
+	}
+
+	/* ---------- ícones (equivalentes visuais aos sap-icon://) ---------- */
+	var P = {
+		"media-play": "<path d=\"M8 5l11 7-11 7z\" fill=\"currentColor\" stroke=\"none\"/>",
+		"media-pause": "<rect x=\"6\" y=\"5\" width=\"4\" height=\"14\" rx=\"1\" fill=\"currentColor\" stroke=\"none\"/><rect x=\"14\" y=\"5\" width=\"4\" height=\"14\" rx=\"1\" fill=\"currentColor\" stroke=\"none\"/>",
+		"palette": "<path d=\"M12 3a9 9 0 1 0 0 18c1.1 0 1.6-.9 1.2-1.8-.5-1 .2-2.2 1.3-2.2H17a4 4 0 0 0 4-4c0-5.5-4-10-9-10z\"/><circle cx=\"7.5\" cy=\"11\" r=\"1.2\" fill=\"currentColor\"/><circle cx=\"10\" cy=\"7\" r=\"1.2\" fill=\"currentColor\"/><circle cx=\"15\" cy=\"7.5\" r=\"1.2\" fill=\"currentColor\"/>",
+		"paper-plane": "<path d=\"M3 11.5L21 3l-6.5 18-3.2-7.3z\"/><path d=\"M11.3 13.7L21 3\"/>",
+		"factory": "<path d=\"M3 21V10l5 3v-3l5 3v-3l5 3V4h3v17z\"/><path d=\"M7 17h2M12 17h2M17 17h1\"/>",
+		"inspection": "<rect x=\"5\" y=\"4\" width=\"14\" height=\"17\" rx=\"2\"/><path d=\"M9 4V3h6v1\"/><path d=\"M9 12.5l2 2 4-4.5\"/>",
+		"shipping-status": "<rect x=\"3\" y=\"6\" width=\"18\" height=\"9\" rx=\"1.5\"/><circle cx=\"7.5\" cy=\"18\" r=\"1.8\"/><circle cx=\"16.5\" cy=\"18\" r=\"1.8\"/>",
+		"measure": "<path d=\"M12 3v18M5 7h14\"/><path d=\"M5 7l-3 6a3 3 0 0 0 6 0zM19 7l-3 6a3 3 0 0 0 6 0z\"/><path d=\"M8 21h8\"/>",
+		"alert": "<path d=\"M12 3l10 18H2z\"/><path d=\"M12 10v4M12 17.5v.5\"/>",
+		"error": "<circle cx=\"12\" cy=\"12\" r=\"9\"/><path d=\"M9 9l6 6M15 9l-6 6\"/>",
+		"message-popup": "<path d=\"M4 4h16v12H9l-5 4z\"/><path d=\"M8 9h8M8 12h5\"/>",
+		"complete": "<path d=\"M5 12.5l4.5 4.5L19 7.5\"/>",
+		"accept": "<path d=\"M5 12.5l4.5 4.5L19 7.5\"/>",
+		"sys-enter-2": "<circle cx=\"12\" cy=\"12\" r=\"9\"/><path d=\"M8 12.5l3 3 5-6\"/>",
+		"less": "<path d=\"M5 12h14\"/>",
+		"decline": "<path d=\"M6 6l12 12M18 6L6 18\"/>",
+		"shield": "<path d=\"M12 3l8 3v6c0 4.5-3.4 8.2-8 9-4.6-.8-8-4.5-8-9V6z\"/><path d=\"M8.5 12l2.5 2.5 4.5-5\"/>",
+		"locked": "<rect x=\"5\" y=\"11\" width=\"14\" height=\"10\" rx=\"2\"/><path d=\"M8 11V8a4 4 0 0 1 8 0v3\"/>",
+		"wrench": "<path d=\"M14.5 6.5a4 4 0 0 0 5 5L12 19a2.1 2.1 0 0 1-3-3l7.5-7.5a4 4 0 0 0-2-2z\"/>",
+		"pending": "<circle cx=\"12\" cy=\"12\" r=\"9\"/><path d=\"M12 7v5l3 2\"/>",
+		"status-in-process": "<circle cx=\"12\" cy=\"12\" r=\"9\"/><circle cx=\"12\" cy=\"12\" r=\"3.5\" fill=\"currentColor\"/>",
+		"stop": "<rect x=\"6\" y=\"6\" width=\"12\" height=\"12\" rx=\"1.5\" fill=\"currentColor\" stroke=\"none\"/>",
+		"navigation": "<path d=\"M9 6l6 6-6 6\"/>"
+	};
+	function ico(n) {
+		n = String(n || "").replace("sap-icon://", "");
+		return "<svg class=\"ico\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\">" + (P[n] || "") + "</svg>";
+	}
+	function esc(v) {
+		return String(v == null ? "" : v).replace(/[&<>"']/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", "\"": "&quot;", "'": "&#39;" }[c]; });
+	}
+	function $(id) { return document.getElementById(id); }
+	function all(sel) { return Array.prototype.slice.call(document.querySelectorAll(sel)); }
+	function get(o, p) { return p.split(".").reduce(function (a, k) { return a == null ? a : a[k]; }, o); }
+	function truthy(vm, expr) { var neg = expr[0] === "!"; var v = !!get(vm, neg ? expr.slice(1) : expr); return neg ? !v : v; }
+
+	/* ---------- textos estáticos ---------- */
+	all("[data-i18n]").forEach(function (el) { el.textContent = t(el.getAttribute("data-i18n")); });
+	all("[data-i18n-title]").forEach(function (el) { el.title = t(el.getAttribute("data-i18n-title")); });
+	all("[data-i18n-aria]").forEach(function (el) { el.setAttribute("aria-label", t(el.getAttribute("data-i18n-aria"))); });
+	all("[data-icon-static]").forEach(function (el) { el.outerHTML = ico(el.getAttribute("data-icon-static")); });
+	document.title = t("appTitle");
+
+	/* ---------- estado ---------- */
+	var S = Simulador.estadoInicial(MOCK);
+	var UI = { sel: 3, bocaSel: 0 };
+	var VM = null;
+	var sigs = {};
+	var popOpener = null;
+
+	var station = new StationDom($("station"), {
+		onWagonPress: function (i) { UI.sel = i; publicar(); },
+		onBocaPress: function (i, el) { abrirBoca(i, el); }
+	});
+
+	function publicar() {
+		VM = Regras.montarViewModel(S, UI, t);
+		render(VM);
+	}
+	function executar(fn) {
+		var a = Array.prototype.slice.call(arguments, 1);
+		S = fn.apply(Simulador, [S].concat(a));
+		publicar();
+	}
+
+	/* ---------- binder ---------- */
+	function render(vm) {
+		all("[data-t]").forEach(function (el) {
+			var v = get(vm, el.getAttribute("data-t"));
+			v = v == null ? "" : String(v);
+			if (el.textContent !== v) { el.textContent = v; }
+		});
+		all("[data-state]").forEach(function (el) {
+			var v = get(vm, el.getAttribute("data-state")) || "None";
+			if (el.getAttribute("data-vs") !== v) { el.setAttribute("data-vs", v); }
+		});
+		all("[data-if]").forEach(function (el) { el.hidden = !truthy(vm, el.getAttribute("data-if")); });
+		all("[data-en]").forEach(function (el) { el.disabled = !truthy(vm, el.getAttribute("data-en")); });
+		all("[data-w]").forEach(function (el) { el.style.width = (get(vm, el.getAttribute("data-w")) || 0) + "%"; });
+		all("[data-btype]").forEach(function (el) {
+			var v = get(vm, el.getAttribute("data-btype"));
+			el.classList.toggle("Accept", v === "Accept");
+			el.classList.toggle("Reject", v === "Reject");
+		});
+		all("[data-icon]").forEach(function (el) {
+			var n = get(vm, el.getAttribute("data-icon"));
+			if (el.getAttribute("data-cur") !== n) { el.setAttribute("data-cur", n); el.innerHTML = ico(n); }
+		});
+
+		station.update({
+			bocas: vm.bocas, vagoes: vm.vagoes, selectedIndex: vm.view.sel, running: vm.view.running,
+			textos: vm.estacaoTextos, nivelMinimoPct: vm.composicao.nivelMinimoSiloPct
+		});
+
+		lista("checks", vm.sel.checks, function (c) {
+			return "<div class=\"chk\" data-vs=\"" + c.state + "\">" + ico(c.icon) + "<span class=\"chk-l\">" + esc(c.label) + "</span><span class=\"os\" data-vs=\"" + c.state + "\">" + esc(c.text) + "</span></div>";
+		}, vm.view.sel);
+
+		lista("valList", vm.validacoes, itemValidacao, "", "<li class=\"nodata\">" + esc(t("val.nenhuma")) + "</li>");
+		if (!$("msgPop").hidden) { lista("msgList", vm.validacoes, itemValidacao, ""); }
+
+		lista("tblBocas", vm.bocas, function (b) {
+			return "<tr class=\"r\" data-vs=\"" + b.statusState + "\" data-boca=\"" + b.index + "\" tabindex=\"0\">" +
+				"<td><div class=\"oi-t\">" + esc(b.nome) + "</div><div class=\"oi-s\">" + esc(b.silo) + "</div></td>" +
+				"<td><div class=\"oi-t\">" + esc(b.produto) + "</div><div class=\"oi-s\">" + esc(b.umidadeTxt) + "</div></td>" +
+				"<td><span class=\"os\" data-vs=\"" + b.statusState + "\">" + ico(b.statusIcon) + esc(b.statusText) + "</span></td>" +
+				"<td class=\"e\"><b>" + esc(b.vazaoTxt) + "</b> <span class=\"oi-s\">t/h</span></td>" +
+				"<td class=\"e\">" + esc(b.aberturaTxt) + "</td>" +
+				"<td><div class=\"pi\" data-vs=\"" + b.nivelState + "\"><i style=\"width:" + b.nivelPct + "%\"></i><b>" + esc(b.nivelTxt) + "</b></div></td>" +
+				"<td><div class=\"oi-t\">" + esc(b.destinoTxt) + "</div><div class=\"oi-s\">" + esc(b.etaTxt) + "</div></td>" +
+				"<td class=\"e\">" + esc(b.turnoTxt) + " <span class=\"oi-s\">t</span></td></tr>";
+		});
+
+		lista("selDestino", vm.destinos, function (d) {
+			return "<option value=\"" + esc(d.key) + "\">" + esc(d.text) + "</option>";
+		}, "", "<option value=\"\">—</option>");
+		var oSel = $("selDestino");
+		if (document.activeElement !== oSel) { oSel.value = vm.bocaSel.destinoKey; if (oSel.selectedIndex < 0) { oSel.selectedIndex = -1; } }
+		var oSld = $("sldAbertura");
+		if (document.activeElement !== oSld) { oSld.value = vm.bocaSel.abertura; }
+	}
+
+	function itemValidacao(v, i) {
+		return "<li class=\"li" + (v.navegavel ? " nav" : "") + "\" data-vs=\"" + v.state + "\" data-val=\"" + i + "\"" + (v.navegavel ? " tabindex=\"0\" role=\"button\"" : "") + ">" +
+			ico(v.icon) + "<div class=\"li-tx\"><div class=\"li-t\">" + esc(v.title) + "</div><div class=\"li-d\">" + esc(v.description) + "</div></div>" +
+			"<span class=\"li-info os\" data-vs=\"" + v.state + "\">" + esc(v.infoText) + "</span>" + (v.navegavel ? "<span class=\"li-chev\">" + ico("navigation") + "</span>" : "") + "</li>";
+	}
+
+	function lista(id, arr, fn, extra, vazio) {
+		var html = arr.length ? arr.map(fn).join("") : (vazio || "");
+		var sig = html + "|" + (extra || "");
+		if (sigs[id] === sig) { return; }
+		sigs[id] = sig;
+		$(id).innerHTML = html;
+	}
+
+	/* ---------- popover da boca ---------- */
+	function posicionar(oPop, el) {
+		if (window.innerWidth <= 600 || !el) { oPop.style.left = ""; oPop.style.top = ""; return; }
+		var r = el.getBoundingClientRect();
+		var w = oPop.offsetWidth, h = oPop.offsetHeight;
+		var x = Math.min(window.innerWidth - w - 8, Math.max(8, r.left + r.width / 2 - w / 2));
+		var y = r.bottom + 8;
+		if (y + h > window.innerHeight - 8) { y = Math.max(8, r.top - h - 8); }
+		if (y + h > window.innerHeight - 8) { y = Math.max(8, window.innerHeight - h - 8); }
+		oPop.style.left = x + "px";
+		oPop.style.top = y + "px";
+	}
+	function abrirBoca(i, el) {
+		UI.bocaSel = i;
+		popOpener = el;
+		publicar();
+		var oPop = $("bocaPop");
+		oPop.hidden = false;
+		posicionar(oPop, el);
+		$("bocaPopX").focus();
+	}
+	function fecharBoca() {
+		$("bocaPop").hidden = true;
+		if (popOpener && popOpener.focus) { popOpener.focus(); }
+	}
+	$("bocaPopX").onclick = fecharBoca;
+	$("bocaFechar").onclick = fecharBoca;
+	$("sldAbertura").addEventListener("input", function (e) { executar(Simulador.definirAbertura, UI.bocaSel, Number(e.target.value)); });
+	$("selDestino").addEventListener("change", function (e) { if (e.target.value) { executar(Simulador.definirDestino, UI.bocaSel, Number(e.target.value)); } });
+	$("bocaAcao").onclick = function () {
+		if (VM.bocaSel.ligada) { executar(Simulador.pararBoca, UI.bocaSel); } else { executar(Simulador.iniciarBoca, UI.bocaSel); }
+	};
+
+	/* ---------- ações ---------- */
+	$("btnSim").onclick = function () { executar(Simulador.alternarSimulacao); };
+	$("btnTema").onclick = function () {
+		var html = document.documentElement;
+		var claro = html.getAttribute("data-theme") === "dark";
+		html.setAttribute("data-theme", claro ? "light" : "dark");
+		html.className = claro ? "sapUiTheme-sap_horizon" : "sapUiTheme-sap_horizon_dark";
+	};
+	$("btnVist").onclick = function () {
+		var l = VM.sel.label;
+		executar(Simulador.concluirVistoria, UI.sel);
+		toast(t("msgVistoriaOk", [l]));
+	};
+	$("btnExcesso").onclick = function () {
+		var l = VM.sel.label;
+		executar(Simulador.retirarExcesso, UI.sel);
+		toast(t("msgExcessoOk", [l]));
+	};
+	all(".tab").forEach(function (b) {
+		b.onclick = function () {
+			all(".tab").forEach(function (x) { x.setAttribute("aria-selected", x === b ? "true" : "false"); });
+			all("[data-pane]").forEach(function (p) { p.hidden = p.getAttribute("data-pane") !== b.getAttribute("data-tab"); });
+		};
+	});
+	function onValidacao(e) {
+		var li = e.target.closest("[data-val]");
+		if (!li || (e.type === "keydown" && e.key !== "Enter" && e.key !== " ")) { return; }
+		var v = VM.validacoes[Number(li.getAttribute("data-val"))];
+		if (!v || !v.navegavel) { return; }
+		$("msgPop").hidden = true;
+		if (v.vagaoIndex >= 0) {
+			UI.sel = v.vagaoIndex;
+			publicar();
+			all(".tab")[0].click();
+			$("station").scrollIntoView({ behavior: "smooth", block: "center" });
+			var w = $("station").querySelectorAll(".vgWag")[v.vagaoIndex];
+			if (w) { w.scrollIntoView({ behavior: "smooth", block: "nearest", inline: "center" }); }
+		} else if (v.bocaIndex >= 0) {
+			abrirBoca(v.bocaIndex, li);
+		}
+	}
+	["valList", "msgList"].forEach(function (id) { $(id).addEventListener("click", onValidacao); $(id).addEventListener("keydown", onValidacao); });
+	function onTabela(e) {
+		var tr = e.target.closest("tr[data-boca]");
+		if (!tr || (e.type === "keydown" && e.key !== "Enter")) { return; }
+		abrirBoca(Number(tr.getAttribute("data-boca")), tr);
+	}
+	$("tblBocas").addEventListener("click", onTabela);
+	$("tblBocas").addEventListener("keydown", onTabela);
+
+	$("btnMsgs").onclick = function () {
+		var p = $("msgPop");
+		p.hidden = !p.hidden;
+		if (!p.hidden) {
+			sigs.msgList = null;
+			lista("msgList", VM.validacoes, itemValidacao, "");
+			var r = $("btnMsgs").getBoundingClientRect();
+			if (window.innerWidth > 600) {
+				p.style.left = Math.max(8, r.left) + "px";
+				p.style.top = Math.max(8, r.top - p.offsetHeight - 8) + "px";
+			}
+		}
+	};
+	$("msgPopX").onclick = function () { $("msgPop").hidden = true; };
+
+	function emitir() {
+		if (!VM.fatura.podeEmitir) { return; }
+		$("dlgTx").textContent = t("fat.confirmTexto", [VM.composicao.codigo, VM.kpi.totalTxt, VM.fatura.nCarregados]);
+		$("dlg").hidden = false;
+		$("dlgOk").focus();
+	}
+	["btnFatTop", "btnFatCard", "btnFatFoot"].forEach(function (id) { $(id).onclick = emitir; });
+	$("dlgCancel").onclick = function () { $("dlg").hidden = true; };
+	$("dlgOk").onclick = function () {
+		$("dlg").hidden = true;
+		var d = new Date();
+		executar(Simulador.emitirFatura, String(d.getHours()).padStart(2, "0") + ":" + String(d.getMinutes()).padStart(2, "0"));
+		toast(t("fat.ok", [VM.fatura.numeroTxt]));
+	};
+
+	var toastTimer;
+	function toast(msg) {
+		var el = $("toast");
+		el.textContent = msg;
+		el.hidden = false;
+		clearTimeout(toastTimer);
+		toastTimer = setTimeout(function () { el.hidden = true; }, 3000);
+	}
+
+	document.addEventListener("keydown", function (e) {
+		if (e.key === "Escape") {
+			if (!$("dlg").hidden) { $("dlg").hidden = true; }
+			else if (!$("bocaPop").hidden) { fecharBoca(); }
+			else { $("msgPop").hidden = true; }
+		}
+	});
+	document.addEventListener("mousedown", function (e) {
+		var p = $("bocaPop");
+		if (!p.hidden && !p.contains(e.target) && !e.target.closest("[data-vg-boca],tr[data-boca],[data-val]")) { p.hidden = true; }
+		var m = $("msgPop");
+		if (!m.hidden && !m.contains(e.target) && !e.target.closest("#btnMsgs")) { m.hidden = true; }
+	});
+
+	publicar();
+	setInterval(function () { S = Simulador.passo(S); publicar(); }, 1000);
+})();
+
+</script>
+</body>
+</html>

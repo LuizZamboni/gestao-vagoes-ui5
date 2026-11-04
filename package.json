@@ -1,0 +1,16 @@
+{
+  "name": "gestao-vagoes-ui5",
+  "version": "0.1.0",
+  "description": "Protótipo SAPUI5/Fiori - Dashboard de carregamento e faturamento de vagões (somente front, dados mock)",
+  "private": true,
+  "scripts": {
+    "start": "ui5 serve --open index.html",
+    "build": "ui5 build --config ui5.yaml --clean-dest",
+    "deploy": "ui5 build --config ui5-deploy.yaml --clean-dest",
+    "undeploy": "fiori undeploy --config ui5-deploy.yaml"
+  },
+  "devDependencies": {
+    "@sap/ux-ui5-tooling": "^1.34.0",
+    "@ui5/cli": "^4.0.0"
+  }
+}

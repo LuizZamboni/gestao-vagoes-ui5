@@ -91,9 +91,11 @@
 			</FlexBox>
 		</FlexBox>
 
-		<!-- ================= LATERAL ESQUERDA: vagão em foco ================= -->
+		<!-- ================= LATERAL ESQUERDA: vagões ================= -->
 		<VBox renderType="Bare" class="vgSide vgSide--l">
-			<VBox renderType="Bare" class="vgPanel">
+
+			<!-- vagão em foco -->
+			<VBox renderType="Bare" class="vgPanel vgFocus">
 				<HBox renderType="Bare" justifyContent="SpaceBetween" alignItems="Center" class="vgPanel__head">
 					<HBox renderType="Bare" alignItems="Center" class="vgFoco"><customData><core:CustomData key="st" value="{/view/focoKey}" writeToDom="true"/></customData>
 						<Text text="" class="vgFoco__dot"/>
@@ -101,30 +103,34 @@
 					</HBox>
 					<Text text="{/sel/statusText}" class="vgTag"><customData><core:CustomData key="st" value="{/sel/statusState}" writeToDom="true"/></customData></Text>
 				</HBox>
-				<Title text="{/sel/tituloCurto}" level="H2" class="vgPanel__title"/>
-				<Text text="{/sel/id}" class="vgMono"/>
 
-				<HBox renderType="Bare" alignItems="Baseline" class="vgBig">
-					<Text text="{/sel/cargaTxt}" class="vgBig__v"><customData><core:CustomData key="st" value="{/sel/cargaState}" writeToDom="true"/></customData></Text>
-					<Text text="{/sel/limiteBarTxt}" class="vgBig__u"/>
+				<HBox renderType="Bare" alignItems="Center" justifyContent="SpaceBetween" class="vgFocus__id">
+					<Title text="{/sel/tituloCurto}" level="H2" class="vgPanel__title"/>
+					<Text text="{/sel/placa}" class="vgPlate vgPlate--lg"/>
+				</HBox>
+
+				<HBox renderType="Bare" alignItems="Baseline" justifyContent="SpaceBetween" class="vgBig">
+					<HBox renderType="Bare" alignItems="Baseline" class="vgBig__l">
+						<Text text="{/sel/cargaTxt}" class="vgBig__v"><customData><core:CustomData key="st" value="{/sel/cargaState}" writeToDom="true"/></customData></Text>
+						<Text text="{/sel/limiteBarTxt}" class="vgBig__u"/>
+					</HBox>
+					<Text text="{/sel/pctTxt}" class="vgBig__pct"/>
 				</HBox>
 				<HBox renderType="Bare" class="vgBar vgBar--lg"><HBox renderType="Bare" width="{/sel/pctCss}" class="vgBar__fill"><customData><core:CustomData key="st" value="{/sel/statusState}" writeToDom="true"/></customData></HBox></HBox>
+
+				<HBox renderType="Bare" items="{/sel/secoes}" class="vgSecCards">
+					<VBox renderType="Bare" class="vgSecCard"><customData><core:CustomData key="st" value="{state}" writeToDom="true"/></customData>
+						<Text text="{label}" class="vgSecCard__k"/>
+						<VBox renderType="Bare" class="vgSecCard__tank"><HBox renderType="Bare" height="{fillCss}" class="vgSecCard__fill"/></VBox>
+						<Text text="{cargaTxt}" class="vgSecCard__v"/>
+						<Text text="{= '/ ' + ${metaTxt} }" class="vgSecCard__m"/>
+					</VBox>
+				</HBox>
 
 				<VBox renderType="Bare" class="vgFacts">
 					<HBox renderType="Bare" justifyContent="SpaceBetween"><Text text="{i18n>lblEtaVagao}" class="vgFacts__k"/><Text text="{/sel/etaTxt}" class="vgFacts__v"/></HBox>
 					<HBox renderType="Bare" justifyContent="SpaceBetween"><Text text="{i18n>lblBocas}" class="vgFacts__k"/><Text text="{/sel/bocasTxt}" class="vgFacts__v"/></HBox>
 					<HBox renderType="Bare" justifyContent="SpaceBetween"><Text text="{i18n>lblVistoria}" class="vgFacts__k"/><Text text="{/sel/vistText}" class="vgFacts__v"><customData><core:CustomData key="st" value="{/sel/vistState}" writeToDom="true"/></customData></Text></HBox>
-				</VBox>
-
-				<VBox renderType="Bare" class="vgFacts vgSecs">
-					<Text text="{i18n>cardDistribuicao}" class="vgFacts__k"/>
-					<VBox renderType="Bare" items="{/sel/secoes}" class="vgSecs__list">
-						<HBox renderType="Bare" alignItems="Center" class="vgSec"><customData><core:CustomData key="st" value="{state}" writeToDom="true"/><core:CustomData key="sec" value="{key}" writeToDom="true"/></customData>
-							<Text text="{label}" class="vgSec__k"/>
-							<HBox renderType="Bare" class="vgBar vgSec__bar"><HBox renderType="Bare" width="{fillCss}" class="vgBar__fill"/></HBox>
-							<Text text="{txt}" class="vgSec__v"/>
-						</HBox>
-					</VBox>
 				</VBox>
 				<FlexBox items="{/sel/checks}" renderType="Bare" class="vgChecks">
 					<HBox renderType="Bare" alignItems="Center" class="vgCheck"><customData><core:CustomData key="st" value="{state}" writeToDom="true"/></customData>
@@ -136,32 +142,19 @@
 					visible="{/sel/podeRetirar}" press=".onRetirarExcesso" class="vgPanel__btn"/>
 			</VBox>
 
-			<VBox renderType="Bare" class="vgPanel">
-				<HBox renderType="Bare" justifyContent="SpaceBetween" alignItems="Center" class="vgPanel__head">
-					<Text text="{i18n>cardFatura}" class="vgPanel__k"/>
-					<Text text="{/fatura/statusText}" class="vgTag"><customData><core:CustomData key="st" value="{/fatura/statusState}" writeToDom="true"/></customData></Text>
-				</HBox>
-				<VBox renderType="Bare" class="vgFacts">
-					<HBox renderType="Bare" justifyContent="SpaceBetween"><Text text="{i18n>fat.nf}" class="vgFacts__k"/><Text text="{/fatura/numeroTxt}" class="vgFacts__v"/></HBox>
-					<HBox renderType="Bare" justifyContent="SpaceBetween"><Text text="{i18n>fat.vagoes}" class="vgFacts__k"/><Text text="{/fatura/vagoesTxt}" class="vgFacts__v"/></HBox>
-					<HBox renderType="Bare" justifyContent="SpaceBetween"><Text text="{i18n>fat.peso}" class="vgFacts__k"/><Text text="{/fatura/pesoTxt}" class="vgFacts__v"/></HBox>
-					<HBox renderType="Bare" justifyContent="SpaceBetween"><Text text="{i18n>lblMedia}" class="vgFacts__k"/><Text text="{/kpi/mediaUnTxt}" class="vgFacts__v"/></HBox>
-				</VBox>
-			</VBox>
+			<!-- composição (placas) -->
 			<VBox renderType="Bare" class="vgPanel vgPanel--grow">
 				<HBox renderType="Bare" justifyContent="SpaceBetween" alignItems="Center" class="vgPanel__head">
-					<Text text="{i18n>cardTurno}" class="vgPanel__k"/>
-					<Text text="{/kpi/bocasAtivasTxt}" class="vgFacts__k"/>
+					<Text text="{i18n>cardComposicao}" class="vgPanel__k"/>
+					<Text text="{/kpi/carregadosTxt}" class="vgFacts__k"/>
 				</HBox>
-				<HBox renderType="Bare" alignItems="Baseline" class="vgBig vgBig--md">
-					<Text text="{/kpi/turnoTxt}" class="vgBig__v"/>
-					<Text text="t" class="vgBig__u"/>
-				</HBox>
-				<VBox renderType="Bare" items="{/bocas}" class="vgTurno">
-					<HBox renderType="Bare" alignItems="Center" class="vgTurno__row"><customData><core:CustomData key="st" value="{statusState}" writeToDom="true"/></customData>
-						<Text text="{nome}" class="vgTurno__n"/>
-						<HBox renderType="Bare" class="vgBar vgTurno__bar"><HBox renderType="Bare" width="{turnoPctCss}" class="vgBar__fill"/></HBox>
-						<Text text="{turnoUnTxt}" class="vgTurno__v"/>
+				<VBox renderType="Bare" items="{/vagoes}" class="vgComp">
+					<HBox renderType="Bare" alignItems="Center" class="vgComp__row"><customData><core:CustomData key="st" value="{statusState}" writeToDom="true"/><core:CustomData key="sel" value="{= ${index} === ${/view/sel} ? 'sim' : 'nao' }" writeToDom="true"/></customData>
+						<Text text="" class="vgComp__dot" tooltip="{statusText}"/>
+						<Link text="{= 'V' + ${label} }" press=".onVagaoListPress" class="vgComp__n"/>
+						<Text text="{placa}" class="vgPlate"/>
+						<HBox renderType="Bare" class="vgBar vgComp__bar"><HBox renderType="Bare" width="{pctCss}" class="vgBar__fill"/></HBox>
+						<Text text="{cargaUnTxt}" class="vgComp__v"/>
 					</HBox>
 				</VBox>
 			</VBox>
@@ -182,8 +175,37 @@
 				bocaPress=".onBocaPress"/>
 		</VBox>
 
-		<!-- ================= LATERAL DIREITA: pendências ================= -->
+		<!-- ================= LATERAL DIREITA: faturamento ================= -->
 		<VBox renderType="Bare" class="vgSide vgSide--r">
+
+			<!-- fatura (destaque) -->
+			<VBox renderType="Bare" class="vgPanel vgFat"><customData><core:CustomData key="st" value="{/fatura/key}" writeToDom="true"/></customData>
+				<HBox renderType="Bare" justifyContent="SpaceBetween" alignItems="Center" class="vgPanel__head">
+					<Text text="{i18n>cardFaturamento}" class="vgPanel__k"/>
+					<Text text="{= 'NF ' + ${/fatura/numeroTxt} }" class="vgFat__nf"/>
+				</HBox>
+				<HBox renderType="Bare" alignItems="Center" class="vgFat__status">
+					<core:Icon src="{/fatura/icone}" class="vgFat__icon"/>
+					<VBox renderType="Bare" class="vgFat__statusTxt">
+						<Text text="{/fatura/statusText}" class="vgFat__state"/>
+						<Text text="{/fatura/motivoTxt}" class="vgFat__motivo"/>
+					</VBox>
+				</HBox>
+				<VBox renderType="Bare" class="vgFat__peso">
+					<Text text="{i18n>fat.pesoLiquido}" class="vgFacts__k"/>
+					<HBox renderType="Bare" alignItems="Baseline" class="vgBig vgBig--fat">
+						<Text text="{/fatura/pesoNumTxt}" class="vgBig__v"/>
+						<Text text="t" class="vgBig__u"/>
+					</HBox>
+				</VBox>
+				<VBox renderType="Bare" class="vgFacts">
+					<HBox renderType="Bare" justifyContent="SpaceBetween"><Text text="{i18n>fat.vagoes}" class="vgFacts__k"/><Text text="{/fatura/vagoesTxt}" class="vgFacts__v"/></HBox>
+					<HBox renderType="Bare" class="vgBar"><HBox renderType="Bare" width="{/fatura/vagoesPctCss}" class="vgBar__fill vgFat__bar"/></HBox>
+					<HBox renderType="Bare" justifyContent="SpaceBetween"><Text text="{i18n>lblMedia}" class="vgFacts__k"/><Text text="{/fatura/mediaTxt}" class="vgFacts__v"/></HBox>
+				</VBox>
+			</VBox>
+
+			<!-- pendências (impedem a emissão) -->
 			<VBox renderType="Bare" class="vgPanel vgPanel--grow">
 				<HBox renderType="Bare" justifyContent="SpaceBetween" alignItems="Center" class="vgPanel__head">
 					<Text text="{i18n>cardValidacoes}" class="vgPanel__k"/>
@@ -199,20 +221,6 @@
 					</HBox>
 				</VBox>
 				<Text text="{i18n>val.nenhuma}" visible="{/view/semPendencias}" class="vgVal__none"/>
-			</VBox>
-			<VBox renderType="Bare" class="vgPanel">
-				<HBox renderType="Bare" justifyContent="SpaceBetween" alignItems="Center" class="vgPanel__head">
-					<Text text="{i18n>cardComposicao}" class="vgPanel__k"/>
-					<Text text="{/kpi/carregadosTxt}" class="vgFacts__k"/>
-				</HBox>
-				<VBox renderType="Bare" items="{/vagoes}" class="vgComp">
-					<HBox renderType="Bare" alignItems="Center" class="vgComp__row"><customData><core:CustomData key="st" value="{statusState}" writeToDom="true"/><core:CustomData key="sel" value="{= ${index} === ${/view/sel} ? 'sim' : 'nao' }" writeToDom="true"/></customData>
-						<Link text="{= 'V' + ${label} }" press=".onVagaoListPress" class="vgComp__n"/>
-						<HBox renderType="Bare" class="vgBar vgComp__bar"><HBox renderType="Bare" width="{pctCss}" class="vgBar__fill"/></HBox>
-						<Text text="{cargaUnTxt}" class="vgComp__v"/>
-						<Text text="{statusText}" class="vgComp__st"/>
-					</HBox>
-				</VBox>
 			</VBox>
 		</VBox>
 	</FlexBox>

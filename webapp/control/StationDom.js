@@ -27,7 +27,7 @@ sap.ui.define([], function () {
 
 	/* Geometria fixa em px: facilita alinhar cones, linhas de fluxo e vagões. */
 	var G = { pad: 12, navW: 48, slotW: 136, gap: 12, unitW: 172, siloW: 124,
-		labelH: 34, siloH: 176, coneH: 56, gateH: 10, vzH: 26, flowH: 112, wagonH: 140, bogieH: 24, railH: 10,
+		labelH: 34, siloH: 176, coneH: 56, gateH: 10, vzH: 26, flowH: 112, wagonH: 162, bogieH: 24, railH: 10,
 		viewPadT: 16, miniH: 14 };
 	G.siloY = G.labelH;
 	G.coneY = G.siloY + G.siloH;
@@ -176,7 +176,8 @@ sap.ui.define([], function () {
 	};
 
 	StationDom.prototype._geo = function (nB) {
-		var iSilos = nB * (G.unitW + 16);
+		// poucas bocas: espalha os silos sobre a largura da composição visível
+		var iSilos = Math.max(nB * (G.unitW + 16), Math.min(G.viewW + 2 * (G.navW + G.gap), nB * (G.unitW + 120)));
 		var iTrain = G.viewW + 2 * (G.navW + G.gap);
 		var iWidth = Math.max(iSilos, iTrain) + 2 * G.pad;
 		var g = { width: iWidth, siloCX: [], viewX: Math.round((iWidth - G.viewW) / 2) };
@@ -251,6 +252,7 @@ sap.ui.define([], function () {
 			h.push("<span class=\"vgCar\" style=\"left:" + ((i + 1) * G.step) + "px;width:" + G.slotW + "px\">" +
 				"<button type=\"button\" class=\"vgWag\" data-vg-wagon=\"" + i + "\" style=\"top:" + G.viewPadT + "px;width:" + G.slotW + "px;height:" + G.wagonH + "px\">" +
 				"<span class=\"vgWag__head\"><span class=\"vgWag__num\" data-vg-r=\"num\"></span><span class=\"vgWag__st\"><span class=\"vgWag__dot\"></span><span data-vg-r=\"st\"></span></span></span>" +
+				"<span class=\"vgWag__plate\" data-vg-r=\"plate\"></span>" +
 				"<span class=\"vgWag__hopper\">" +
 					"<span class=\"vgWag__sec\"><span class=\"vgWag__fill\"></span></span>" +
 					"<span class=\"vgWag__sec vgWag__sec--c\"><span class=\"vgWag__fill\"></span></span>" +
@@ -303,7 +305,7 @@ sap.ui.define([], function () {
 			return { g: el, base: aP[0], dash: aP[1], d: "" };
 		});
 		this.wagons = Array.prototype.map.call(oWrap.querySelectorAll(".vgWag"), function (el) {
-			return { el: el, num: ref(el, "num"), st: ref(el, "st"), pct: ref(el, "pct"), carga: ref(el, "carga"),
+			return { el: el, num: ref(el, "num"), st: ref(el, "st"), pct: ref(el, "pct"), carga: ref(el, "carga"), plate: ref(el, "plate"),
 				fills: Array.prototype.slice.call(el.querySelectorAll(".vgWag__fill")) };
 		});
 		this.nB = nB;
@@ -395,6 +397,7 @@ sap.ui.define([], function () {
 			attr(r.el, "tabindex", visivel(i) ? "0" : "-1");
 			attr(r.el, "aria-label", w.titulo + ". " + w.statusText + ". " + w.vistText + ". " + w.cargaTxt + " t " + w.limiteTxt.replace(" t", "") + ".");
 			txt(r.num, "V" + w.label);
+			txt(r.plate, w.placa);
 			txt(r.st, w.statusText);
 			// enchimento por seção (esquerda / centro / direita), conforme a receita
 			r.fills.forEach(function (oFill, k) {

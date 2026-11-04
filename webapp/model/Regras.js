@@ -169,8 +169,8 @@ sap.ui.define([], function () {
 					index: i,
 					pos: w.pos,
 					label: sLabel,
-					id: w.id,
-					titulo: t("vagaoN", [sLabel]) + " · " + w.id,
+					placa: w.placa,
+					titulo: t("vagaoN", [sLabel]) + " · " + w.placa,
 					tituloCurto: t("vagaoN", [sLabel]),
 					vistoriado: w.vistoriado,
 					vistText: t(w.vistoriado ? "vistoriado" : "naoVistoriado"),
@@ -310,7 +310,7 @@ sap.ui.define([], function () {
 			}
 			s.vagoes.forEach(function (w, i) {
 				if (!w.vistoriado) {
-					add("Error", t("val.semVistoria.t", [pad(w.pos)]), t("val.semVistoria.d", [w.id]), i, -1);
+					add("Error", t("val.semVistoria.t", [pad(w.pos)]), t("val.semVistoria.d", [w.placa]), i, -1);
 				}
 				if (w.carga > LIM) {
 					add("Error", t("val.excesso.t", [pad(w.pos)]),
@@ -458,7 +458,14 @@ sap.ui.define([], function () {
 					pesoTxt: f1(nTotal) + " t",
 					botaoTexto: sBotao,
 					botaoIcone: bEmitida ? "sap-icon://accept" : "sap-icon://paper-plane",
-					nCarregados: nCarregados
+					nCarregados: nCarregados,
+					key: bEmitida ? "emitida" : (bPodeEmitir ? "pronta" : "bloqueada"),
+					icone: bEmitida ? "sap-icon://accept" : (bPodeEmitir ? "sap-icon://paper-plane" : "sap-icon://locked"),
+					motivoTxt: bEmitida ? t("fat.motivoEmitida", [s.fatura.numero])
+						: (bPodeEmitir ? t("fat.motivoPronta") : (nErros === 1 ? t("fat.resolva1") : t("fat.resolvaN", [nErros]))),
+					pesoNumTxt: f1(nTotal),
+					vagoesPctCss: Math.round(nCarregados / s.vagoes.length * 100) + "%",
+					mediaTxt: f1(nCarregados ? nTotal / nCarregados : 0) + " t"
 				}
 			};
 		}

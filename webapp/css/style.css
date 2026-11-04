@@ -744,3 +744,105 @@ html { font-size: clamp(10px, min(0.834vw, 1.482vh), 22px) !important; }
 	.vgHead__clock.sapMText { font-size: 1.125rem; }
 	.vgComp__st.sapMText { display: none; }
 }
+
+/* ==========================================================================
+   Placas dos vagões
+   ========================================================================== */
+.vgPlate.sapMText,
+.vgWag__plate {
+	display: inline-block;
+	box-sizing: border-box;
+	padding: .125rem .4375rem;
+	border-radius: 4px;
+	border: 1.5px solid #1d2733;
+	box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .55);
+	background: linear-gradient(180deg, #f4f6f8, #dfe4e9);
+	color: #111a24;
+	font-family: "72Mono", "Consolas", "Courier New", monospace;
+	font-weight: 700;
+	font-size: .75rem;
+	letter-spacing: .04em;
+	white-space: nowrap;
+	line-height: 1.35;
+}
+.vgPlate--lg.sapMText { font-size: .9375rem; padding: .1875rem .625rem; border-width: 2px; }
+.vgWag__plate {
+	align-self: flex-start;
+	font-size: 12px; padding: 1px 6px; line-height: 16px;
+	border-radius: 3px;
+}
+.vgWag.is-blocked .vgWag__plate { opacity: .75; }
+
+/* ==========================================================================
+   Laterais reformuladas
+   ========================================================================== */
+.vgFocus { gap: .625rem; }
+.vgFocus__id { gap: .75rem; }
+.vgFocus .vgPanel__title.sapMTitle { margin: 0; font-size: 1.625rem; }
+.vgBig__l { gap: .5rem; }
+.vgBig__pct.sapMText { font-size: 1.125rem; font-weight: 700; color: var(--vg-text-2); font-variant-numeric: tabular-nums; }
+.vgFocus .vgBig { margin-top: .25rem; }
+.vgFocus .vgBar--lg { margin: 0; }
+
+/* seções do vagão como 3 mini-tanques */
+.vgSecCards { display: grid !important; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: .5rem; margin-top: .25rem; }
+.vgSecCard {
+	align-items: center; gap: .25rem;
+	padding: .5rem .375rem .5rem;
+	border-radius: 10px;
+	background: color-mix(in srgb, var(--vg-text-2) 7%, transparent);
+	border: 1px solid color-mix(in srgb, var(--vg-text-2) 12%, transparent);
+	min-width: 0;
+}
+.vgSecCard__k.sapMText { font-size: .6875rem; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; color: var(--vg-text-2); }
+.vgSecCard__tank {
+	position: relative; width: 70%; height: 3rem; border-radius: 4px 4px 8px 8px; overflow: hidden;
+	background: color-mix(in srgb, var(--vg-text-2) 14%, transparent);
+	display: flex !important; flex-direction: column; justify-content: flex-end;
+}
+.vgSecCard__fill { width: 100%; background: linear-gradient(180deg, #f6cd73, #e3a73b 40%, #b07a1c); transition: height .9s cubic-bezier(.2,.8,.2,1); }
+.vgSecCard[data-st="Error"] .vgSecCard__fill { background: var(--vg-err); }
+.vgSecCard__v.sapMText { font-size: 1.0625rem; font-weight: 700; font-variant-numeric: tabular-nums; line-height: 1.1; }
+.vgSecCard__m.sapMText { font-size: .6875rem; color: var(--vg-text-2); }
+
+/* composição com placas */
+.vgComp { gap: .25rem; }
+.vgComp__row { gap: .5rem; padding: .25rem .375rem; }
+.vgComp__dot.sapMText { width: .5rem; height: .5rem; border-radius: 50%; flex-shrink: 0; background: var(--vg-st); }
+.vgComp__row[data-st="Information"] .vgComp__dot { background: #e3a73b; animation: vgPulse .9s ease-in-out infinite; }
+.vgComp__row[data-st="None"] .vgComp__dot { background: color-mix(in srgb, var(--vg-text-2) 55%, transparent); }
+.vgComp__n.sapMLnk { width: 2rem; }
+.vgComp__row .vgPlate { font-size: .6875rem; padding: .0625rem .3125rem; flex-shrink: 0; }
+.vgComp__v.sapMText { width: 3.75rem; }
+
+/* fatura em destaque */
+.vgFat {
+	--vg-fat: var(--vg-err);
+	gap: .75rem;
+	border: 1px solid color-mix(in srgb, var(--vg-fat) 45%, transparent) !important;
+	background:
+		linear-gradient(160deg, color-mix(in srgb, var(--vg-fat) 16%, var(--vg-panel)) 0%, var(--vg-panel) 70%) !important;
+	box-shadow: 0 0 0 1px color-mix(in srgb, var(--vg-fat) 10%, transparent), 0 10px 30px -18px var(--vg-fat);
+}
+.vgFat[data-st="pronta"] { --vg-fat: var(--vg-info-c); }
+.vgFat[data-st="emitida"] { --vg-fat: var(--vg-ok); }
+.vgFat__nf.sapMText { font-family: "72Mono", "Courier New", monospace; font-size: .8125rem; font-weight: 700; color: var(--vg-text-2); white-space: nowrap; }
+.vgFat__status { gap: .75rem; }
+.vgFat__icon.sapUiIcon {
+	flex-shrink: 0;
+	display: inline-flex !important; align-items: center; justify-content: center;
+	width: 2.75rem; height: 2.75rem; border-radius: 12px;
+	font-size: 1.25rem !important;
+	color: var(--vg-fat) !important;
+	background: color-mix(in srgb, var(--vg-fat) 18%, transparent);
+}
+.vgFat__statusTxt { min-width: 0; gap: .125rem; }
+.vgFat__state.sapMText { font-size: 1.75rem; font-weight: 800; letter-spacing: -.01em; line-height: 1.1; color: var(--vg-fat); }
+.vgFat__motivo.sapMText { font-size: .8125rem; color: var(--vg-text-1); }
+.vgFat[data-st="bloqueada"] .vgFat__state { animation: vgPulse 2.4s ease-in-out infinite; }
+.vgFat__peso { gap: .125rem; padding-top: .625rem; border-top: 1px solid color-mix(in srgb, var(--vg-text-2) 18%, transparent); }
+.vgBig--fat { margin: 0; }
+.vgBig--fat .vgBig__v.sapMText { font-size: 2.25rem; }
+.vgFat .vgFacts { border-top: 0; padding-top: 0; }
+.vgFat .vgBar { margin: 0 0 .25rem; }
+.vgFat__bar { background: var(--vg-fat) !important; }

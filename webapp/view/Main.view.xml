@@ -49,6 +49,29 @@
 
 		<!-- ================= KPIs ================= -->
 		<FlexBox renderType="Bare" class="vgKpis">
+			<HBox renderType="Bare" class="vgKpi vgRec">
+				<VBox renderType="Bare" class="vgRec__id">
+					<HBox renderType="Bare" alignItems="Center" class="vgRec__head">
+						<Text text="{i18n>cardReceita}" class="vgKpi__k"/>
+						<Text text="{/receita/codigo}" class="vgRec__code"/>
+					</HBox>
+					<Text text="{/receita/material}" class="vgRec__mat"/>
+					<Text text="{= ${/receita/vazaoTxt} + ' t/h por boca · ' + ${/receita/bocasTxt} }" class="vgRec__sub"/>
+				</VBox>
+				<VBox renderType="Bare" class="vgRec__dist">
+					<HBox renderType="Bare" items="{/receita/secoes}" class="vgRec__bar">
+						<VBox renderType="Bare" width="{pctCss}" class="vgRec__seg"><customData><core:CustomData key="sec" value="{key}" writeToDom="true"/></customData>
+							<Text text="{pctTxt}" class="vgRec__pct"/>
+						</VBox>
+					</HBox>
+					<HBox renderType="Bare" items="{/receita/secoes}" class="vgRec__legend">
+						<VBox renderType="Bare" width="{pctCss}" class="vgRec__leg">
+							<Text text="{label}" class="vgRec__lbl"/>
+							<Text text="{metaTxt}" class="vgRec__meta"/>
+						</VBox>
+					</HBox>
+				</VBox>
+			</HBox>
 			<VBox renderType="Bare" class="vgKpi vgKpi--accent">
 				<Text text="{i18n>kpiVazao}" class="vgKpi__k"/>
 				<HBox renderType="Bare" alignItems="Baseline" class="vgKpi__row">
@@ -74,12 +97,6 @@
 				<Text text="{i18n>kpiEta}" class="vgKpi__k"/>
 				<HBox renderType="Bare" alignItems="Baseline" class="vgKpi__row">
 					<Text text="{/kpi/etaTxt}" class="vgKpi__v"/>
-				</HBox>
-			</VBox>
-			<VBox renderType="Bare" class="vgKpi">
-				<Text text="{i18n>kpiFatura}" class="vgKpi__k"/>
-				<HBox renderType="Bare" alignItems="Baseline" class="vgKpi__row">
-					<Text text="{/fatura/statusText}" class="vgKpi__v vgKpi__v--sm"><customData><core:CustomData key="st" value="{/fatura/statusState}" writeToDom="true"/></customData></Text>
 				</HBox>
 			</VBox>
 		</FlexBox>
@@ -109,15 +126,22 @@
 					<HBox renderType="Bare" justifyContent="SpaceBetween"><Text text="{i18n>lblVistoria}" class="vgFacts__k"/><Text text="{/sel/vistText}" class="vgFacts__v"><customData><core:CustomData key="st" value="{/sel/vistState}" writeToDom="true"/></customData></Text></HBox>
 				</VBox>
 
+				<VBox renderType="Bare" class="vgFacts vgSecs">
+					<Text text="{i18n>cardDistribuicao}" class="vgFacts__k"/>
+					<VBox renderType="Bare" items="{/sel/secoes}" class="vgSecs__list">
+						<HBox renderType="Bare" alignItems="Center" class="vgSec"><customData><core:CustomData key="st" value="{state}" writeToDom="true"/><core:CustomData key="sec" value="{key}" writeToDom="true"/></customData>
+							<Text text="{label}" class="vgSec__k"/>
+							<HBox renderType="Bare" class="vgBar vgSec__bar"><HBox renderType="Bare" width="{fillCss}" class="vgBar__fill"/></HBox>
+							<Text text="{txt}" class="vgSec__v"/>
+						</HBox>
+					</VBox>
+				</VBox>
 				<FlexBox items="{/sel/checks}" renderType="Bare" class="vgChecks">
 					<HBox renderType="Bare" alignItems="Center" class="vgCheck"><customData><core:CustomData key="st" value="{state}" writeToDom="true"/></customData>
 						<core:Icon src="{icon}" size="0.875rem"/>
 						<Text text="{label}"/>
 					</HBox>
 				</FlexBox>
-
-				<Button text="{i18n>acaoConcluirVistoria}" icon="sap-icon://complete" type="Accept" width="100%"
-					visible="{/sel/podeVistoriar}" press=".onConcluirVistoria" class="vgPanel__btn"/>
 				<Button text="{/sel/retirarTxt}" icon="sap-icon://less" type="Reject" width="100%"
 					visible="{/sel/podeRetirar}" press=".onRetirarExcesso" class="vgPanel__btn"/>
 			</VBox>
@@ -125,9 +149,10 @@
 			<VBox renderType="Bare" class="vgPanel">
 				<HBox renderType="Bare" justifyContent="SpaceBetween" alignItems="Center" class="vgPanel__head">
 					<Text text="{i18n>cardFatura}" class="vgPanel__k"/>
-					<Text text="{/fatura/numeroTxt}" class="vgMono"/>
+					<Text text="{/fatura/statusText}" class="vgTag"><customData><core:CustomData key="st" value="{/fatura/statusState}" writeToDom="true"/></customData></Text>
 				</HBox>
 				<VBox renderType="Bare" class="vgFacts">
+					<HBox renderType="Bare" justifyContent="SpaceBetween"><Text text="{i18n>fat.nf}" class="vgFacts__k"/><Text text="{/fatura/numeroTxt}" class="vgFacts__v"/></HBox>
 					<HBox renderType="Bare" justifyContent="SpaceBetween"><Text text="{i18n>fat.vagoes}" class="vgFacts__k"/><Text text="{/fatura/vagoesTxt}" class="vgFacts__v"/></HBox>
 					<HBox renderType="Bare" justifyContent="SpaceBetween"><Text text="{i18n>fat.peso}" class="vgFacts__k"/><Text text="{/fatura/pesoTxt}" class="vgFacts__v"/></HBox>
 					<HBox renderType="Bare" justifyContent="SpaceBetween"><Text text="{i18n>lblMedia}" class="vgFacts__k"/><Text text="{/kpi/mediaUnTxt}" class="vgFacts__v"/></HBox>

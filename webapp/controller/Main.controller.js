@@ -175,12 +175,6 @@ sap.ui.define([
 		/* Vagão selecionado                                           */
 		/* =========================================================== */
 
-		onConcluirVistoria: function () {
-			var sLabel = this._vm("/sel/label");
-			this._executar(Simulador.concluirVistoria, this._ui.sel);
-			MessageToast.show(this._t("msgVistoriaOk", [sLabel]));
-		},
-
 		onRetirarExcesso: function () {
 			var sLabel = this._vm("/sel/label");
 			this._executar(Simulador.retirarExcesso, this._ui.sel);

@@ -251,7 +251,11 @@ sap.ui.define([], function () {
 			h.push("<span class=\"vgCar\" style=\"left:" + ((i + 1) * G.step) + "px;width:" + G.slotW + "px\">" +
 				"<button type=\"button\" class=\"vgWag\" data-vg-wagon=\"" + i + "\" style=\"top:" + G.viewPadT + "px;width:" + G.slotW + "px;height:" + G.wagonH + "px\">" +
 				"<span class=\"vgWag__head\"><span class=\"vgWag__num\" data-vg-r=\"num\"></span><span class=\"vgWag__st\"><span class=\"vgWag__dot\"></span><span data-vg-r=\"st\"></span></span></span>" +
-				"<span class=\"vgWag__hopper\"><span class=\"vgWag__fill\" data-vg-r=\"fill\"></span><span class=\"vgWag__pct\" data-vg-r=\"pct\"></span></span>" +
+				"<span class=\"vgWag__hopper\">" +
+					"<span class=\"vgWag__sec\"><span class=\"vgWag__fill\"></span></span>" +
+					"<span class=\"vgWag__sec vgWag__sec--c\"><span class=\"vgWag__fill\"></span></span>" +
+					"<span class=\"vgWag__sec\"><span class=\"vgWag__fill\"></span></span>" +
+					"<span class=\"vgWag__pct\" data-vg-r=\"pct\"></span></span>" +
 				"<span class=\"vgWag__w\"><span class=\"vgWag__carga\" data-vg-r=\"carga\"></span><span class=\"vgWag__lock\" aria-hidden=\"true\"></span></span>" +
 				"</button>" + bogies(G.slotW) + "</span>");
 		}
@@ -299,7 +303,8 @@ sap.ui.define([], function () {
 			return { g: el, base: aP[0], dash: aP[1], d: "" };
 		});
 		this.wagons = Array.prototype.map.call(oWrap.querySelectorAll(".vgWag"), function (el) {
-			return { el: el, num: ref(el, "num"), st: ref(el, "st"), fill: ref(el, "fill"), pct: ref(el, "pct"), carga: ref(el, "carga") };
+			return { el: el, num: ref(el, "num"), st: ref(el, "st"), pct: ref(el, "pct"), carga: ref(el, "carga"),
+				fills: Array.prototype.slice.call(el.querySelectorAll(".vgWag__fill")) };
 		});
 		this.nB = nB;
 		this.nW = nW;
@@ -391,7 +396,11 @@ sap.ui.define([], function () {
 			attr(r.el, "aria-label", w.titulo + ". " + w.statusText + ". " + w.vistText + ". " + w.cargaTxt + " t " + w.limiteTxt.replace(" t", "") + ".");
 			txt(r.num, "V" + w.label);
 			txt(r.st, w.statusText);
-			css(r.fill, "height", w.pct + "%");
+			// enchimento por seção (esquerda / centro / direita), conforme a receita
+			r.fills.forEach(function (oFill, k) {
+				var oSec = w.secoes && w.secoes[k];
+				css(oFill, "height", (oSec ? oSec.fillPct : w.pct) + "%");
+			});
 			txt(r.pct, w.pctTxt);
 			txt(r.carga, w.cargaTxt + " t");
 			var m = that.minis[i + 1];

@@ -17,6 +17,9 @@ sap.ui.define([], function () {
 
 	var CHECKLIST = ["limpeza", "escotilhas", "comportas", "rodeiros"];
 
+	/** Seções do vagão onde a boca descarrega (ordem de exibição). */
+	var SECOES = ["esquerda", "centro", "direita"];
+
 	/** Status do vagão -> sap.ui.core.ValueState */
 	var ESTADO_VAGAO = {
 		bloqueado: "Error",
@@ -31,14 +34,12 @@ sap.ui.define([], function () {
 	var ESTADO_BOCA = {
 		ativa: "Success",
 		parada: "None",
-		manutencao: "Warning",
 		aguardandoVagao: "Information",
 		siloVazio: "Error"
 	};
 	var ICONE_BOCA = {
 		ativa: "sap-icon://media-play",
 		parada: "sap-icon://media-pause",
-		manutencao: "sap-icon://wrench",
 		aguardandoVagao: "sap-icon://pending",
 		siloVazio: "sap-icon://error"
 	};
@@ -66,6 +67,32 @@ sap.ui.define([], function () {
 	var Regras = {
 
 		formatar: { f1: f1, f0: f0, pad: pad, duracao: duracao },
+
+		SECOES: SECOES,
+
+		/**
+		 * Receita de descarga do material: vazão da boca (t/h) e quanto dela vai
+		 * para cada seção do vagão (% esquerda / centro / direita).
+		 */
+		receita: function (s, sMaterial) {
+			return (s.receitas || []).filter(function (r) { return r.material === sMaterial; })[0] || null;
+		},
+
+		/** Seções formatadas para exibição (com meta por vagão, se informada). */
+		secoesReceita: function (oReceita, t, nMetaVagao) {
+			return SECOES.map(function (k) {
+				var nPct = oReceita ? oReceita.distribuicao[k] : 0;
+				return {
+					key: k,
+					label: t("sec." + k),
+					sigla: t("sec." + k + ".sigla"),
+					pct: nPct,
+					pctTxt: nPct + "%",
+					pctCss: nPct + "%",
+					metaTxt: nMetaVagao ? f1(nMetaVagao * nPct / 100) + " t" : ""
+				};
+			});
+		},
 
 		/** Carga-alvo de um vagão (limite menos margem de segurança). */
 		alvo: function (oComposicao) {
@@ -106,6 +133,7 @@ sap.ui.define([], function () {
 			var bEmitida = !!s.fatura.emitida;
 			var bRodando = !!s.simulacao.rodando && !bEmitida;
 
+			var oRecComp = Regras.receita(s, c.produto);
 			var aAtivas = s.bocas.filter(function (b) { return b.status === "ativa" && b.destino != null; });
 			var mDestinos = {};
 			var mVazaoPorVagao = {};
@@ -120,6 +148,23 @@ sap.ui.define([], function () {
 				var iPct = Math.round(w.carga / LIM * 100);
 				var sLabel = pad(w.pos);
 				var nVazao = mVazaoPorVagao[w.pos] || 0;
+				var aSec = SECOES.map(function (k, ix) {
+					var nMeta = LIM * (oRecComp ? oRecComp.distribuicao[k] : 100 / 3) / 100;
+					var nCarga = w.secoes ? w.secoes[k] : 0;
+					var nFill = nMeta ? Math.round(nCarga / nMeta * 100) : 0;
+					return {
+						key: k,
+						sigla: t("sec." + k + ".sigla"),
+						label: t("sec." + k),
+						carga: nCarga,
+						fillPct: Math.max(0, Math.min(100, nFill)),
+						fillCss: Math.max(0, Math.min(100, nFill)) + "%",
+						cargaTxt: f1(nCarga),
+						metaTxt: f1(nMeta) + " t",
+						txt: f1(nCarga) + " / " + f1(nMeta) + " t",
+						state: nCarga > nMeta + 0.05 ? "Error" : (nFill >= 94 ? "Success" : "None")
+					};
+				});
 				return {
 					index: i,
 					pos: w.pos,
@@ -149,6 +194,7 @@ sap.ui.define([], function () {
 					bocasHist: w.bocas.slice(),
 					bocasAtivas: mDestinos[w.pos] || [],
 					cargaUnTxt: f1(w.carga) + " t",
+					secoes: aSec,
 					bocasTxt: w.bocas.length ? w.bocas.map(function (n) { return "B" + n; }).join(" · ") : "—",
 					etaTxt: nVazao > 0 ? duracao(Math.max(0, ALVO - w.carga) / nVazao * 60) : "—",
 					checks: CHECKLIST.map(function (k) {
@@ -163,7 +209,6 @@ sap.ui.define([], function () {
 							iconColor: bOk ? "Positive" : "Negative"
 						};
 					}),
-					podeVistoriar: !w.vistoriado && !bEmitida,
 					podeRetirar: w.carga > LIM && !bEmitida,
 					retirarTxt: t("acaoRetirarExcesso", [f1(Math.max(0, w.carga - LIM))])
 				};
@@ -179,14 +224,14 @@ sap.ui.define([], function () {
 				s.vagoes.forEach(function (w, i) { if (w.pos === b.destino) { oDest = w; iDestIndex = i; } });
 				var nVzDest = oDest ? (mVazaoPorVagao[oDest.pos] || 0) : 0;
 				var sEta = bAtiva && nVzDest > 0 ? duracao(Math.max(0, ALVO - oDest.carga) / nVzDest * 60) : "—";
-				var bBaixo = nNivel < c.nivelMinimoSiloPct && b.status !== "manutencao" && b.estoque > 0;
+				var bBaixo = nNivel < c.nivelMinimoSiloPct && b.estoque > 0;
+				var oRec = Regras.receita(s, b.produto);
 				var bDivergente = bAtiva && b.produto !== c.produto;
 				var sNome = "B" + b.n;
 
 				var sAlerta = "";
 				var sAlertaTipo = "None";
-				if (b.status === "manutencao") { sAlerta = b.os || t("boca.manutencao"); sAlertaTipo = "Warning"; }
-				else if (bDivergente) { sAlerta = t("val.produto.d", [sNome, b.produto, c.produto]); sAlertaTipo = "Error"; }
+				if (bDivergente) { sAlerta = t("val.produto.d", [sNome, b.produto, c.produto]); sAlertaTipo = "Error"; }
 				else if (b.status === "siloVazio") { sAlerta = t("pop.alerta.siloVazio"); sAlertaTipo = "Error"; }
 				else if (b.status === "aguardandoVagao") { sAlerta = t("pop.alerta.aguardando"); sAlertaTipo = "Information"; }
 				else if (bBaixo) { sAlerta = t("val.siloBaixo.d", [b.silo, f0(b.estoque) + " t", iNivel]); sAlertaTipo = "Warning"; }
@@ -204,10 +249,12 @@ sap.ui.define([], function () {
 					statusState: ESTADO_BOCA[b.status],
 					statusIcon: ICONE_BOCA[b.status],
 					ativa: bAtiva,
-					manutencao: b.status === "manutencao",
 					vazao: bAtiva ? b.vazao : 0,
 					vazaoTxt: f0(bAtiva ? b.vazao : 0),
-					nominalTxt: f0(b.vazaoNominal) + " t/h",
+					nominalTxt: oRec ? f0(oRec.vazao) + " t/h" : "—",
+					receitaCodigo: oRec ? oRec.codigo : t("rec.semReceita"),
+					receitaSecoes: Regras.secoesReceita(oRec, t),
+					receitaDistTxt: oRec ? SECOES.map(function (k) { return t("sec." + k + ".sigla") + " " + oRec.distribuicao[k]; }).join(" · ") : "",
 					abertura: b.abertura,
 					aberturaTxt: b.abertura + "%",
 					aberturaLabel: t("pop.comporta", [b.abertura]),
@@ -230,7 +277,7 @@ sap.ui.define([], function () {
 					alertaTxt: sAlerta,
 					alertaTipo: sAlertaTipo,
 					os: b.os || "",
-					podeOperar: b.status !== "manutencao" && b.status !== "siloVazio" && !bEmitida,
+					podeOperar: b.status !== "siloVazio" && !!oRec && !bEmitida,
 					ligada: bLigada,
 					acaoTexto: t(bLigada ? "pop.parar" : "pop.iniciar"),
 					acaoTipo: bLigada ? "Reject" : "Accept",
@@ -277,9 +324,7 @@ sap.ui.define([], function () {
 			});
 			var nErros = aVal.length;
 			aBocas.forEach(function (b) {
-				if (b.manutencao) {
-					add("Warning", t("val.manut.t", [b.nome]), t("val.manut.d", [b.os || b.silo]), -1, b.index);
-				} else if (b.status === "siloVazio") {
+				if (b.status === "siloVazio") {
 					add("Warning", t("val.siloVazio.t", [b.nome]), t("val.siloVazio.d", [b.silo]), -1, b.index);
 				} else if (b.nivelBaixo) {
 					add("Warning", t("val.siloBaixo.t", [b.nome]), t("val.siloBaixo.d", [b.silo, b.estoqueTxt, b.nivelPct]), -1, b.index);
@@ -326,6 +371,13 @@ sap.ui.define([], function () {
 					estacaoTitulo: t("cardEstacao") + " · " + c.estacao,
 					estacaoSub: t("cardEstacaoSub", [c.produto]),
 					nivelMinimoSiloPct: c.nivelMinimoSiloPct
+				},
+				receita: {
+					material: c.produto,
+					codigo: oRecComp ? oRecComp.codigo : t("rec.semReceita"),
+					vazaoTxt: oRecComp ? f0(oRecComp.vazao) : "—",
+					bocasTxt: t("rec.bocasMaterial", [s.bocas.filter(function (b) { return b.produto === c.produto; }).length]),
+					secoes: Regras.secoesReceita(oRecComp, t, ALVO)
 				},
 				estacaoTextos: {
 					comporta: t("st.txt.comporta"),

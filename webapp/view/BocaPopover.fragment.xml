@@ -32,12 +32,16 @@
 					class="sapUiSmallMarginTop"/>
 
 				<form:SimpleForm editable="false" layout="ColumnLayout" columnsM="1" columnsL="1" columnsXL="1" class="vgForm">
-					<Label text="{i18n>pop.produto}"/>
+					<Label text="{i18n>pop.material}"/>
 					<Text text="{/bocaSel/produto}"/>
+					<Label text="{i18n>pop.receita}"/>
+					<Text text="{/bocaSel/receitaCodigo}"/>
 					<Label text="{i18n>pop.umidade}"/>
 					<Text text="{/bocaSel/umidadeTxt}"/>
 					<Label text="{i18n>pop.nominal}"/>
 					<Text text="{/bocaSel/nominalTxt}"/>
+					<Label text="{i18n>pop.distribuicao}"/>
+					<Text text="{/bocaSel/receitaDistTxt}"/>
 					<Label text="{i18n>colDestino}"/>
 					<Text text="{/bocaSel/destinoTxt}"/>
 					<Label text="{i18n>pop.eta}"/>

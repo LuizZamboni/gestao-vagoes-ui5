@@ -652,3 +652,95 @@
 .vgSec[data-st="Error"] .vgBar__fill { background: var(--vg-err); }
 .vgSec__v.sapMText { width: 6.5rem; flex-shrink: 0; text-align: right; font-size: .8125rem; font-weight: 600; font-variant-numeric: tabular-nums; }
 .vgSec[data-st="Error"] .vgSec__v { color: var(--vg-err); }
+
+/* ==========================================================================
+   Indicadores em um único painel (separados por divisórias)
+   ========================================================================== */
+.vgKpis { grid-template-columns: minmax(0, 1fr) minmax(0, 1.45fr) !important; }
+.vgStats {
+	display: grid !important;
+	grid-template-columns: repeat(4, minmax(0, 1fr));
+	align-items: center;
+	padding: .875rem 0;
+	border-radius: var(--vg-radius);
+	background: var(--vg-panel);
+	border: 1px solid var(--vg-panel-line);
+	min-width: 0;
+}
+.vgStat { position: relative; min-width: 0; padding: .125rem 1.25rem; }
+.vgStat + .vgStat { border-left: 1px solid color-mix(in srgb, var(--vg-text-2) 20%, transparent); }
+.vgStat--accent .vgKpi__v.sapMText { color: var(--vg-accent); }
+.vgStat .vgKpi__k.sapMText { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; display: block; }
+
+/* ==========================================================================
+   Responsividade
+   1) Modo TV (paisagem, >= 1100px): toda a interface é dimensionada em rem e
+      a raiz escala com a janela -> mesma composição em 720p, 1080p e 4K.
+   2) Telas estreitas / retrato (tablet, celular): uma coluna com rolagem.
+   ========================================================================== */
+html { font-size: clamp(10px, min(0.834vw, 1.482vh), 22px) !important; }
+
+/* rótulos de painel nunca quebram em duas linhas */
+.vgPanel__k.sapMText,
+.vgKpi__k.sapMText { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.vgPanel__head { flex-wrap: nowrap; min-width: 0; }
+.vgPanel__head > :first-child { min-width: 0; overflow: hidden; }
+.vgPanel__head > .vgTag, .vgPanel__head > .vgFacts__k { flex-shrink: 0; }
+
+/* laterais: painéis mantêm a altura do conteúdo; só a lista de pendências encolhe (com rolagem) */
+.vgSide { overflow-y: auto; overflow-x: hidden; scrollbar-width: none; }
+.vgSide::-webkit-scrollbar { display: none; }
+.vgSide > .vgPanel { flex: 0 0 auto; }
+.vgSide--l > .vgPanel--grow { flex: 1 0 auto; }
+.vgSide--r > .vgPanel--grow { flex: 1 1 0; min-height: 9rem; overflow: hidden; }
+
+/* receita: textos não sobrepõem */
+.vgRec { min-width: 0; overflow: hidden; }
+.vgRec__id { flex: 0 1 auto; min-width: 0; }
+.vgRec__mat.sapMText, .vgRec__sub.sapMText { overflow: hidden; text-overflow: ellipsis; }
+.vgRec__head { flex-wrap: nowrap; }
+.vgRec__head .vgKpi__k { flex: 0 1 auto; }
+.vgRec__code.sapMText { white-space: nowrap; flex-shrink: 0; }
+.vgRec__lbl.sapMText, .vgRec__meta.sapMText { white-space: nowrap; }
+.vgRec__dist { min-width: 9rem; }
+
+@media (max-width: 1099px), (orientation: portrait) {
+	html { font-size: 14px !important; }
+	html, body#content { height: auto !important; overflow-y: auto !important; }
+	body#content > .sapUiComponentContainer,
+	body#content > div[data-sap-ui-component],
+	.sapUiComponentContainer, .sapUiComponentContainer > div, .sapUiView { height: auto !important; }
+
+	.vgTv {
+		height: auto;
+		min-height: 100vh;
+		overflow: visible;
+		padding: .75rem;
+		gap: .75rem;
+		grid-template-columns: minmax(0, 1fr);
+		grid-template-rows: auto;
+		grid-template-areas: "head" "kpi" "c" "l" "r";
+	}
+	.vgHead { flex-wrap: wrap; gap: .75rem; }
+	.vgHead__right { flex-wrap: wrap; justify-content: flex-end; flex-shrink: 1; }
+	.vgHead__title.sapMTitle { font-size: 1.375rem; }
+	.vgHead__sub.sapMText { font-size: .8125rem; }
+
+	.vgKpis { grid-template-columns: minmax(0, 1fr) !important; gap: .75rem; }
+	.vgRec { flex-wrap: wrap; gap: .75rem; }
+	.vgRec__id, .vgRec__dist { flex: 1 1 100%; }
+	.vgStats { grid-template-columns: repeat(2, minmax(0, 1fr)); row-gap: .875rem; }
+	.vgStat:nth-child(3) { border-left: 0; }
+
+	/* altura acompanha a proporção do desenho da estação (sem sobra) */
+	.vgCenter { height: auto; aspect-ratio: 16 / 10.4; max-height: 36rem; padding: .5rem; }
+	.vgSide { overflow: visible; }
+	.vgSide > .vgPanel, .vgSide--l > .vgPanel--grow { flex: 0 0 auto !important; }
+	.vgSide--r > .vgPanel--grow { flex: 0 0 auto; min-height: 0; }
+	.vgVals { overflow: visible; }
+}
+
+@media (max-width: 480px) {
+	.vgHead__clock.sapMText { font-size: 1.125rem; }
+	.vgComp__st.sapMText { display: none; }
+}

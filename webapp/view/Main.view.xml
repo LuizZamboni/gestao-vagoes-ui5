@@ -72,33 +72,35 @@
 					</HBox>
 				</VBox>
 			</HBox>
-			<VBox renderType="Bare" class="vgKpi vgKpi--accent">
-				<Text text="{i18n>kpiVazao}" class="vgKpi__k"/>
-				<HBox renderType="Bare" alignItems="Baseline" class="vgKpi__row">
-					<Text text="{/kpi/vazaoTxt}" class="vgKpi__v"/>
-					<Text text="t/h" class="vgKpi__u"/>
-				</HBox>
-			</VBox>
-			<VBox renderType="Bare" class="vgKpi">
-				<Text text="{i18n>kpiTotal}" class="vgKpi__k"/>
-				<HBox renderType="Bare" alignItems="Baseline" class="vgKpi__row">
-					<Text text="{/kpi/totalTxt}" class="vgKpi__v"/>
-					<Text text="{/kpi/capTxt}" class="vgKpi__u"/>
-				</HBox>
-				<HBox renderType="Bare" class="vgBar"><HBox renderType="Bare" width="{/kpi/totalPctCss}" class="vgBar__fill"/></HBox>
-			</VBox>
-			<VBox renderType="Bare" class="vgKpi">
-				<Text text="{i18n>kpiVistoriados}" class="vgKpi__k"/>
-				<HBox renderType="Bare" alignItems="Baseline" class="vgKpi__row">
-					<Text text="{/kpi/vistTxt}" class="vgKpi__v"><customData><core:CustomData key="st" value="{/kpi/vistState}" writeToDom="true"/></customData></Text>
-				</HBox>
-			</VBox>
-			<VBox renderType="Bare" class="vgKpi">
-				<Text text="{i18n>kpiEta}" class="vgKpi__k"/>
-				<HBox renderType="Bare" alignItems="Baseline" class="vgKpi__row">
-					<Text text="{/kpi/etaTxt}" class="vgKpi__v"/>
-				</HBox>
-			</VBox>
+			<FlexBox renderType="Bare" class="vgStats">
+				<VBox renderType="Bare" class="vgStat vgStat--accent">
+					<Text text="{i18n>kpiVazao}" class="vgKpi__k"/>
+					<HBox renderType="Bare" alignItems="Baseline" class="vgKpi__row">
+						<Text text="{/kpi/vazaoTxt}" class="vgKpi__v"/>
+						<Text text="t/h" class="vgKpi__u"/>
+					</HBox>
+				</VBox>
+				<VBox renderType="Bare" class="vgStat">
+					<Text text="{i18n>kpiTotal}" class="vgKpi__k"/>
+					<HBox renderType="Bare" alignItems="Baseline" class="vgKpi__row">
+						<Text text="{/kpi/totalTxt}" class="vgKpi__v"/>
+						<Text text="{/kpi/capTxt}" class="vgKpi__u"/>
+					</HBox>
+					<HBox renderType="Bare" class="vgBar"><HBox renderType="Bare" width="{/kpi/totalPctCss}" class="vgBar__fill"/></HBox>
+				</VBox>
+				<VBox renderType="Bare" class="vgStat">
+					<Text text="{i18n>kpiVistoriados}" class="vgKpi__k"/>
+					<HBox renderType="Bare" alignItems="Baseline" class="vgKpi__row">
+						<Text text="{/kpi/vistTxt}" class="vgKpi__v"><customData><core:CustomData key="st" value="{/kpi/vistState}" writeToDom="true"/></customData></Text>
+					</HBox>
+				</VBox>
+				<VBox renderType="Bare" class="vgStat">
+					<Text text="{i18n>kpiEta}" class="vgKpi__k"/>
+					<HBox renderType="Bare" alignItems="Baseline" class="vgKpi__row">
+						<Text text="{/kpi/etaTxt}" class="vgKpi__v"/>
+					</HBox>
+				</VBox>
+			</FlexBox>
 		</FlexBox>
 
 		<!-- ================= LATERAL ESQUERDA: vagão em foco ================= -->

@@ -1,4 +1,6 @@
 # Publica a pasta webapp como site estático; o UI5 vem do CDN da SAP (index-cdn.html).
+# force = true: o webapp/index.html existe (bootstrap local do ui5 serve) e, sem
+# forçar, o Netlify o serviria em vez de aplicar a regra.
 [build]
   publish = "webapp"
   command = ""
@@ -7,3 +9,10 @@
   from = "/"
   to = "/index-cdn.html"
   status = 200
+  force = true
+
+[[redirects]]
+  from = "/index.html"
+  to = "/index-cdn.html"
+  status = 200
+  force = true

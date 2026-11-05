@@ -2,9 +2,10 @@ sap.ui.define([
 	"sap/ui/core/mvc/Controller",
 	"sap/ui/model/json/JSONModel",
 	"sap/m/MessageToast",
+	"sap/ui/core/Theming",
 	"../model/Regras",
 	"../model/Simulador"
-], function (Controller, JSONModel, MessageToast, Regras, Simulador) {
+], function (Controller, JSONModel, MessageToast, Theming, Regras, Simulador) {
 	"use strict";
 
 	/** Intervalo da simulação. Em produção: polling/WebSocket do backend. */
@@ -12,6 +13,11 @@ sap.ui.define([
 
 	/** Depois de uma seleção manual, volta a seguir o vagão em carga após este tempo. */
 	var MANUAL_MS = 20000;
+
+	/** Temas do modo escuro / claro e chave onde a escolha fica salva no navegador. */
+	var TEMA_ESCURO = "sap_horizon_dark";
+	var TEMA_CLARO = "sap_horizon";
+	var TEMA_KEY = "vagoes.dashboard.tema";
 
 	return Controller.extend("vagoes.dashboard.controller.Main", {
 
@@ -29,6 +35,11 @@ sap.ui.define([
 			this._oModel.setSizeLimit(500);
 			this.getView().setModel(this._oModel);
 
+			// tema (escuro/claro): modelo "ui" só para o botão do cabeçalho
+			this._oUi = new JSONModel({ claro: false });
+			this.getView().setModel(this._oUi, "ui");
+			this._iniciarTema();
+
 			var oComponent = this.getOwnerComponent();
 			var oMock = oComponent.getModel("mock");
 			var pBundle = Promise.resolve(oComponent.getModel("i18n").getResourceBundle());
@@ -44,6 +55,33 @@ sap.ui.define([
 
 		onExit: function () {
 			clearInterval(this._iTimer);
+		},
+
+		/* =========================================================== */
+		/* Tema (modo escuro / claro)                                  */
+		/* =========================================================== */
+
+		_iniciarTema: function () {
+			var sSalvo = null;
+			try { sSalvo = window.localStorage.getItem(TEMA_KEY); } catch (e) { /* sem storage */ }
+			if (sSalvo === TEMA_CLARO || sSalvo === TEMA_ESCURO) {
+				this._aplicarTema(sSalvo);
+			} else {
+				this._oUi.setProperty("/claro", Theming.getTheme() === TEMA_CLARO);
+			}
+		},
+
+		_aplicarTema: function (sTema) {
+			if (Theming.getTheme() !== sTema) {
+				Theming.setTheme(sTema);
+			}
+			this._oUi.setProperty("/claro", sTema === TEMA_CLARO);
+		},
+
+		onAlternarTema: function () {
+			var sTema = this._oUi.getProperty("/claro") ? TEMA_ESCURO : TEMA_CLARO;
+			this._aplicarTema(sTema);
+			try { window.localStorage.setItem(TEMA_KEY, sTema); } catch (e) { /* sem storage */ }
 		},
 
 		/* =========================================================== */

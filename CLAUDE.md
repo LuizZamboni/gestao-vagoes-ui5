@@ -54,7 +54,7 @@ webapp/
 ├── controller/Main.controller.js tick da simulação, foco automático, seleção, popover
 ├── control/LoadingStation.js     controle UI5 custom (wrapper; setters sem invalidar)
 ├── control/StationDom.js         desenho da estação em DOM puro (silos, fluxo, trem)
-├── model/mockData.json           composição, receitas, vagões (placa), 3 bocas, fatura
+├── model/mockData.json           composição, receitas, vagões (placa), 6 bocas, fatura
 ├── model/Regras.js               regras de negócio + montagem do view model (puro)
 ├── model/Simulador.js            simulação da descarga e ações (estado imutável)
 ├── i18n/i18n.properties          textos pt-BR
@@ -93,7 +93,7 @@ preview/gestao-vagoes-preview.html  prévia antiga em HTML puro (desatualizada)
 
 A grade CSS fica em `.vgTv`: cabeçalho, linha de receita + indicadores, e a linha principal com 3 colunas.
 
-- **Cabeçalho:** título da composição, linha de informações, pílula "Ao vivo" e relógio. Sem botões.
+- **Cabeçalho:** título da composição, linha de informações, botão **Modo claro / Modo escuro**, pílula "Ao vivo" e relógio. O botão é o único do cabeçalho.
 - **Receita** (destaque à esquerda): material, código, vazão por boca e barra E/C/D com a meta por vagão.
 - **Indicadores** num **único painel com divisórias**: vazão total, carregado, vagões vistoriados e previsão de término.
 - **Lateral esquerda (vagões):**
@@ -109,7 +109,7 @@ A grade CSS fica em `.vgTv`: cabeçalho, linha de receita + indicadores, e a lin
 ### Estação (`StationDom.js`)
 
 - Tem geometria fixa em px (objeto `G`) e é **escalada para caber** no espaço (`_fit`, com `ResizeObserver`), sempre centralizada.
-- Mostra **3 bocas**: silos com nível, cone, comporta, vazão e linhas de fluxo SVG animadas até o vagão de destino.
+- Mostra **6 bocas** (a quantidade vem do mock; a geometria se ajusta sozinha): silos com nível, cone, comporta, vazão e linhas de fluxo SVG animadas até o vagão de destino.
 - **Janela do trem:** mostra `SLOTS = 5` posições (a locomotiva é a posição 0), centradas no vagão selecionado, com animação de deslize. As setas ‹ › mostram quantos vagões estão escondidos; há um mini-mapa clicável. A navegação manual expira em `NAV_MS` (20 s).
 - O vagão desenha o funil com **3 seções** (E/C/D) e a placa.
 - Atualiza o DOM **no lugar**, sem re-renderizar, para que as animações não reiniciem. O `LoadingStation` sobrescreve os setters com `setProperty(..., true)` e agrupa as atualizações num microtask.
@@ -124,7 +124,8 @@ A grade CSS fica em `.vgTv`: cabeçalho, linha de receita + indicadores, e a lin
   - isso mantém a mesma composição em 720p, 1080p e 4K, sem mexer em `html`/`body`.
 - **Quebras de layout** via `@container vgapp (max-width: 1099px) or (orientation: portrait)`: coluna única com rolagem (tablet e celular).
 - `FlexBox renderType="Bare"` é usado para montar o grid sem wrappers.
-- O tema claro (`sap_horizon`) tem ajustes em `.sapUiTheme-sap_horizon ...`.
+- **Tema:** escuro (`sap_horizon_dark`) por padrão; o botão do cabeçalho alterna para `sap_horizon` via `sap/ui/core/Theming` e salva a escolha no `localStorage` (`vagoes.dashboard.tema`). O modelo `ui>/claro` controla o texto do botão.
+- O tema claro tem tokens próprios em `.sapUiTheme-sap_horizon .vgApp` e `.sapUiTheme-sap_horizon .vgSt`, com valores de reserva claros (as variáveis SAP nem sempre são publicadas).
 
 ## Preferências do usuário
 

@@ -17,6 +17,21 @@
 	--vg-radius: 14px;
 }
 
+/* modo claro (sap_horizon): mesmos tokens, com valores de reserva claros,
+   já que as variáveis do tema nem sempre são publicadas na 1.120 */
+.sapUiTheme-sap_horizon .vgApp {
+	--vg-bg: var(--sapBackgroundColor, #f5f6f7);
+	--vg-panel: var(--sapTile_Background, #ffffff);
+	--vg-panel-line: var(--sapTile_BorderColor, rgba(0, 0, 0, .1));
+	--vg-text-1: var(--sapTextColor, #1d2d3e);
+	--vg-text-2: var(--sapContent_LabelColor, #556b82);
+	--vg-accent: var(--sapBrandColor, #0070f2);
+	--vg-ok: var(--sapPositiveTextColor, #256f3a);
+	--vg-warn: var(--sapCriticalTextColor, #b44f00);
+	--vg-err: var(--sapNegativeTextColor, #aa0808);
+	--vg-info-c: var(--sapInformativeTextColor, #0064d9);
+}
+
 /* cor por estado (data-st vem do CustomData writeToDom) */
 [data-st="Success"] { --vg-st: var(--vg-ok); }
 [data-st="Warning"] { --vg-st: var(--vg-warn); }
@@ -66,6 +81,17 @@
 	font-size: calc(1.375 * var(--vg-r)); font-weight: 600; font-variant-numeric: tabular-nums;
 	color: var(--vg-text-1); padding: 0 calc(.5 * var(--vg-r));
 }
+
+/* botão modo claro / escuro */
+.vgHead__tema.sapMBtn { height: auto; padding: 0; }
+.vgHead__tema .sapMBtnInner {
+	height: auto; min-height: calc(2 * var(--vg-r)); padding: 0 calc(.625 * var(--vg-r));
+	border-radius: 999px; border: 1px solid var(--vg-panel-line); background: var(--vg-panel);
+	color: var(--vg-text-2);
+}
+.vgHead__tema .sapMBtnInner .sapMBtnContent,
+.vgHead__tema .sapMBtnInner .sapUiIcon { font-size: calc(.875 * var(--vg-r)); color: var(--vg-text-2); }
+.vgHead__tema:hover .sapMBtnInner { color: var(--vg-text-1); border-color: var(--vg-text-2); }
 
 .vgLivePill {
 	gap: calc(.5 * var(--vg-r)); padding: calc(.3125 * var(--vg-r)) calc(.75 * var(--vg-r)); border-radius: 999px;
@@ -232,6 +258,19 @@
 }
 /* tema claro */
 .sapUiTheme-sap_horizon .vgSt {
+	--vg-pos: var(--sapPositiveElementColor, #30914c);
+	--vg-neg: var(--sapNegativeElementColor, #f53232);
+	--vg-crit: var(--sapCriticalElementColor, #e76500);
+	--vg-info: var(--sapInformativeElementColor, #0070f2);
+	--vg-pos-t: var(--sapPositiveTextColor, #256f3a);
+	--vg-neg-t: var(--sapNegativeTextColor, #aa0808);
+	--vg-crit-t: var(--sapCriticalTextColor, #b44f00);
+	--vg-info-t: var(--sapInformativeTextColor, #0064d9);
+	--vg-sel: var(--sapContent_FocusColor, #0032a5);
+	--vg-surface: var(--sapBackgroundColor, #f5f6f7);
+	--vg-line: var(--sapList_BorderColor, #d9d9d9);
+	--vg-text: var(--sapTextColor, #1d2d3e);
+	--vg-label: var(--sapContent_LabelColor, #556b82);
 	--vg-grain-text: #8a5a00;
 	--vg-steel: #a3adb8;
 	--vg-steel-dark: #cfd6dd;
@@ -636,6 +675,7 @@
 .vgRec__bar { height: calc(2 * var(--vg-r)); border-radius: 8px; overflow: hidden; gap: 2px; }
 .vgRec__seg { display: flex !important; align-items: center; justify-content: center; background: #e3a73b; }
 .vgRec__seg[data-sec="centro"] { background: #f6cd73; }
+.sapUiTheme-sap_horizon .vgRec__mat.sapMText { color: #8a5a00; }
 .vgRec__pct.sapMText { font-size: calc(.9375 * var(--vg-r)); font-weight: 800; color: #1d1608; }
 .vgRec__legend { gap: 2px; }
 .vgRec__leg { align-items: center; text-align: center; }

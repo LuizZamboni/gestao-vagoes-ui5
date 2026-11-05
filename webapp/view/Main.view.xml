@@ -28,6 +28,10 @@
 				</VBox>
 			</FlexBox>
 			<FlexBox renderType="Bare" class="vgHead__right">
+				<Button id="btnTema" icon="sap-icon://palette" type="Transparent" class="vgHead__tema"
+					text="{= ${ui>/claro} ? ${i18n>temaEscuro} : ${i18n>temaClaro} }"
+					tooltip="{= ${ui>/claro} ? ${i18n>temaEscuro} : ${i18n>temaClaro} }"
+					press=".onAlternarTema"/>
 				<HBox renderType="Bare" alignItems="Center" class="vgLivePill"><customData><core:CustomData key="st" value="{/view/liveKey}" writeToDom="true"/></customData>
 					<Text text="" class="vgLivePill__dot"/>
 					<Text text="{/view/liveText}"/>

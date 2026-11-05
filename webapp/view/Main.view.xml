@@ -49,7 +49,7 @@
 						<Text text="{/receita/codigo}" class="vgRec__code"/>
 					</HBox>
 					<Text text="{/receita/material}" class="vgRec__mat"/>
-					<Text text="{= ${/receita/vazaoTxt} + ' t/h por boca · ' + ${/receita/bocasTxt} }" class="vgRec__sub"/>
+					<Text text="{/receita/calculoTxt}" class="vgRec__sub"/>
 				</VBox>
 				<VBox renderType="Bare" class="vgRec__dist">
 					<HBox renderType="Bare" items="{/receita/secoes}" class="vgRec__bar">

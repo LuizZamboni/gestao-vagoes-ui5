@@ -34,7 +34,7 @@ npm run undeploy
 | Fiori Launchpad (S/4) | `Component.js` + `manifest.json` (o `index.html` é ignorado) | runtime do Launchpad |
 
 - **Netlify** (`netlify.toml`): publica a pasta `webapp`, sem build. Redireciona `/` e `/index.html` para `/index-cdn.html` com `force = true`; sem o `force`, o Netlify serve o `index.html` local e a tela fica em branco. Cada push na `main` publica sozinho.
-- **Git:** `https://github.com/LuizZamboni/gestao-vagoes-ui5` (privado), branch `main`. Commits com `user.email=zambonioficial@gmail.com`. O usuário pede explicitamente quando quer enviar para o git; **não faça push sem pedido**.
+- **Git:** `https://github.com/LuizZamboni/gestao-vagoes-ui5` (privado), branch `main`. Commits com `user.email=zambonioficial@gmail.com`. O usuário pediu que **toda alteração pedida já seja commitada e enviada** para a `main` (pode dar push sem perguntar).
 - **Deploy no S/4** (`ui5-deploy.yaml`): os valores ainda são de exemplo (`SEU-S4-HOST`, `ZPACOTE`, `DEVK900000`; BSP `ZGESTAO_VAGOES`). Nunca grave senha no arquivo.
 - **Launchpad:**
   - o `manifest.json` tem `sap.ui.fullWidth = true` e o inbound `Vagao-display`;
@@ -74,8 +74,9 @@ preview/gestao-vagoes-preview.html  prévia antiga em HTML puro (desatualizada)
 
 ## Regras de negócio (resumo)
 
-- **Receita por material** (`receitas` no mock): define a `vazao` da boca em t/h e a `distribuicao` em % para `esquerda`, `centro` e `direita` do vagão. A composição atual é de **Farelo de soja** (`REC-FS-01`: 600 t/h, 30/40/30).
-- **Vazão da boca** = vazão da receita do material × `abertura`/100, com um ruído de ±30 na simulação.
+- **Receita por material** (`receitas` no mock): define a `vazao` **total da estação** em t/h e a `distribuicao` em % para `esquerda`, `centro` e `direita` do vagão. A composição atual é de **Farelo de soja** (`REC-FS-01`: 1.800 t/h, 30/40/30).
+- **Cálculo com 6 bocas:** vazão nominal por boca = vazão da receita ÷ nº de bocas com o material (`Regras.vazaoPorBoca`), hoje 1.800 ÷ 6 = 300 t/h. O painel da receita mostra a conta (`rec.calculo`).
+- **Vazão da boca** = vazão nominal por boca × `abertura`/100, com ruído de ±5% na simulação.
 - **Vagão:**
   - guarda `carga` (total) e `secoes {esquerda, centro, direita}`; cada descarga é repartida pela receita da boca;
   - **meta por seção** = limite × % da receita;
@@ -125,7 +126,7 @@ A grade CSS fica em `.vgTv`: cabeçalho, linha de receita + indicadores, e a lin
 - **Quebras de layout** via `@container vgapp (max-width: 1099px) or (orientation: portrait)`: coluna única com rolagem (tablet e celular).
 - `FlexBox renderType="Bare"` é usado para montar o grid sem wrappers.
 - **Tema:** escuro (`sap_horizon_dark`) por padrão; o botão do cabeçalho alterna para `sap_horizon` via `sap/ui/core/Theming` e salva a escolha no `localStorage` (`vagoes.dashboard.tema`). O modelo `ui>/claro` controla o texto do botão.
-- O tema claro tem tokens próprios em `.sapUiTheme-sap_horizon .vgApp` e `.sapUiTheme-sap_horizon .vgSt`, com valores de reserva claros (as variáveis SAP nem sempre são publicadas).
+- O tema claro tem tokens próprios **fixos** (sem `var(--sap…)`) em `.sapUiTheme-sap_horizon .vgApp` e `.sapUiTheme-sap_horizon .vgSt`: paleta **cinza suave** (fundo `#d9dee4`, painéis `#e9ecf0`). O usuário achou o branco do Horizon forte demais; não volte ao branco.
 
 ## Preferências do usuário
 

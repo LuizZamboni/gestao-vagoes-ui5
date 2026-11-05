@@ -21,10 +21,9 @@ sap.ui.define([
 	function clone(o) { return JSON.parse(JSON.stringify(o)); }
 	function r1(v) { return Math.round(v * 10) / 10; }
 	function vagao(s, iPos) { return s.vagoes.filter(function (w) { return w.pos === iPos; })[0]; }
-	/** Vazão da boca = vazão da receita do material × abertura da comporta. */
+	/** Vazão da boca = (vazão da receita ÷ bocas do material) × abertura da comporta. */
 	function vazaoAlvo(s, b) {
-		var r = Regras.receita(s, b.produto);
-		return Math.round((r ? r.vazao : 0) * b.abertura / 100);
+		return Math.round(Regras.vazaoPorBoca(s, b.produto) * b.abertura / 100);
 	}
 
 	/** Reparte uma quantidade entre as seções do vagão conforme a receita. */
@@ -93,7 +92,9 @@ sap.ui.define([
 					b.destino = oNovo.pos;
 					w = oNovo;
 				}
-				b.vazao = b.abertura > 0 ? Math.max(0, vazaoAlvo(s, b) + Math.round(Math.random() * 60 - 30)) : 0;
+				// ruído de ±5% da vazão alvo (oscilação natural do grão)
+				var nAlvo = vazaoAlvo(s, b);
+				b.vazao = b.abertura > 0 ? Math.max(0, Math.round(nAlvo * (1 + (Math.random() - 0.5) * 0.1))) : 0;
 				var dt = Math.min(b.estoque, b.vazao / FATOR);
 				b.estoque = Math.max(0, b.estoque - dt);
 				b.descarregadoTurno += dt;

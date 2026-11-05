@@ -10,9 +10,9 @@
 		"nivelMinimoSiloPct": 15
 	},
 	"receitas": [
-		{ "material": "Farelo de soja", "codigo": "REC-FS-01", "vazao": 600, "distribuicao": { "esquerda": 30, "centro": 40, "direita": 30 } },
-		{ "material": "Soja em grão", "codigo": "REC-SG-01", "vazao": 650, "distribuicao": { "esquerda": 35, "centro": 30, "direita": 35 } },
-		{ "material": "Milho em grão", "codigo": "REC-MG-01", "vazao": 620, "distribuicao": { "esquerda": 33, "centro": 34, "direita": 33 } }
+		{ "material": "Farelo de soja", "codigo": "REC-FS-01", "vazao": 1800, "distribuicao": { "esquerda": 30, "centro": 40, "direita": 30 } },
+		{ "material": "Soja em grão", "codigo": "REC-SG-01", "vazao": 1950, "distribuicao": { "esquerda": 35, "centro": 30, "direita": 35 } },
+		{ "material": "Milho em grão", "codigo": "REC-MG-01", "vazao": 1860, "distribuicao": { "esquerda": 33, "centro": 34, "direita": 33 } }
 	],
 	"vagoes": [
 		{ "pos": 1, "placa": "HFE 718204-3", "vistoriado": true, "checklist": { "limpeza": true, "escotilhas": true, "comportas": true, "rodeiros": true }, "carga": 95.8, "bocas": [ 1, 2 ] },
@@ -25,12 +25,12 @@
 		{ "pos": 8, "placa": "HFE 720490-5", "vistoriado": true, "checklist": { "limpeza": true, "escotilhas": true, "comportas": true, "rodeiros": true }, "carga": 0, "bocas": [] }
 	],
 	"bocas": [
-		{ "n": 1, "silo": "Silo 01", "produto": "Farelo de soja", "status": "ativa", "abertura": 95, "vazao": 618, "estoque": 1840, "capacidade": 2500, "umidade": 12.4, "destino": 4, "descarregadoTurno": 412.6 },
-		{ "n": 2, "silo": "Silo 02", "produto": "Farelo de soja", "status": "ativa", "abertura": 90, "vazao": 558, "estoque": 2105, "capacidade": 2500, "umidade": 12.9, "destino": 4, "descarregadoTurno": 389.1 },
-		{ "n": 3, "silo": "Silo 03", "produto": "Farelo de soja", "status": "ativa", "abertura": 70, "vazao": 420, "estoque": 240, "capacidade": 1500, "umidade": 13.1, "destino": 4, "descarregadoTurno": 276.4 },
-		{ "n": 4, "silo": "Silo 04", "produto": "Farelo de soja", "status": "ativa", "abertura": 85, "vazao": 510, "estoque": 1620, "capacidade": 2500, "umidade": 12.6, "destino": 4, "descarregadoTurno": 351.8 },
-		{ "n": 5, "silo": "Silo 05", "produto": "Farelo de soja", "status": "ativa", "abertura": 80, "vazao": 480, "estoque": 1930, "capacidade": 2500, "umidade": 12.2, "destino": 4, "descarregadoTurno": 298.5 },
-		{ "n": 6, "silo": "Silo 06", "produto": "Farelo de soja", "status": "ativa", "abertura": 75, "vazao": 450, "estoque": 1210, "capacidade": 2000, "umidade": 12.8, "destino": 4, "descarregadoTurno": 184.2 }
+		{ "n": 1, "silo": "Silo 01", "produto": "Farelo de soja", "status": "ativa", "abertura": 95, "vazao": 285, "estoque": 1840, "capacidade": 2500, "umidade": 12.4, "destino": 4, "descarregadoTurno": 412.6 },
+		{ "n": 2, "silo": "Silo 02", "produto": "Farelo de soja", "status": "ativa", "abertura": 90, "vazao": 270, "estoque": 2105, "capacidade": 2500, "umidade": 12.9, "destino": 4, "descarregadoTurno": 389.1 },
+		{ "n": 3, "silo": "Silo 03", "produto": "Farelo de soja", "status": "ativa", "abertura": 70, "vazao": 210, "estoque": 240, "capacidade": 1500, "umidade": 13.1, "destino": 4, "descarregadoTurno": 276.4 },
+		{ "n": 4, "silo": "Silo 04", "produto": "Farelo de soja", "status": "ativa", "abertura": 85, "vazao": 255, "estoque": 1620, "capacidade": 2500, "umidade": 12.6, "destino": 4, "descarregadoTurno": 351.8 },
+		{ "n": 5, "silo": "Silo 05", "produto": "Farelo de soja", "status": "ativa", "abertura": 80, "vazao": 240, "estoque": 1930, "capacidade": 2500, "umidade": 12.2, "destino": 4, "descarregadoTurno": 298.5 },
+		{ "n": 6, "silo": "Silo 06", "produto": "Farelo de soja", "status": "ativa", "abertura": 75, "vazao": 225, "estoque": 1210, "capacidade": 2000, "umidade": 12.8, "destino": 4, "descarregadoTurno": 184.2 }
 	],
 	"fatura": {
 		"emitida": false,

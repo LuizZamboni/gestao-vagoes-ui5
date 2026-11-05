@@ -78,6 +78,21 @@ sap.ui.define([], function () {
 			return (s.receitas || []).filter(function (r) { return r.material === sMaterial; })[0] || null;
 		},
 
+		/** Quantas bocas trabalham com o material (base do cálculo da receita). */
+		bocasDoMaterial: function (s, sMaterial) {
+			return (s.bocas || []).filter(function (b) { return b.produto === sMaterial; }).length;
+		},
+
+		/**
+		 * Vazão nominal de UMA boca: a vazão da receita é o total da estação para
+		 * o material, dividido igualmente entre as bocas que trabalham com ele.
+		 */
+		vazaoPorBoca: function (s, sMaterial) {
+			var r = Regras.receita(s, sMaterial);
+			var n = Regras.bocasDoMaterial(s, sMaterial);
+			return r && n ? r.vazao / n : 0;
+		},
+
 		/** Seções formatadas para exibição (com meta por vagão, se informada). */
 		secoesReceita: function (oReceita, t, nMetaVagao) {
 			return SECOES.map(function (k) {
@@ -251,7 +266,7 @@ sap.ui.define([], function () {
 					ativa: bAtiva,
 					vazao: bAtiva ? b.vazao : 0,
 					vazaoTxt: f0(bAtiva ? b.vazao : 0),
-					nominalTxt: oRec ? f0(oRec.vazao) + " t/h" : "—",
+					nominalTxt: oRec ? f0(Regras.vazaoPorBoca(s, b.produto)) + " t/h" : "—",
 					receitaCodigo: oRec ? oRec.codigo : t("rec.semReceita"),
 					receitaSecoes: Regras.secoesReceita(oRec, t),
 					receitaDistTxt: oRec ? SECOES.map(function (k) { return t("sec." + k + ".sigla") + " " + oRec.distribuicao[k]; }).join(" · ") : "",
@@ -376,7 +391,9 @@ sap.ui.define([], function () {
 					material: c.produto,
 					codigo: oRecComp ? oRecComp.codigo : t("rec.semReceita"),
 					vazaoTxt: oRecComp ? f0(oRecComp.vazao) : "—",
-					bocasTxt: t("rec.bocasMaterial", [s.bocas.filter(function (b) { return b.produto === c.produto; }).length]),
+					porBocaTxt: oRecComp ? f0(Regras.vazaoPorBoca(s, c.produto)) : "—",
+					bocasTxt: t("rec.bocasMaterial", [Regras.bocasDoMaterial(s, c.produto)]),
+					calculoTxt: oRecComp ? t("rec.calculo", [f0(oRecComp.vazao), Regras.bocasDoMaterial(s, c.produto), f0(Regras.vazaoPorBoca(s, c.produto))]) : t("rec.semReceita"),
 					secoes: Regras.secoesReceita(oRecComp, t, ALVO)
 				},
 				estacaoTextos: {

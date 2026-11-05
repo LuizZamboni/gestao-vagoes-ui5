@@ -111,7 +111,7 @@ A grade CSS fica em `.vgTv`: cabeçalho, linha de receita + indicadores, e a lin
 
 - Tem geometria fixa em px (objeto `G`) e é **escalada para caber** no espaço (`_fit`, com `ResizeObserver`), sempre centralizada.
 - Mostra **6 bocas** (a quantidade vem do mock; a geometria se ajusta sozinha): silos com nível, cone, comporta, vazão e linhas de fluxo SVG animadas até o vagão de destino.
-- **Janela do trem:** mostra `SLOTS = 5` posições (a locomotiva é a posição 0), centradas no vagão selecionado, com animação de deslize. As setas ‹ › mostram quantos vagões estão escondidos; há um mini-mapa clicável. A navegação manual expira em `NAV_MS` (20 s).
+- **Janela do trem:** mostra **3 vagões grandes** (`SLOTS = 3`, `slotW` 220, `wagonH` 210), centrados no vagão selecionado. A locomotiva (posição 0) fica fora da janela (`MIN_START = 1`), para sempre aparecerem 3 vagões; com animação de deslize. As setas ‹ › mostram quantos vagões estão escondidos; há um mini-mapa clicável. A navegação manual expira em `NAV_MS` (20 s).
 - O vagão desenha o funil com **3 seções** (E/C/D) e a placa.
 - Atualiza o DOM **no lugar**, sem re-renderizar, para que as animações não reiniciem. O `LoadingStation` sobrescreve os setters com `setProperty(..., true)` e agrupa as atualizações num microtask.
 

@@ -496,9 +496,9 @@
 .vgWag:focus-visible { outline: 2px solid var(--vg-sel); outline-offset: 3px; }
 
 .vgWag__head { justify-content: space-between; align-items: center; gap: 6px; }
-.vgWag__num { font-size: 16px; font-weight: 700; }
-.vgWag__st { display: inline-flex; align-items: center; gap: 4px; font-size: 10px; font-weight: 700; white-space: nowrap; color: var(--vg-label); }
-.vgWag__dot { width: 7px; height: 7px; border-radius: 50%; background: currentColor; }
+.vgWag__num { font-size: 22px; font-weight: 700; }
+.vgWag__st { display: inline-flex; align-items: center; gap: 5px; font-size: 13px; font-weight: 700; white-space: nowrap; color: var(--vg-label); }
+.vgWag__dot { width: 9px; height: 9px; border-radius: 50%; background: currentColor; }
 
 .vgWag__hopper {
 	position: relative;
@@ -525,11 +525,11 @@
 }
 .vgWag__pct {
 	position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%);
-	font-size: 16px; font-weight: 700;
+	font-size: 24px; font-weight: 700;
 	text-shadow: 0 1px 5px rgba(0, 0, 0, .6);
 }
 .sapUiTheme-sap_horizon .vgWag__pct { text-shadow: 0 0 5px rgba(233, 236, 240, .9); }
-.vgWag__w { justify-content: space-between; align-items: center; font-size: 15px; }
+.vgWag__w { justify-content: space-between; align-items: center; font-size: 20px; }
 .vgWag__carga { font-weight: 700; font-variant-numeric: tabular-nums; }
 .vgWag__lock { display: none !important; width: 9px; height: 9px; border-radius: 50%; background: var(--vg-neg); }
 .vgWag.is-blocked .vgWag__lock { display: block !important; animation: vgPulse 1.1s ease-in-out infinite; }
@@ -814,7 +814,7 @@
 .vgPlate--lg.sapMText { font-size: calc(.9375 * var(--vg-r)); padding: calc(.1875 * var(--vg-r)) calc(.625 * var(--vg-r)); border-width: 2px; }
 .vgWag__plate {
 	align-self: flex-start;
-	font-size: 12px; padding: 1px 6px; line-height: 16px;
+	font-size: 16px; padding: 2px 8px; line-height: 20px;
 	border-radius: 3px;
 }
 .vgWag.is-blocked .vgWag__plate { opacity: .75; }

@@ -22,12 +22,14 @@
 sap.ui.define([], function () {
 	"use strict";
 
-	var SLOTS = 5;
+	/* Janela do trem: 3 vagões grandes. A locomotiva (posição 0) fica fora da janela. */
+	var SLOTS = 3;
+	var MIN_START = 1;
 	var NAV_MS = 20000;
 
 	/* Geometria fixa em px: facilita alinhar cones, linhas de fluxo e vagões. */
-	var G = { pad: 12, navW: 48, slotW: 136, gap: 12, unitW: 172, siloW: 124,
-		labelH: 34, siloH: 176, coneH: 56, gateH: 10, vzH: 26, flowH: 112, wagonH: 162, bogieH: 24, railH: 10,
+	var G = { pad: 12, navW: 48, slotW: 220, gap: 12, unitW: 172, siloW: 124,
+		labelH: 34, siloH: 176, coneH: 56, gateH: 10, vzH: 26, flowH: 112, wagonH: 210, bogieH: 24, railH: 10,
 		viewPadT: 16, miniH: 14 };
 	G.siloY = G.labelH;
 	G.coneY = G.siloY + G.siloH;
@@ -140,11 +142,11 @@ sap.ui.define([], function () {
 	};
 
 	StationDom.prototype._maxStart = function () {
-		return Math.max(0, this.nW + 1 - SLOTS);
+		return Math.max(MIN_START, this.nW + 1 - SLOTS);
 	};
 
 	StationDom.prototype._navegar = function (iStart) {
-		this.nav = { start: clamp(iStart, 0, this._maxStart()), at: Date.now() };
+		this.nav = { start: clamp(iStart, MIN_START, this._maxStart()), at: Date.now() };
 		if (this.last) { this._apply(this.last); }
 	};
 
@@ -330,7 +332,7 @@ sap.ui.define([], function () {
 		/* ---- janela visível da composição ---- */
 		if (this.nav && Date.now() - this.nav.at > NAV_MS) { this.nav = null; }
 		var iMax = this._maxStart();
-		var iStart = this.nav ? this.nav.start : clamp(iSel + 1 - Math.floor(SLOTS / 2), 0, iMax);
+		var iStart = this.nav ? this.nav.start : clamp(iSel + 1 - Math.floor(SLOTS / 2), MIN_START, iMax);
 		if (iStart !== this.start) {
 			if (this.start < 0) { css(this.train, "transition", "none"); }
 			css(this.train, "transform", "translateX(" + (-iStart * G.step) + "px)");
@@ -339,7 +341,7 @@ sap.ui.define([], function () {
 		}
 		var nOcultosL = Math.max(0, iStart - 1);
 		var nOcultosR = Math.max(0, nW + 1 - (iStart + SLOTS));
-		cls(this.navL.el, "vgNav vgNav--l", [iStart === 0 && "is-off"]);
+		cls(this.navL.el, "vgNav vgNav--l", [iStart <= MIN_START && "is-off"]);
 		cls(this.navR.el, "vgNav vgNav--r", [iStart >= iMax && "is-off"]);
 		txt(this.navL.n, nOcultosL ? "+" + nOcultosL : "");
 		txt(this.navR.n, nOcultosR ? "+" + nOcultosR : "");

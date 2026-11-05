@@ -54,7 +54,7 @@ webapp/
 ├── controller/Main.controller.js tick da simulação, foco automático, seleção, popover
 ├── control/LoadingStation.js     controle UI5 custom (wrapper; setters sem invalidar)
 ├── control/StationDom.js         desenho da estação em DOM puro (silos, fluxo, trem)
-├── model/mockData.json           composição, receitas, vagões (placa), 6 bocas, fatura
+├── model/mockData.json           composição, receitas, 3 vagões (placa), 6 bocas, fatura
 ├── model/Regras.js               regras de negócio + montagem do view model (puro)
 ├── model/Simulador.js            simulação da descarga e ações (estado imutável)
 ├── i18n/i18n.properties          textos pt-BR
@@ -99,7 +99,7 @@ A grade CSS fica em `.vgTv`: cabeçalho, linha de receita + indicadores, e a lin
 - **Indicadores** num **único painel com divisórias**: vazão total, carregado, vagões vistoriados e previsão de término.
 - **Lateral esquerda (vagões):**
   - "Vagão em foco": placa grande, carga com barra, 3 mini-tanques E/C/D (carga/meta), término, bocas, vistoria e checklist;
-  - "Composição": os 8 vagões com ponto de status, placa, barra e carga. Clicar seleciona o vagão.
+  - "Composição": os 3 vagões com ponto de status, placa, barra e carga. Clicar seleciona o vagão.
 - **Centro:** estação (`LoadingStation`).
 - **Lateral direita (faturamento):**
   - painel de **fatura em destaque**, que muda de cor por status (`data-st`: bloqueada, pronta ou emitida) e mostra motivo, peso a faturar e vagões faturados;
@@ -111,7 +111,7 @@ A grade CSS fica em `.vgTv`: cabeçalho, linha de receita + indicadores, e a lin
 
 - Tem geometria fixa em px (objeto `G`) e é **escalada para caber** no espaço (`_fit`, com `ResizeObserver`), sempre centralizada.
 - Mostra **6 bocas** (a quantidade vem do mock; a geometria se ajusta sozinha): silos com nível, cone, comporta, vazão e linhas de fluxo SVG animadas até o vagão de destino.
-- **Janela do trem:** mostra **3 vagões grandes** (`SLOTS = 3`, `slotW` 220, `wagonH` 210), centrados no vagão selecionado. A locomotiva (posição 0) fica fora da janela (`MIN_START = 1`), para sempre aparecerem 3 vagões; com animação de deslize. As setas ‹ › mostram quantos vagões estão escondidos; há um mini-mapa clicável. A navegação manual expira em `NAV_MS` (20 s).
+- **Janela do trem:** mostra **3 vagões grandes** (`SLOTS = 3`, `slotW` 300, `wagonH` 260), centrados no vagão selecionado. A locomotiva (posição 0) fica fora da janela (`MIN_START = 1`), para sempre aparecerem 3 vagões; com animação de deslize. As setas ‹ › mostram quantos vagões estão escondidos e há um mini-mapa clicável; os dois **somem** (`is-all`) quando a composição inteira cabe na janela. A navegação manual expira em `NAV_MS` (20 s).
 - O vagão desenha o funil com **3 seções** (E/C/D) e a placa.
 - Atualiza o DOM **no lugar**, sem re-renderizar, para que as animações não reiniciem. O `LoadingStation` sobrescreve os setters com `setProperty(..., true)` e agrupa as atualizações num microtask.
 

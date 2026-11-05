@@ -28,8 +28,8 @@ sap.ui.define([], function () {
 	var NAV_MS = 20000;
 
 	/* Geometria fixa em px: facilita alinhar cones, linhas de fluxo e vagões. */
-	var G = { pad: 12, navW: 48, slotW: 220, gap: 12, unitW: 172, siloW: 124,
-		labelH: 34, siloH: 176, coneH: 56, gateH: 10, vzH: 26, flowH: 112, wagonH: 210, bogieH: 24, railH: 10,
+	var G = { pad: 12, navW: 48, slotW: 300, gap: 12, unitW: 172, siloW: 124,
+		labelH: 34, siloH: 176, coneH: 56, gateH: 10, vzH: 26, flowH: 112, wagonH: 260, bogieH: 24, railH: 10,
 		viewPadT: 16, miniH: 14 };
 	G.siloY = G.labelH;
 	G.coneY = G.siloY + G.siloH;
@@ -324,7 +324,7 @@ sap.ui.define([], function () {
 		var bAlgumaAtiva = d.bocas.some(function (b) { return b.ativa; });
 		var bMove = !!d.running && bAlgumaAtiva;
 
-		cls(this.wrap, "vgSt__wrap", [!d.running && "is-paused", bMove && "is-moving"]);
+		cls(this.wrap, "vgSt__wrap", [!d.running && "is-paused", bMove && "is-moving", d.vagoes.length <= SLOTS && "is-all"]);
 		if (this.svg && this.svg.pauseAnimations) {
 			if (d.running) { this.svg.unpauseAnimations(); } else { this.svg.pauseAnimations(); }
 		}

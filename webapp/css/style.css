@@ -781,8 +781,11 @@
 	.vgStats { grid-template-columns: repeat(2, minmax(0, 1fr)); row-gap: calc(.875 * var(--vg-r)); }
 	.vgStat:nth-child(3) { border-left: 0; }
 
-	/* altura acompanha a proporção do desenho da estação (sem sobra) */
-	.vgCenter { height: auto; aspect-ratio: 16 / 10.4; max-height: calc(36 * var(--vg-r)); padding: calc(.5 * var(--vg-r)); }
+	/* altura acompanha a proporção do desenho da estação (1152 × 708, sem sobra).
+	   A estação fica em position:absolute: no Safari/iPhone o height:100% dentro de
+	   um bloco com aspect-ratio vira 0 e o desenho não aparecia. */
+	.vgCenter { height: auto; aspect-ratio: 1152 / 708; max-height: none; min-height: calc(14 * var(--vg-r)); padding: 0; }
+	.vgCenter > .vgSt { position: absolute !important; inset: calc(.5 * var(--vg-r)); height: auto !important; }
 	.vgSide { overflow: visible; }
 	.vgSide > .vgPanel, .vgSide--l > .vgPanel--grow { flex: 0 0 auto !important; }
 	.vgSide--r > .vgPanel--grow { flex: 0 0 auto; min-height: 0; }

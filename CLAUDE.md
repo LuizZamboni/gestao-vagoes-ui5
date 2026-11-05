@@ -124,6 +124,7 @@ A grade CSS fica em `.vgTv`: cabeçalho, linha de receita + indicadores, e a lin
   - a unidade `--vg-r` vem do tamanho do **app** (`cqw`/`cqh`), não da janela, e todo o CSS do layout usa `calc(X * var(--vg-r))` no lugar de `rem`;
   - isso mantém a mesma composição em 720p, 1080p e 4K, sem mexer em `html`/`body`.
 - **Quebras de layout** via `@container vgapp (max-width: 1099px) or (orientation: portrait)`: coluna única com rolagem (tablet e celular).
+  - no modo empilhado, `.vgCenter` usa `aspect-ratio: 1152 / 708` e a estação (`.vgSt`) fica em `position: absolute`. **Não volte** para `height: 100%`/flex ali: no Safari do iPhone a altura vira 0 e a estação some. O `_fit` também tem reserva: sem altura, escala pela largura e define `min-height`.
 - `FlexBox renderType="Bare"` é usado para montar o grid sem wrappers.
 - **Tema:** escuro (`sap_horizon_dark`) por padrão; o botão do cabeçalho alterna para `sap_horizon` via `sap/ui/core/Theming` e salva a escolha no `localStorage` (`vagoes.dashboard.tema`). O modelo `ui>/claro` controla o texto do botão.
 - O tema claro tem tokens próprios **fixos** (sem `var(--sap…)`) em `.sapUiTheme-sap_horizon .vgApp` e `.sapUiTheme-sap_horizon .vgSt`: paleta **cinza suave** (fundo `#d9dee4`, painéis `#e9ecf0`). O usuário achou o branco do Horizon forte demais; não volte ao branco.

@@ -155,9 +155,14 @@ sap.ui.define([], function () {
 		if (!this.root || !this.track || !this.geo) { return; }
 		var W = this.root.clientWidth;
 		var H = this.root.clientHeight;
-		if (!W || !H) { return; }
+		if (!W) { return; }
 		var w = this.geo.width;
 		var h = G.height;
+		// sem altura (alguns navegadores de celular): escala pela largura e reserva a altura
+		if (H < 2) {
+			H = Math.ceil(h * Math.min(W / w, 1.8));
+			css(this.root, "minHeight", H + "px");
+		}
 		var s = Math.min(W / w, H / h, 1.8);
 		var x = Math.round((W - w * s) / 2);
 		var y = Math.round((H - h * s) / 2);

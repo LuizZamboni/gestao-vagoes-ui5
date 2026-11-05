@@ -12,8 +12,11 @@ sap.ui.define([
 ], function (Regras) {
 	"use strict";
 
-	/** Fator de aceleração: toneladas por tick = vazão (t/h) / FATOR. */
-	var FATOR = 480;
+	/**
+	 * Fator de aceleração: toneladas por tick (1 s) = vazão (t/h) / FATOR.
+	 * 3600 = tempo real; valores menores aceleram a simulação.
+	 */
+	var FATOR = 1800;
 
 	function clone(o) { return JSON.parse(JSON.stringify(o)); }
 	function r1(v) { return Math.round(v * 10) / 10; }

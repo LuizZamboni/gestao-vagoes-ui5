@@ -56,16 +56,42 @@ webapp/
 ├── control/StationDom.js         desenho da estação em DOM puro (silos, fluxo, trem)
 ├── model/mockData.json           composição, receitas, 3 vagões (placa), 6 bocas, fatura
 ├── model/Regras.js               regras de negócio + montagem do view model (puro)
-├── model/Simulador.js            simulação da descarga e ações (estado imutável)
+├── model/Simulador.js            simulação (modo demonstração) e ações do operador
+├── model/Carregamento.js         aplica eventos do stream ao estado (modo real)
+├── model/stream/                 cliente SSE + validação das mensagens
 ├── i18n/i18n.properties          textos pt-BR
 └── css/style.css                 todo o visual
 preview/gestao-vagoes-preview.html  prévia antiga em HTML puro (desatualizada)
 ```
 
+## Stream de carregamento (dados reais)
+
+- **API:** `GET {servidor}/GestaoCooperado/stream` com `Accept: text/event-stream`. Cada evento SSE manda no `data:` um JSON `{"VagaoId":"HTC-0002","PesoAtualKg":500.5,"Status":"Carregando","DataHora":"2026-11-12T13:20:42.6379277Z"}`. O campo opcional `BocaId` liga a boca ao vagão.
+- **Configuração** (único lugar): `manifest.json` > `sap.ui5/config/carregamentoStream`.
+  - `servidor` vazio = mesma origem, que é o recomendado no S/4/BTP via destino ou proxy, sem CORS.
+  - `caminho`, `nomeEvento`, `enviarCredenciais`, `intervaloAtualizacaoTelaMs` (500), `segundosSemDadosParaAlerta` (15) e as esperas de reconexão.
+- **Modo demonstração:** usa o `Simulador` antigo e é ativado por `modoDemonstracao: true` ou pela meta tag `vagoes-modo-demonstracao` do `index-cdn.html`. Assim o **Netlify continua em demonstração**; o `index.html` local e o Launchpad usam o stream.
+- **Arquivos:**
+  - `model/stream/EventoCarregamento.js`: valida e normaliza cada mensagem (tamanho, `VagaoId` por regex, faixa de peso, `DataHora` com 7 casas, mapa de status).
+  - `model/stream/CarregamentoStream.js`: `EventSource` com reconexão por espera crescente, checagem de origem e validação da URL.
+  - `model/Carregamento.js`: aplica os eventos ao estado.
+    - peso kg → t, repartido nas seções E/C/D pela receita;
+    - vazão medida por Δpeso/Δtempo (média móvel);
+    - vagão desconhecido é incluído;
+    - liga as bocas `ativa`/`aguardandoVagao` ao vagão em carga e reparte a vazão pela abertura;
+    - bocas `parada`/`siloVazio` não mudam.
+- **Controller:** os eventos vão para um buffer, aplicado a cada 500 ms. Pausa com a aba oculta, e a conexão fecha no `onExit`.
+- **Diferenças no modo stream:**
+  - pesos do mock zerados até chegar leitura;
+  - "Retirar excesso" e a escolha de destino da boca ficam desabilitados;
+  - a pílula do cabeçalho mostra o status da conexão;
+  - validações extras: sem conexão, carga sem vistoria, sem atualização, vagão incluído, mensagens descartadas.
+- **Teste local:** `node test/servidor-sse-teste.js` (porta 8787) e `"servidor": "http://localhost:8787"`.
+
 ## Arquitetura e fluxo de dados
 
 1. O `Main.controller` carrega `mockData.json` (modelo `mock`) e cria o estado com `Simulador.estadoInicial`.
-2. A cada `INTERVALO_MS` (1 s), roda `Simulador.passo(state)`, que devolve um novo estado, e depois `_publicar()`.
+2. **Modo stream:** o buffer de eventos é aplicado com `Carregamento.aplicarEventos` + `sincronizarBocas` a cada 500 ms. **Modo demonstração:** a cada `INTERVALO_MS` (1 s), roda `Simulador.passo(state)`. Nos dois casos vem depois o `_publicar()`.
 3. O `_publicar()` chama `_seguirCarregamento()` (foco automático) e `Regras.montarViewModel(state, ui, t)`, e o resultado entra num `JSONModel` em modo **OneWay** (`setData`).
 4. As ações da tela passam por `_executar(Simulador.acao, ...)`. A view nunca escreve direto no modelo.
 5. Na implementação definitiva, `passo()` vira polling/WebSocket do backend, as ações viram chamadas OData, e as regras de validação e fatura vão para o backend.

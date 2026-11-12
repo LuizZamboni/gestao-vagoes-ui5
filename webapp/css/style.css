@@ -104,6 +104,7 @@
 .vgLivePill .sapMText { color: var(--vg-live); font-size: inherit; font-weight: inherit; }
 .vgLivePill[data-st="live"] { --vg-live: var(--vg-ok); }
 .vgLivePill[data-st="done"] { --vg-live: var(--vg-info-c); }
+.vgLivePill[data-st="off"] { --vg-live: var(--vg-err, #ff5c5c); }
 .vgLivePill__dot.sapMText {
 	display: inline-block; width: calc(.5 * var(--vg-r)); height: calc(.5 * var(--vg-r)); border-radius: 50%;
 	background: var(--vg-live);

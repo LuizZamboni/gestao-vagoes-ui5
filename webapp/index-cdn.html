@@ -10,6 +10,11 @@
 		(ex.: npx http-server webapp) e abra /index-cdn.html.
 		Para fixar a versão, troque por https://ui5.sap.com/<versão>/resources/sap-ui-core.js
 	-->
+	<!--
+		Modo demonstração: esta página (Netlify) usa a simulação, sem precisar do
+		servidor do stream. O controller lê esta meta tag; o Launchpad ignora este arquivo.
+	-->
+	<meta name="vagoes-modo-demonstracao" content="true">
 	<script id="sap-ui-bootstrap"
 		src="https://ui5.sap.com/1.120.50/resources/sap-ui-core.js"
 		data-sap-ui-theme="sap_horizon_dark"

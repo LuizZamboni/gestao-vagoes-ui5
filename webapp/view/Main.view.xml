@@ -36,7 +36,7 @@
 					<Text text="" class="vgLivePill__dot"/>
 					<Text text="{/view/liveText}"/>
 				</HBox>
-				<Text text="{/view/hora}" class="vgHead__clock"/>
+				<Text text="{/view/hora}" class="vgHead__clock" tooltip="{/view/ultimoEventoTxt}"/>
 			</FlexBox>
 		</FlexBox>
 
@@ -134,6 +134,7 @@
 
 				<VBox renderType="Bare" class="vgFacts">
 					<HBox renderType="Bare" justifyContent="SpaceBetween"><Text text="{i18n>lblEtaVagao}" class="vgFacts__k"/><Text text="{/sel/etaTxt}" class="vgFacts__v"/></HBox>
+					<HBox renderType="Bare" justifyContent="SpaceBetween" visible="{/view/modoStream}"><Text text="{i18n>lblLeitura}" class="vgFacts__k"/><Text text="{/sel/leituraTxt}" class="vgFacts__v"/></HBox>
 					<HBox renderType="Bare" justifyContent="SpaceBetween"><Text text="{i18n>lblBocas}" class="vgFacts__k"/><Text text="{/sel/bocasTxt}" class="vgFacts__v"/></HBox>
 					<HBox renderType="Bare" justifyContent="SpaceBetween"><Text text="{i18n>lblVistoria}" class="vgFacts__k"/><Text text="{/sel/vistText}" class="vgFacts__v"><customData><core:CustomData key="st" value="{/sel/vistState}" writeToDom="true"/></customData></Text></HBox>
 				</VBox>

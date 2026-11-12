@@ -126,11 +126,16 @@ sap.ui.define([], function () {
 			return aDisp.filter(function (w) { return w.pos > iAposPos; })[0] || aDisp[0] || null;
 		},
 
+		/**
+		 * Status do vagão na tela. Ordem de prioridade:
+		 * sem vistoria > excesso > em carga (boca ligada ou stream "Carregando") > peso.
+		 * statusChave vem do stream (ver model/Carregamento.js); no modo demonstração é vazio.
+		 */
 		statusVagao: function (oVagao, oComposicao, mDestinosAtivos) {
 			if (!oVagao.vistoriado) { return "bloqueado"; }
 			if (oVagao.carga > oComposicao.limiteVagao) { return "excesso"; }
-			if (mDestinosAtivos[oVagao.pos]) { return "carregando"; }
-			if (oVagao.carga >= oComposicao.limiteVagao * 0.94) { return "carregado"; }
+			if (mDestinosAtivos[oVagao.pos] || oVagao.statusChave === "carregando") { return "carregando"; }
+			if (oVagao.statusChave === "carregado" || oVagao.carga >= oComposicao.limiteVagao * 0.94) { return "carregado"; }
 			if (oVagao.carga > 0) { return "parcial"; }
 			return "aguardando";
 		},
@@ -147,6 +152,15 @@ sap.ui.define([], function () {
 			var ALVO = Regras.alvo(c);
 			var bEmitida = !!s.fatura.emitida;
 			var bRodando = !!s.simulacao.rodando && !bEmitida;
+
+			// Modo stream: s.conexao existe (ver Carregamento.prepararEstado). Modo demonstração: não existe.
+			var oConexao = s.conexao || null;
+			var bStream = !!oConexao;
+			var iAgoraMs = Date.now();
+			var iLimiteSemDadosMs = ui.limiteSemDadosMs || 15000;
+			if (bStream) {
+				bRodando = oConexao.status === "conectado" && !bEmitida;
+			}
 
 			var oRecComp = Regras.receita(s, c.produto);
 			var aAtivas = s.bocas.filter(function (b) { return b.status === "ativa" && b.destino != null; });
@@ -224,7 +238,12 @@ sap.ui.define([], function () {
 							iconColor: bOk ? "Positive" : "Negative"
 						};
 					}),
-					podeRetirar: w.carga > LIM && !bEmitida,
+					// no modo stream o peso vem da balança: ajuste manual seria sobrescrito
+					podeRetirar: w.carga > LIM && !bEmitida && !bStream,
+					statusSistemaTxt: w.statusSistema || "—",
+					leituraTxt: w.recebidoEmMs ? hora(new Date(w.dataHoraMs)) : t("semLeitura"),
+					semAtualizacao: bStream && w.statusChave === "carregando" && !!w.recebidoEmMs && iAgoraMs - w.recebidoEmMs > iLimiteSemDadosMs,
+					incluidoPeloStream: !!w.incluidoPeloStream,
 					retirarTxt: t("acaoRetirarExcesso", [f1(Math.max(0, w.carga - LIM))])
 				};
 			});
@@ -293,6 +312,8 @@ sap.ui.define([], function () {
 					alertaTipo: sAlertaTipo,
 					os: b.os || "",
 					podeOperar: b.status !== "siloVazio" && !!oRec && !bEmitida,
+					// no modo stream o destino vem do vagão em carga informado pela balança
+					podeEscolherDestino: b.status !== "siloVazio" && !!oRec && !bEmitida && !bStream,
 					ligada: bLigada,
 					acaoTexto: t(bLigada ? "pop.parar" : "pop.iniciar"),
 					acaoTipo: bLigada ? "Reject" : "Accept",
@@ -323,8 +344,13 @@ sap.ui.define([], function () {
 					navegavel: iVagao >= 0 || iBoca >= 0
 				});
 			}
+			if (bStream && (oConexao.status === "desconectado" || oConexao.status === "indisponivel")) {
+				add("Error", t("val.semConexao.t"), t("val.semConexao.d"), -1, -1);
+			}
 			s.vagoes.forEach(function (w, i) {
-				if (!w.vistoriado) {
+				if (!w.vistoriado && (w.carga > 0 || w.statusChave === "carregando")) {
+					add("Error", t("val.cargaSemVistoria.t", [pad(w.pos)]), t("val.cargaSemVistoria.d", [w.placa, f1(w.carga)]), i, -1);
+				} else if (!w.vistoriado) {
 					add("Error", t("val.semVistoria.t", [pad(w.pos)]), t("val.semVistoria.d", [w.placa]), i, -1);
 				}
 				if (w.carga > LIM) {
@@ -338,6 +364,25 @@ sap.ui.define([], function () {
 				}
 			});
 			var nErros = aVal.length;
+			if (bStream) {
+				if (oConexao.status === "reconectando") {
+					add("Warning", t("val.reconectando.t"), t("val.reconectando.d"), -1, -1);
+				}
+				aVagoes.forEach(function (oVagao) {
+					if (oVagao.semAtualizacao) {
+						add("Warning", t("val.semAtualizacao.t", [oVagao.label]), t("val.semAtualizacao.d", [oVagao.placa, oVagao.leituraTxt]), oVagao.index, -1);
+					}
+					if (oVagao.incluidoPeloStream) {
+						add("Warning", t("val.incluido.t", [oVagao.placa]), t("val.incluido.d"), oVagao.index, -1);
+					}
+				});
+				if (oConexao.mensagensDescartadas > 0) {
+					add("Warning", t("val.descartadas.t", [oConexao.mensagensDescartadas]), t("val.descartadas.d"), -1, -1);
+				}
+				if (oConexao.vagoesIgnorados > 0) {
+					add("Warning", t("val.limiteVagoes.t", [oConexao.vagoesIgnorados]), t("val.limiteVagoes.d"), -1, -1);
+				}
+			}
 			aBocas.forEach(function (b) {
 				if (b.status === "siloVazio") {
 					add("Warning", t("val.siloVazio.t", [b.nome]), t("val.siloVazio.d", [b.silo]), -1, b.index);
@@ -346,7 +391,7 @@ sap.ui.define([], function () {
 				}
 			});
 			var nAguardando = s.vagoes.filter(function (w) {
-				return w.vistoriado && w.carga === 0 && !mDestinos[w.pos];
+				return w.vistoriado && w.carga === 0 && !mDestinos[w.pos] && w.statusChave !== "carregando";
 			}).length;
 			if (nAguardando > 0) {
 				add("Warning", nAguardando === 1 ? t("val.aguardando1.t") : t("val.aguardandoN.t", [nAguardando]),
@@ -422,9 +467,14 @@ sap.ui.define([], function () {
 					rodandoFlag: !!s.simulacao.rodando,
 					focoLabel: t(ui.auto ? "focoAuto" : "focoManual"),
 					focoKey: ui.auto ? "auto" : "manual",
-					liveKey: bEmitida ? "done" : (bRodando ? "live" : "paused"),
+					liveKey: bEmitida ? "done" : (bStream
+						? ({ conectado: "live", desconectado: "off", indisponivel: "off" }[oConexao.status] || "paused")
+						: (bRodando ? "live" : "paused")),
 					hora: hora(new Date(s.simulacao.ultimaAtualizacao)),
-					liveText: bEmitida ? t("statusFaturada") : (s.simulacao.rodando ? t("statusAoVivo") : t("statusPausado")),
+					liveText: bEmitida ? t("statusFaturada")
+						: (bStream ? t("conexao." + oConexao.status) : (s.simulacao.rodando ? t("statusAoVivo") : t("statusPausado"))),
+					modoStream: bStream,
+					ultimoEventoTxt: bStream ? (oConexao.ultimoEventoMs ? t("ultimoEvento", [hora(new Date(oConexao.ultimoEventoMs))]) : t("nenhumEvento")) : "",
 					liveState: bEmitida ? "Success" : (bRodando ? "Information" : "None"),
 					liveIcon: bEmitida ? "sap-icon://accept" : (bRodando ? "sap-icon://status-in-process" : "sap-icon://media-pause"),
 					simTexto: s.simulacao.rodando ? t("acaoPausar") : t("acaoRetomar"),

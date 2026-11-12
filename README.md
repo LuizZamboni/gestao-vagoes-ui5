@@ -12,6 +12,54 @@ Protótipo **somente front-end**, com dados mock, de um dashboard para gerenciar
 - **Tema:** `sap_horizon_dark`, com alternância para `sap_horizon` pelo botão de paleta
 - **Idioma:** pt-BR (`i18n/i18n.properties`)
 
+## Stream de carregamento (dados reais)
+
+A tela consome `GET {servidor}/GestaoCooperado/stream` (`Accept: text/event-stream`). Cada evento traz:
+
+```json
+{"VagaoId":"HTC-0002","PesoAtualKg":500.5,"Status":"Carregando","DataHora":"2026-11-12T13:20:42.6379277Z"}
+```
+
+**Onde colocar o servidor:** `webapp/manifest.json` → `sap.ui5` → `config` → `carregamentoStream` → `"servidor"`.
+
+- Ex.: `"https://meuservidor:5001"`. Sem protocolo, assume `https://`.
+- **Deixe vazio no S/4/BTP** e exponha `/GestaoCooperado/*` na mesma origem do Launchpad (destino/rota no approuter ou Web Dispatcher). Assim não há CORS e vale a autenticação do SAP.
+
+| Campo | Uso |
+|---|---|
+| `servidor` | Só o endereço do servidor (vazio = mesma origem) |
+| `caminho` | `/GestaoCooperado/stream` |
+| `nomeEvento` | `message` (padrão SSE). Troque se o backend usar `event: nome` |
+| `enviarCredenciais` | `true` só para outro domínio com cookie (exige CORS com origem explícita) |
+| `modoDemonstracao` | `true` = simulação local, sem servidor (o `index-cdn.html`/Netlify já liga isso por meta tag) |
+| `intervaloAtualizacaoTelaMs` | Frequência de atualização da tela (500 ms) |
+| `segundosSemDadosParaAlerta` | Aviso de "sem atualização da balança" (15 s) |
+
+**Como os dados entram:**
+
+- `VagaoId` → vagão (campo `id` no `mockData.json`). Vagão desconhecido é incluído com aviso.
+- `PesoAtualKg` → carga em t, repartida nas seções E/C/D pela receita.
+- `Status` → status do vagão. O texto original fica disponível.
+- `DataHora` → ordem dos eventos e vazão medida.
+- `BocaId` *(opcional)* → liga a boca exata ao vagão. Sem ele, as bocas ligadas vão para o vagão em carga.
+
+**Checklist do servidor/proxy:**
+
+- `Content-Type: text/event-stream`, `Cache-Control: no-cache`.
+- Sem buffering/compressão no proxy (nginx: `X-Accel-Buffering: no`).
+- `: ping` a cada 15–30 s.
+- Se for outro domínio, incluir em `connect-src` na CSP do Launchpad.
+
+**Teste local:** `node test/servidor-sse-teste.js` e `"servidor": "http://localhost:8787"`.
+
+**Segurança e performance:**
+
+- Cada mensagem é validada (≤ 4 KB, `VagaoId` por regex, faixa de peso, texto saneado) e só são aceitas mensagens da origem configurada.
+- URL só `http(s)`, sem usuário/senha. O servidor não pode ser trocado por parâmetro de URL.
+- Limites: no máximo 60 vagões e 2.000 eventos no buffer.
+- Eventos aplicados em lote a cada 500 ms; nada é processado com a aba oculta; a conexão fecha ao sair do app.
+- Reconexão automática com espera crescente.
+
 ## Como rodar
 
 ```bash

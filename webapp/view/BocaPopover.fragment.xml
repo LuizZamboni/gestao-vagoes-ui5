@@ -75,7 +75,7 @@
 					forceSelection="false"
 					items="{/destinos}"
 					selectedKey="{/bocaSel/destinoKey}"
-					enabled="{/bocaSel/podeOperar}"
+					enabled="{/bocaSel/podeEscolherDestino}"
 					change=".onDestinoChange">
 					<core:Item key="{key}" text="{text}"/>
 				</Select>

@@ -15,9 +15,9 @@
 		{ "material": "Milho em grão", "codigo": "REC-MG-01", "vazao": 1860, "distribuicao": { "esquerda": 33, "centro": 34, "direita": 33 } }
 	],
 	"vagoes": [
-		{ "pos": 1, "placa": "HFE 718204-3", "vistoriado": true, "checklist": { "limpeza": true, "escotilhas": true, "comportas": true, "rodeiros": true }, "carga": 95.8, "bocas": [ 1, 2 ] },
-		{ "pos": 2, "placa": "HFE 719155-1", "vistoriado": true, "checklist": { "limpeza": true, "escotilhas": true, "comportas": true, "rodeiros": true }, "carga": 61.3, "bocas": [ 1, 2, 3, 4, 5 ] },
-		{ "pos": 3, "placa": "HFE 720102-4", "vistoriado": true, "checklist": { "limpeza": true, "escotilhas": true, "comportas": true, "rodeiros": true }, "carga": 0, "bocas": [] }
+		{ "pos": 1, "id": "HTC-0001", "placa": "HFE 718204-3", "vistoriado": true, "checklist": { "limpeza": true, "escotilhas": true, "comportas": true, "rodeiros": true }, "carga": 95.8, "bocas": [ 1, 2 ] },
+		{ "pos": 2, "id": "HTC-0002", "placa": "HFE 719155-1", "vistoriado": true, "checklist": { "limpeza": true, "escotilhas": true, "comportas": true, "rodeiros": true }, "carga": 61.3, "bocas": [ 1, 2, 3, 4, 5 ] },
+		{ "pos": 3, "id": "HTC-0003", "placa": "HFE 720102-4", "vistoriado": true, "checklist": { "limpeza": true, "escotilhas": true, "comportas": true, "rodeiros": true }, "carga": 0, "bocas": [] }
 	],
 	"bocas": [
 		{ "n": 1, "silo": "Silo 01", "produto": "Farelo de soja", "status": "ativa", "abertura": 95, "vazao": 285, "estoque": 1840, "capacidade": 2500, "umidade": 12.4, "destino": 2, "descarregadoTurno": 412.6 },

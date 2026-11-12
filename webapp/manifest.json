@@ -9,7 +9,7 @@
 			"fallbackLocale": ""
 		},
 		"applicationVersion": {
-			"version": "0.1.0"
+			"version": "0.2.0"
 		},
 		"title": "{{appTitle}}",
 		"description": "{{appDescription}}",
@@ -61,6 +61,19 @@
 		"contentDensities": {
 			"compact": true,
 			"cozy": true
+		},
+		"config": {
+			"carregamentoStream": {
+				"servidor": "",
+				"caminho": "/GestaoCooperado/stream",
+				"nomeEvento": "message",
+				"enviarCredenciais": false,
+				"modoDemonstracao": false,
+				"intervaloAtualizacaoTelaMs": 500,
+				"segundosSemDadosParaAlerta": 15,
+				"esperaReconexaoInicialMs": 2000,
+				"esperaReconexaoMaximaMs": 30000
+			}
 		},
 		"models": {
 			"i18n": {

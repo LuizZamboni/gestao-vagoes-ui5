@@ -1,15 +1,40 @@
+/**
+ * Main.controller
+ * ------------------------------------------------------------------
+ * Duas fontes de dados, escolhidas na inicialização:
+ *
+ *  1. STREAM (produção): eventos SSE de GET {servidor}/GestaoCooperado/stream.
+ *     Configuração em manifest.json > sap.ui5 > config > carregamentoStream.
+ *     Os eventos entram num buffer; a cada "intervaloAtualizacaoTelaMs" o buffer
+ *     é aplicado ao estado (model/Carregamento.js) e a tela é atualizada.
+ *
+ *  2. DEMONSTRAÇÃO: a simulação local (model/Simulador.js), sem servidor.
+ *     Ativada por "modoDemonstracao": true no manifest ou pela meta tag
+ *     "vagoes-modo-demonstracao" (usada no index-cdn.html / Netlify).
+ *
+ * Nos dois casos a tela é montada pelo mesmo Regras.montarViewModel.
+ */
 sap.ui.define([
 	"sap/ui/core/mvc/Controller",
 	"sap/ui/model/json/JSONModel",
 	"sap/m/MessageToast",
 	"sap/ui/core/Theming",
+	"sap/base/Log",
 	"../model/Regras",
-	"../model/Simulador"
-], function (Controller, JSONModel, MessageToast, Theming, Regras, Simulador) {
+	"../model/Simulador",
+	"../model/Carregamento",
+	"../model/stream/CarregamentoStream"
+], function (Controller, JSONModel, MessageToast, Theming, Log, Regras, Simulador, Carregamento, CarregamentoStream) {
 	"use strict";
 
-	/** Intervalo da simulação. Em produção: polling/WebSocket do backend. */
+	/** Intervalo da simulação (modo demonstração). */
 	var INTERVALO_MS = 1000;
+
+	/** Máximo de eventos guardados com a aba oculta (proteção de memória). */
+	var LIMITE_EVENTOS_NO_BUFFER = 2000;
+
+	/** No modo stream, a tela é recalculada ao menos a cada X ms (relógio e alerta "sem atualização"). */
+	var INTERVALO_VERIFICACAO_MS = 1000;
 
 	/** Depois de uma seleção manual, volta a seguir o vagão em carga após este tempo. */
 	var MANUAL_MS = 20000;
@@ -44,17 +69,112 @@ sap.ui.define([
 			var oMock = oComponent.getModel("mock");
 			var pBundle = Promise.resolve(oComponent.getModel("i18n").getResourceBundle());
 
+			this._oConfigStream = Object.assign({}, oComponent.getManifestEntry("/sap.ui5/config/carregamentoStream"));
+			this._ui.limiteSemDadosMs = (this._oConfigStream.segundosSemDadosParaAlerta || 15) * 1000;
+			this._aEventosPendentes = [];
+
 			Promise.all([pBundle, oMock.dataLoaded()]).then(function (aRes) {
 				var oBundle = aRes[0];
 				this._t = function (sKey, aArgs) { return oBundle.getText(sKey, aArgs); };
-				this._state = Simulador.estadoInicial(oMock.getData());
-				this._publicar();
-				this._iTimer = setInterval(this._tick.bind(this), INTERVALO_MS);
-			}.bind(this));
+				var oEstadoInicial = Simulador.estadoInicial(oMock.getData());
+				if (this._modoDemonstracao()) {
+					this._state = oEstadoInicial;
+					this._publicar();
+					this._iTimer = setInterval(this._tick.bind(this), INTERVALO_MS);
+				} else {
+					this._iniciarStream(oEstadoInicial);
+				}
+			}.bind(this)).catch(function (oErro) {
+				Log.error("Falha ao carregar dados iniciais", oErro && oErro.message, "vagoes.dashboard");
+			});
 		},
 
 		onExit: function () {
+			// fecha a conexão e os timers ao sair do app (navegação no Launchpad)
 			clearInterval(this._iTimer);
+			if (this._oStream) {
+				this._oStream.parar();
+			}
+			if (this._fnAoMudarVisibilidade) {
+				document.removeEventListener("visibilitychange", this._fnAoMudarVisibilidade);
+			}
+		},
+
+		/* =========================================================== */
+		/* Stream de carregamento (SSE)                                */
+		/* =========================================================== */
+
+		_modoDemonstracao: function () {
+			return !!this._oConfigStream.modoDemonstracao ||
+				!!document.querySelector("meta[name='vagoes-modo-demonstracao'][content='true']");
+		},
+
+		_iniciarStream: function (oEstadoInicial) {
+			this._state = Carregamento.prepararEstado(oEstadoInicial);
+			this._iUltimaPublicacaoMs = 0;
+			this._bPrecisaPublicar = true;
+
+			this._oStream = new CarregamentoStream(this._oConfigStream, {
+				aoReceberEvento: function (oEvento) {
+					this._aEventosPendentes.push(oEvento);
+					if (this._aEventosPendentes.length > LIMITE_EVENTOS_NO_BUFFER) {
+						this._compactarBuffer();
+					}
+				}.bind(this),
+				aoMudarStatusConexao: function (sStatus) {
+					this._state = Carregamento.definirStatusConexao(this._state, sStatus);
+					this._bPrecisaPublicar = true;
+				}.bind(this),
+				aoDescartarMensagem: function () {
+					this._state = Carregamento.registrarMensagemDescartada(this._state);
+					this._bPrecisaPublicar = true;
+				}.bind(this)
+			});
+
+			this._publicar();
+			this._oStream.iniciar();
+
+			var iIntervalo = Math.max(200, this._oConfigStream.intervaloAtualizacaoTelaMs || 500);
+			this._iTimer = setInterval(this._aplicarEventosPendentes.bind(this), iIntervalo);
+
+			this._fnAoMudarVisibilidade = function () {
+				if (!document.hidden) { this._aplicarEventosPendentes(); }
+			}.bind(this);
+			document.addEventListener("visibilitychange", this._fnAoMudarVisibilidade);
+		},
+
+		/** Aplica o buffer de eventos e atualiza a tela (no máximo 1x por intervalo). */
+		_aplicarEventosPendentes: function () {
+			if (!this._state || document.hidden) {
+				return; // aba oculta: os eventos ficam no buffer até voltar
+			}
+			var iAgoraMs = Date.now();
+			var bTemEventos = this._aEventosPendentes.length > 0;
+			if (!bTemEventos && !this._bPrecisaPublicar && iAgoraMs - this._iUltimaPublicacaoMs < INTERVALO_VERIFICACAO_MS) {
+				return;
+			}
+			if (bTemEventos) {
+				var aEventos = this._aEventosPendentes;
+				this._aEventosPendentes = [];
+				this._state = Carregamento.aplicarEventos(this._state, aEventos);
+			}
+			this._state = Carregamento.sincronizarBocas(this._state, iAgoraMs, this._ui.limiteSemDadosMs);
+			this._publicar();
+			this._bPrecisaPublicar = false;
+			this._iUltimaPublicacaoMs = iAgoraMs;
+		},
+
+		/** Mantém só os 2 últimos eventos de cada vagão (suficiente para peso e vazão). */
+		_compactarBuffer: function () {
+			var mPorVagao = {};
+			this._aEventosPendentes.forEach(function (oEvento) {
+				var aLista = mPorVagao[oEvento.vagaoId] = mPorVagao[oEvento.vagaoId] || [];
+				aLista.push(oEvento);
+				if (aLista.length > 2) { aLista.shift(); }
+			});
+			this._aEventosPendentes = Object.keys(mPorVagao)
+				.reduce(function (aTodos, sId) { return aTodos.concat(mPorVagao[sId]); }, [])
+				.sort(function (oA, oB) { return oA.recebidoEmMs - oB.recebidoEmMs; });
 		},
 
 		/* =========================================================== */
@@ -120,6 +240,12 @@ sap.ui.define([
 			var s = this._state;
 			var oBoca = s.bocas.filter(function (b) { return b.status === "ativa" && b.destino != null; })[0];
 			if (!oBoca) {
+				// modo stream com todas as bocas paradas: usa o status informado pela balança
+				for (var j = 0; j < s.vagoes.length; j++) {
+					if (s.vagoes[j].statusChave === "carregando") {
+						return j;
+					}
+				}
 				return -1;
 			}
 			for (var i = 0; i < s.vagoes.length; i++) {
@@ -142,6 +268,10 @@ sap.ui.define([
 			}
 			var aArgs = Array.prototype.slice.call(arguments, 1);
 			this._state = fnAcao.apply(Simulador, [this._state].concat(aArgs));
+			if (this._oStream) {
+				// modo stream: religa as bocas ao vagão em carga logo após a ação do operador
+				this._state = Carregamento.sincronizarBocas(this._state, Date.now(), this._ui.limiteSemDadosMs);
+			}
 			this._publicar();
 		},
 

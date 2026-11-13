@@ -29,13 +29,19 @@ sap.ui.define([
 
 	var NOME_COMPONENTE_LOG = "vagoes.dashboard.CarregamentoStream";
 
-	/** Estados possíveis da conexão (também usados pela tela). */
+	/**
+	 * Estados possíveis da fonte de eventos (também usados pela tela).
+	 * PARADO = o usuário parou; DESCONECTADO/INDISPONIVEL = falha.
+	 * AUTOMATICO é usado pelo CarregamentoAutomatico (mesma interface).
+	 */
 	var STATUS = {
 		CONECTANDO: "conectando",
 		CONECTADO: "conectado",
 		RECONECTANDO: "reconectando",
 		DESCONECTADO: "desconectado",
-		INDISPONIVEL: "indisponivel"
+		INDISPONIVEL: "indisponivel",
+		PARADO: "parado",
+		AUTOMATICO: "automatico"
 	};
 
 	/** Valores padrão. Podem ser sobrescritos em manifest.json > sap.ui5 > config > carregamentoStream. */
@@ -86,7 +92,7 @@ sap.ui.define([
 		this._oEventSource = null;
 		this._iTentativasReconexao = 0;
 		this._iTimerReconexao = null;
-		this._sStatus = STATUS.DESCONECTADO;
+		this._sStatus = STATUS.PARADO;
 		this._sUrl = "";
 		this._sOrigemEsperada = "";
 
@@ -128,11 +134,14 @@ sap.ui.define([
 		this._oEventSource.addEventListener("error", this._fnAoFalhar);
 	};
 
-	/** Fecha a conexão e cancela reconexões pendentes. Chamar sempre ao sair da tela. */
+	/**
+	 * Fecha a conexão e cancela reconexões pendentes (botão "Parar").
+	 * Chamar sempre ao sair da tela, para não deixar conexão aberta.
+	 */
 	CarregamentoStream.prototype.parar = function () {
 		this._fecharEventSource();
 		this._iTentativasReconexao = 0;
-		this._definirStatus(STATUS.DESCONECTADO);
+		this._definirStatus(STATUS.PARADO);
 	};
 
 	/** Força uma nova conexão imediatamente (botão "Reconectar"). */
@@ -140,6 +149,12 @@ sap.ui.define([
 		this._iTentativasReconexao = 0;
 		this.iniciar();
 	};
+
+	/**
+	 * Existe só para manter a mesma interface do CarregamentoAutomatico:
+	 * o stream não guarda contadores próprios, então não há o que zerar.
+	 */
+	CarregamentoStream.prototype.zerarContadores = function () {};
 
 	CarregamentoStream.prototype.getStatus = function () {
 		return this._sStatus;

@@ -2,92 +2,78 @@
 	xmlns="sap.m"
 	xmlns:core="sap.ui.core"
 	xmlns:form="sap.ui.layout.form">
+	<!--
+		Popover de uma boca (abre ao tocar em um silo na estação 3D).
+		Mostra os dados da boca selecionada (/bocaSelecionada, montado em
+		model/ModeloTela.js) e permite ligar/desligar e ajustar a comporta.
+		O modelo é somente leitura: o Slider avisa o controller (liveChange),
+		que grava no estado e republica a tela.
+	-->
 	<ResponsivePopover
 		id="bocaPopover"
-		title="{/bocaSel/titulo}"
+		title="{/bocaSelecionada/titulo}"
 		placement="Auto"
-		contentWidth="23rem"
+		contentWidth="22rem"
 		class="vgBocaPop">
 		<content>
 			<VBox class="sapUiSmallMargin">
 				<FlexBox justifyContent="SpaceBetween" alignItems="Center">
 					<ObjectStatus
-						text="{/bocaSel/statusText}"
-						state="{/bocaSel/statusState}"
-						icon="{/bocaSel/statusIcon}"
+						text="{/bocaSelecionada/statusTexto}"
+						state="{/bocaSelecionada/statusEstado}"
+						icon="{/bocaSelecionada/statusIcone}"
 						inverted="true"/>
 					<ObjectNumber
-						number="{/bocaSel/vazaoTxt}"
+						number="{/bocaSelecionada/vazaoTexto}"
 						unit="t/h"
 						emphasized="true"
-						state="{= ${/bocaSel/ativa} ? 'Information' : 'None' }"
-						class="vgPopVazao"/>
+						state="{= ${/bocaSelecionada/fluindo} ? 'Information' : 'None' }"/>
 				</FlexBox>
 
 				<MessageStrip
-					text="{/bocaSel/alertaTxt}"
-					type="{/bocaSel/alertaTipo}"
-					visible="{/bocaSel/temAlerta}"
+					text="{/bocaSelecionada/alertaTexto}"
+					type="{/bocaSelecionada/alertaTipo}"
+					visible="{/bocaSelecionada/temAlerta}"
 					showIcon="true"
 					class="sapUiSmallMarginTop"/>
 
 				<form:SimpleForm editable="false" layout="ColumnLayout" columnsM="1" columnsL="1" columnsXL="1" class="vgForm">
 					<Label text="{i18n>pop.material}"/>
-					<Text text="{/bocaSel/produto}"/>
+					<Text text="{/bocaSelecionada/produto}"/>
 					<Label text="{i18n>pop.receita}"/>
-					<Text text="{/bocaSel/receitaCodigo}"/>
-					<Label text="{i18n>pop.umidade}"/>
-					<Text text="{/bocaSel/umidadeTxt}"/>
+					<Text text="{/bocaSelecionada/receitaCodigo}"/>
 					<Label text="{i18n>pop.nominal}"/>
-					<Text text="{/bocaSel/nominalTxt}"/>
-					<Label text="{i18n>pop.distribuicao}"/>
-					<Text text="{/bocaSel/receitaDistTxt}"/>
-					<Label text="{i18n>colDestino}"/>
-					<Text text="{/bocaSel/destinoTxt}"/>
-					<Label text="{i18n>pop.eta}"/>
-					<Text text="{/bocaSel/etaTxt}"/>
-					<Label text="{i18n>pop.turno}"/>
-					<Text text="{/bocaSel/turnoTxt} t"/>
+					<Text text="{/bocaSelecionada/vazaoNominalTexto}"/>
+					<Label text="{i18n>pop.destino}"/>
+					<Text text="{/bocaSelecionada/destinoTexto}"/>
+					<Label text="{i18n>pop.umidade}"/>
+					<Text text="{/bocaSelecionada/umidadeTexto}"/>
 				</form:SimpleForm>
 
 				<Label text="{i18n>pop.nivel}" class="sapUiTinyMarginTop"/>
 				<ProgressIndicator
-					percentValue="{/bocaSel/nivelPct}"
-					displayValue="{/bocaSel/nivelTxt}"
-					state="{/bocaSel/nivelState}"/>
+					percentValue="{/bocaSelecionada/nivelPct}"
+					displayValue="{/bocaSelecionada/nivelTexto}"
+					state="{/bocaSelecionada/nivelEstado}"/>
 
-				<Label text="{/bocaSel/aberturaLabel}" labelFor="sldAbertura" class="sapUiSmallMarginTop"/>
+				<Label text="{/bocaSelecionada/aberturaRotulo}" labelFor="sldAbertura" class="sapUiSmallMarginTop"/>
 				<Slider
 					id="sldAbertura"
-					value="{/bocaSel/abertura}"
+					value="{/bocaSelecionada/aberturaPct}"
 					min="0"
 					max="100"
 					step="5"
 					enableTickmarks="true"
 					width="100%"
-					enabled="{/bocaSel/podeOperar}"
-					liveChange=".onAberturaChange"/>
-
-				<Label text="{i18n>pop.destino}" labelFor="selDestino" class="sapUiTinyMarginTop"/>
-				<Select
-					id="selDestino"
-					width="100%"
-					forceSelection="false"
-					items="{/destinos}"
-					selectedKey="{/bocaSel/destinoKey}"
-					enabled="{/bocaSel/podeEscolherDestino}"
-					change=".onDestinoChange">
-					<core:Item key="{key}" text="{text}"/>
-				</Select>
+					liveChange=".onMudarAberturaDaBoca"/>
 			</VBox>
 		</content>
 		<beginButton>
 			<Button
-				text="{/bocaSel/acaoTexto}"
-				type="{/bocaSel/acaoTipo}"
-				icon="{/bocaSel/acaoIcone}"
-				enabled="{/bocaSel/podeOperar}"
-				press=".onBocaAcao"/>
+				text="{/bocaSelecionada/textoAcao}"
+				type="{/bocaSelecionada/tipoAcao}"
+				icon="{/bocaSelecionada/iconeAcao}"
+				press=".onLigarOuDesligarBoca"/>
 		</beginButton>
 		<endButton>
 			<Button text="{i18n>fechar}" press=".onFecharPopover"/>

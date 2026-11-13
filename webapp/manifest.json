@@ -9,7 +9,7 @@
 			"fallbackLocale": ""
 		},
 		"applicationVersion": {
-			"version": "0.2.0"
+			"version": "0.3.0"
 		},
 		"title": "{{appTitle}}",
 		"description": "{{appDescription}}",
@@ -68,11 +68,17 @@
 				"caminho": "/GestaoCooperado/stream",
 				"nomeEvento": "message",
 				"enviarCredenciais": false,
-				"modoDemonstracao": false,
+				"fonteInicial": "stream",
+				"transbordoAutomatico": true,
+				"limiteVagoes": 2000,
 				"intervaloAtualizacaoTelaMs": 500,
 				"segundosSemDadosParaAlerta": 15,
 				"esperaReconexaoInicialMs": 2000,
-				"esperaReconexaoMaximaMs": 30000
+				"esperaReconexaoMaximaMs": 30000,
+				"automatico": {
+					"intervaloMs": 500,
+					"aceleracao": 4
+				}
 			}
 		},
 		"models": {
@@ -91,7 +97,8 @@
 		},
 		"resources": {
 			"css": [
-				{ "uri": "css/style.css" }
+				{ "uri": "css/style.css" },
+				{ "uri": "css/estacao3d.css" }
 			]
 		},
 		"rootView": {

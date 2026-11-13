@@ -1,10 +1,16 @@
 /**
  * Servidor SSE de TESTE que imita GET /GestaoCooperado/stream.
- * Uso:  node test/servidor-sse-teste.js      (porta 8787)
+ * Igual à API de teste: um único VagaoId, com o peso subindo 500,5 kg a cada 0,5 s,
+ * sem parar. A tela enche o vagão até 100% e abre o próximo (transbordo automático).
+ *
+ * Uso:  node test/servidor-sse-teste.js              (porta 8787)
+ *       node test/servidor-sse-teste.js --reiniciar  (zera o peso ao chegar em 96 t,
+ *                                                     para testar a balança reiniciando)
  * No manifest.json, para testar: "servidor": "http://localhost:8787"
  * (o app precisa estar em http://localhost:8080 - CORS liberado abaixo só para teste)
  */
 const http = require("http");
+const bReiniciarAoEncher = process.argv.includes("--reiniciar");
 let fPesoKg = 0;
 
 http.createServer(function (oRequisicao, oResposta) {
@@ -22,7 +28,7 @@ http.createServer(function (oRequisicao, oResposta) {
 	oResposta.write("retry: 3000\n\n");
 
 	const iTimerEventos = setInterval(function () {
-		fPesoKg = fPesoKg >= 95600 ? 0 : Math.round((fPesoKg + 500.5) * 10) / 10;
+		fPesoKg = bReiniciarAoEncher && fPesoKg >= 95600 ? 0 : Math.round((fPesoKg + 500.5) * 10) / 10;
 		const oEvento = { VagaoId: "HTC-0002", PesoAtualKg: fPesoKg, Status: "Carregando", DataHora: new Date().toISOString() };
 		oResposta.write("data: " + JSON.stringify(oEvento) + "\n\n");
 	}, 500);

@@ -29,9 +29,13 @@ sap.ui.define([], function () {
 	/** Identificador de vagão: letras, números, espaço, ponto, hífen, barra e sublinhado; até 40 caracteres. */
 	var PADRAO_ID_VAGAO = /^[A-Za-z0-9][A-Za-z0-9 ._\/-]{0,39}$/;
 
-	/** Faixa plausível de peso (kg). Valores fora disso são considerados leitura inválida da balança. */
+	/**
+	 * Faixa aceita de peso (kg). O máximo é alto de propósito: com o transbordo
+	 * automático, o peso de um mesmo VagaoId pode acumular vários vagões
+	 * (ver model/Carregamento.js). Valores fora da faixa são descartados.
+	 */
 	var PESO_MINIMO_KG = -1000;
-	var PESO_MAXIMO_KG = 250000;
+	var PESO_MAXIMO_KG = 100000000;
 
 	/** Tamanho máximo do texto de status exibido na tela. */
 	var TAMANHO_MAXIMO_STATUS = 40;

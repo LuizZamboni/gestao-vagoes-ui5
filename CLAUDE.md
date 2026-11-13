@@ -1,165 +1,146 @@
 # CLAUDE.md: Gestão de Vagões (SAPUI5)
 
-Dashboard **somente front-end, com dados mock** para acompanhar o carregamento e o faturamento de uma composição ferroviária. Foi pensado para ficar **numa TV**: uma única tela, sem rolagem, com tudo visível ao abrir. O destino final é o **SAP Fiori Launchpad no S/4**, publicado como aplicação BSP. Hoje também roda no Netlify, para demonstração.
+Dashboard **front-end** para acompanhar o carregamento e o **faturamento por vagão** de uma composição ferroviária. Foi pensado para ficar **numa TV**: uma única tela, sem rolagem. O destino final é o **SAP Fiori Launchpad no S/4** (aplicação BSP). Também roda no Netlify, para demonstração.
 
-> O `README.md` está **desatualizado** (fala de DynamicPage, abas, tabela de bocas, botão de tema e vistoria). Para saber como o projeto está hoje, vale este arquivo.
+A estação de carregamento é **3D e interativa** (CSS 3D, sem bibliotecas externas).
 
 ## Comandos
 
 ```bash
 npm install
 npm start                      # ui5 serve → http://localhost:8080/index.html
-npx ui5 serve --port 8080      # mesmo servidor, sem abrir o navegador
-npm run build                  # build em dist/ (use para checar se não há erro)
+npm test                       # testes das regras em Node (sem UI5)
+npm run build                  # build em dist/
 npm run deploy                 # build + deploy BSP no S/4 (ui5-deploy.yaml)
-npm run undeploy
+node test/servidor-sse-teste.js   # servidor SSE de teste (porta 8787)
 ```
 
-- Node 24 e `@ui5/cli` v4 (`specVersion: "4.0"`). Framework **SAPUI5 1.120.0**, definido no `ui5.yaml`.
-- Depois de mudar bibliotecas ou framework no `ui5.yaml`, **reinicie o `ui5 serve`**.
-- Não há testes automatizados. Para validar, rode o build e tire prints headless:
-  ```bash
-  "/c/Program Files (x86)/Microsoft/Edge/Application/msedge.exe" --headless=new --disable-gpu \
-    --hide-scrollbars --window-size=1920,1080 --virtual-time-budget=8000 \
-    --screenshot="<scratchpad>/tela.png" "http://localhost:8080/index.html"
-  ```
-  O headless tem largura mínima de cerca de 492px, então prints mais estreitos saem cortados. Confira 1920×1080, 1366×768 e o modo empilhado (por exemplo, 600×1600).
+- Node 24 e `@ui5/cli` v4 (`specVersion: "4.0"`). Framework **SAPUI5 1.120.0** (`ui5.yaml`).
+- `npm test` cobre só as regras (model/). A tela precisa ser conferida no navegador (1920×1080, 1366×768 e celular).
 
 ## Ambientes
 
-| Ambiente | Entrada | Como o UI5 é carregado |
-|---|---|---|
-| Local | `webapp/index.html` | `resources/` do `ui5 serve` |
-| Netlify | `webapp/index-cdn.html` | CDN `https://ui5.sap.com/1.120.50/` (a 1.120.0 não tem mais os temas no CDN) |
-| Fiori Launchpad (S/4) | `Component.js` + `manifest.json` (o `index.html` é ignorado) | runtime do Launchpad |
+| Ambiente | Entrada | UI5 | Fonte de eventos ao abrir |
+|---|---|---|---|
+| Local | `webapp/index.html` | `ui5 serve` | `fonteInicial` do manifest (stream) |
+| Netlify | `webapp/index-cdn.html` | CDN `https://ui5.sap.com/1.120.50/` | **automático** (meta tag `vagoes-modo-demonstracao`) |
+| Fiori Launchpad (S/4) | `Component.js` + `manifest.json` | runtime do Launchpad | `fonteInicial` do manifest |
 
-- **Netlify** (`netlify.toml`): publica a pasta `webapp`, sem build. Redireciona `/` e `/index.html` para `/index-cdn.html` com `force = true`; sem o `force`, o Netlify serve o `index.html` local e a tela fica em branco. Cada push na `main` publica sozinho.
-- **Git:** `https://github.com/LuizZamboni/gestao-vagoes-ui5` (privado), branch `main`. Commits com `user.email=zambonioficial@gmail.com`. O usuário pediu que **toda alteração pedida já seja commitada e enviada** para a `main` (pode dar push sem perguntar).
-- **Deploy no S/4** (`ui5-deploy.yaml`): os valores ainda são de exemplo (`SEU-S4-HOST`, `ZPACOTE`, `DEVK900000`; BSP `ZGESTAO_VAGOES`). Nunca grave senha no arquivo.
-- **Launchpad:**
-  - o `manifest.json` tem `sap.ui.fullWidth = true` e o inbound `Vagao-display`;
-  - o `Component.js` esconde a barra do shell enquanto o app está aberto (`setHeaderVisibility(false, true, ["app"])`). Se não funcionar, a alternativa é a URL com `?sap-ushell-config=headerless`;
-  - o CSS **não pode** alterar `html`/`body`, para não afetar o shell.
-- Os dois `index*.html` usam `data-sap-ui-compat-version="edge"` (necessário para expression binding), `data-height="100%"` no container e tema `sap_horizon_dark`.
+- **Netlify** (`netlify.toml`): publica a pasta `webapp`, sem build; `/` redireciona para `/index-cdn.html` com `force = true`. Cada push na `main` publica sozinho.
+- **Git:** `https://github.com/LuizZamboni/gestao-vagoes-ui5`, branch `main`. Commits com `user.email=zambonioficial@gmail.com`. O usuário pediu que **toda alteração pedida já seja commitada e enviada** para a `main` (pode dar push sem perguntar).
+- **Deploy no S/4** (`ui5-deploy.yaml`): valores ainda de exemplo. Nunca grave senha no arquivo.
+- **Launchpad:** `sap.ui.fullWidth = true`, inbound `Vagao-display`; o `Component.js` esconde a barra do shell. O CSS **não pode** alterar `html`/`body`.
 
 ## Estrutura
 
 ```
 webapp/
-├── index.html / index-cdn.html   bootstrap local / CDN
-├── manifest.json                 descriptor, i18n, modelo "mock", inbound Vagao-display, fullWidth
-├── Component.js                  esconde a barra do Launchpad
-├── view/Main.view.xml            layout de TV (grid CSS com FlexBox renderType="Bare")
-├── view/BocaPopover.fragment.xml operar a boca (comporta, destino, iniciar/parar)
-├── controller/Main.controller.js tick da simulação, foco automático, seleção, popover
-├── control/LoadingStation.js     controle UI5 custom (wrapper; setters sem invalidar)
-├── control/StationDom.js         desenho da estação em DOM puro (silos, fluxo, trem)
-├── model/mockData.json           composição, receitas, 3 vagões (placa), 6 bocas, fatura
-├── model/Regras.js               regras de negócio + montagem do view model (puro)
-├── model/Simulador.js            simulação (modo demonstração) e ações do operador
-├── model/Carregamento.js         aplica eventos do stream ao estado (modo real)
-├── model/stream/                 cliente SSE + validação das mensagens
+├── manifest.json                 configuração (carregamentoStream), modelos, CSS
+├── view/Main.view.xml            layout de TV; só mostra o modelo de tela
+├── view/BocaPopover.fragment.xml popover da boca (ligar/desligar, comporta)
+├── controller/Main.controller.js fonte de eventos → estado → modelo de tela; handlers on...
+├── control/Estacao3D.js          controle UI5 (casca): propriedades e eventos
+├── control/estacao3d/Cena3D.js   monta e atualiza a cena 3D
+├── control/estacao3d/Camera3D.js girar, zoom, vistas (3D/Frente/Topo), giro automático
+├── control/estacao3d/Dom.js      utilitários de DOM (sem innerHTML) e caixas 3D
+├── model/Regras.js               regras puras (cheio, status, situação da fatura...)
+├── model/Carregamento.js         estado + aplicar eventos (transbordo, vazão, silos)
+├── model/Faturamento.js          faturar vagão / faturar liberados
+├── model/ModeloTela.js           estado → textos e valores da view (puro)
+├── model/Formatador.js           números, horas e durações em pt-BR
+├── model/stream/EventoCarregamento.js      valida e normaliza cada mensagem
+├── model/stream/CarregamentoStream.js      cliente SSE (EventSource + reconexão)
+├── model/stream/CarregamentoAutomatico.js  gerador local (modo automático)
+├── model/mockData.json           composição, receita, cadastro de vagões, bocas
 ├── i18n/i18n.properties          textos pt-BR
-└── css/style.css                 todo o visual
-preview/gestao-vagoes-preview.html  prévia antiga em HTML puro (desatualizada)
+└── css/style.css, css/estacao3d.css
+test/  regras.test.js (npm test), carregar.js, servidor-sse-teste.js
 ```
 
-## Stream de carregamento (dados reais)
+## Fluxo de dados
 
-- **API:** `GET {servidor}/GestaoCooperado/stream` com `Accept: text/event-stream`. Cada evento SSE manda no `data:` um JSON `{"VagaoId":"HTC-0002","PesoAtualKg":500.5,"Status":"Carregando","DataHora":"2026-11-12T13:20:42.6379277Z"}`. O campo opcional `BocaId` liga a boca ao vagão.
-- **Configuração** (único lugar): `manifest.json` > `sap.ui5/config/carregamentoStream`.
-  - `servidor` vazio = mesma origem, que é o recomendado no S/4/BTP via destino ou proxy, sem CORS.
-  - `caminho`, `nomeEvento`, `enviarCredenciais`, `intervaloAtualizacaoTelaMs` (500), `segundosSemDadosParaAlerta` (15) e as esperas de reconexão.
-- **Modo demonstração:** usa o `Simulador` antigo e é ativado por `modoDemonstracao: true` ou pela meta tag `vagoes-modo-demonstracao` do `index-cdn.html`. Assim o **Netlify continua em demonstração**; o `index.html` local e o Launchpad usam o stream.
-- **Arquivos:**
-  - `model/stream/EventoCarregamento.js`: valida e normaliza cada mensagem (tamanho, `VagaoId` por regex, faixa de peso, `DataHora` com 7 casas, mapa de status).
-  - `model/stream/CarregamentoStream.js`: `EventSource` com reconexão por espera crescente, checagem de origem e validação da URL.
-  - `model/Carregamento.js`: aplica os eventos ao estado.
-    - peso kg → t, repartido nas seções E/C/D pela receita;
-    - vazão medida por Δpeso/Δtempo (média móvel);
-    - vagão desconhecido é incluído;
-    - liga as bocas `ativa`/`aguardandoVagao` ao vagão em carga e reparte a vazão pela abertura;
-    - bocas `parada`/`siloVazio` não mudam.
-- **Controller:** os eventos vão para um buffer, aplicado a cada 500 ms. Pausa com a aba oculta, e a conexão fecha no `onExit`.
-- **Diferenças no modo stream:**
-  - pesos do mock zerados até chegar leitura;
-  - "Retirar excesso" e a escolha de destino da boca ficam desabilitados;
-  - a pílula do cabeçalho mostra o status da conexão;
-  - validações extras: sem conexão, carga sem vistoria, sem atualização, vagão incluído, mensagens descartadas.
-- **Teste local:** `node test/servidor-sse-teste.js` (porta 8787) e `"servidor": "http://localhost:8787"`.
+`fonte de eventos → fila → Carregamento.aplicarEventos → ModeloTela.montar → JSONModel (OneWay) → view`
 
-## Arquitetura e fluxo de dados
+1. **Fonte** (uma por vez, mesma interface `iniciar/parar` e mesmos callbacks):
+   - **Automático** (`CarregamentoAutomatico`): gera eventos no formato da API, um vagão por vez, fechando em exatamente 100% e abrindo o próximo. A vazão segue as bocas ligadas e a abertura das comportas.
+   - **Stream** (`CarregamentoStream`): `GET {servidor}/GestaoCooperado/stream`, `Accept: text/event-stream`. Evento: `{"VagaoId":"HTC-0002","PesoAtualKg":500.5,"Status":"Carregando","DataHora":"...Z"}` (`BocaId` opcional).
+2. O controller põe os eventos numa **fila** e a aplica a cada `intervaloAtualizacaoTelaMs`. Com a aba oculta a fila espera (e é compactada).
+3. O estado é **imutável**: cada função devolve um estado novo.
+4. A view **não calcula nada**; toda ação do usuário passa por um handler `on...` do controller.
 
-1. O `Main.controller` carrega `mockData.json` (modelo `mock`) e cria o estado com `Simulador.estadoInicial`.
-2. **Modo stream:** o buffer de eventos é aplicado com `Carregamento.aplicarEventos` + `sincronizarBocas` a cada 500 ms. **Modo demonstração:** a cada `INTERVALO_MS` (1 s), roda `Simulador.passo(state)`. Nos dois casos vem depois o `_publicar()`.
-3. O `_publicar()` chama `_seguirCarregamento()` (foco automático) e `Regras.montarViewModel(state, ui, t)`, e o resultado entra num `JSONModel` em modo **OneWay** (`setData`).
-4. As ações da tela passam por `_executar(Simulador.acao, ...)`. A view nunca escreve direto no modelo.
-5. Na implementação definitiva, `passo()` vira polling/WebSocket do backend, as ações viram chamadas OData, e as regras de validação e fatura vão para o backend.
+### Configuração (único lugar): `manifest.json` > `sap.ui5/config/carregamentoStream`
 
-`Regras.js` é **puro** (sem dependência de controles UI5), e todos os textos vêm de `t(chave, args)`, ligado ao i18n.
+| Chave | Padrão | Para quê |
+|---|---|---|
+| `servidor` | `""` | host do stream; vazio = mesma origem (recomendado no S/4/BTP) |
+| `caminho`, `nomeEvento`, `enviarCredenciais` | | detalhes da conexão SSE |
+| `fonteInicial` | `"stream"` | `"stream"` ou `"automatico"` |
+| `transbordoAutomatico` | `true` | peso acima da capacidade passa para o próximo vagão (ver regras) |
+| `limiteVagoes` | `2000` | proteção de memória |
+| `intervaloAtualizacaoTelaMs` | `500` | frequência de atualização da tela |
+| `segundosSemDadosParaAlerta` | `15` | alerta "sem leitura" |
+| `automatico.aceleracao` | `4` | velocidade do modo automático (1 = tempo real, máx. 40) |
+| `automatico.intervaloMs` | `500` | intervalo entre eventos gerados |
 
-## Regras de negócio (resumo)
+## Regras de negócio
 
-- **Receita por material** (`receitas` no mock): define a `vazao` **total da estação** em t/h e a `distribuicao` em % para `esquerda`, `centro` e `direita` do vagão. A composição atual é de **Farelo de soja** (`REC-FS-01`: 1.800 t/h, 30/40/30).
-- **Cálculo com 6 bocas:** vazão nominal por boca = vazão da receita ÷ nº de bocas com o material (`Regras.vazaoPorBoca`), hoje 1.800 ÷ 6 = 300 t/h. O painel da receita mostra a conta (`rec.calculo`).
-- **Vazão da boca** = vazão nominal por boca × `abertura`/100, com ruído de ±5% na simulação.
-- **Vagão:**
-  - guarda `carga` (total) e `secoes {esquerda, centro, direita}`; cada descarga é repartida pela receita da boca;
-  - **meta por seção** = limite × % da receita;
-  - limite de 96 t e alvo = limite − `margemAlvo`.
-- **Status do vagão:** `bloqueado` (não vistoriado), `excesso`, `carregando`, `carregado` (≥ 94% do limite), `parcial`, `aguardando`.
-- **Status da boca:** `ativa`, `parada`, `aguardandoVagao`, `siloVazio`. **Não existe "manutenção"**: o usuário pediu para remover.
-- **Vistoria:** o dashboard só **mostra** o resultado. A conclusão da vistoria foi removida de propósito.
-- **Validações:**
-  - **erros** (bloqueiam a fatura): vagão sem vistoria, vagão acima do limite, produto divergente;
-  - **avisos**: silo baixo, silo vazio, vagões aguardando carga.
-- **Fatura:** pode ser emitida quando não há erros e já existe carga. **Não há botão de emitir nem de pausar** na tela (foram removidos); o painel só mostra o status.
-- **Velocidade da simulação:** `FATOR` em `Simulador.js`, onde toneladas por tick = vazão/FATOR. **3600 = tempo real**; está em **1800**.
+- **Vagão enche até 100%** da capacidade (`composicao.capacidadeVagaoKg`, 96 t). O percentual só mostra 100 quando está cheio de fato.
+- **Novos vagões** são criados pelos eventos e só param de surgir quando os eventos param:
+  - `VagaoId` novo → vagão novo;
+  - **transbordo automático** (ligado): o emissor de teste manda um único `VagaoId` com peso crescente; o que passa da capacidade vai para vagões criados em sequência (`HTC-0002`, `HTC-0002 #2`, ...). Desligado (produção com um id por vagão): o excesso vira erro "excesso" e bloqueia a fatura;
+  - peso caindo para menos da metade = balança reiniciou → novo ciclo, novo vagão;
+  - eventos fora de ordem são ignorados; vagão faturado não muda mais.
+- **Faturamento é por vagão** (`Regras.situacaoFaturamento`):
+  - `aguardando` até encher; `liberado` quando cheio (ou status do sistema Carregado/Finalizado);
+  - `bloqueado` por vistoria reprovada ou excesso de peso; vistoria **não informada** não bloqueia (vira aviso);
+  - `faturado` após "Faturar" (por vagão ou "Faturar os N liberados"). A NF é sequencial (`faturamento` no mock). Pontos de integração marcados com `TODO integração`.
+- **Iniciar / Parar / Reiniciar** (cabeçalho): Parar interrompe a fonte e mantém a tela; Iniciar retoma de onde parou; Reiniciar zera a composição. Trocar Automático ↔ Stream também zera.
+- **Receita** (`receitas` no mock): vazão total da estação e distribuição E/C/D. Vazão nominal por boca = vazão ÷ bocas com o material.
+- **Bocas:** ligar/desligar e abertura da comporta (popover). Status: descarregando, aguardando vagão, comporta fechada, desligada, silo vazio. **Não existe "manutenção"**.
+- **Silos:** o nível só é consumido/reabastecido no modo automático (no stream a API não informa estoque).
+- **Vazão medida** = Δpeso/Δtempo dos eventos (média móvel).
 
 ## Tela (layout de TV)
 
-A grade CSS fica em `.vgTv`: cabeçalho, linha de receita + indicadores, e a linha principal com 3 colunas.
+Grade em `.vgTv`: cabeçalho, receita + indicadores, e três colunas.
 
-- **Cabeçalho:** título da composição, linha de informações, botão **Modo claro / Modo escuro**, pílula "Ao vivo" e relógio. O botão é o único do cabeçalho.
-- **Receita** (destaque à esquerda): material, código, vazão por boca e barra E/C/D com a meta por vagão.
-- **Indicadores** num **único painel com divisórias**: vazão total, carregado, vagões vistoriados e previsão de término.
-- **Lateral esquerda (vagões):**
-  - "Vagão em foco": placa grande, carga com barra, 3 mini-tanques E/C/D (carga/meta), término, bocas, vistoria e checklist;
-  - "Composição": os 3 vagões com ponto de status, placa, barra e carga. Clicar seleciona o vagão.
-- **Centro:** estação (`LoadingStation`).
-- **Lateral direita (faturamento):**
-  - painel de **fatura em destaque**, que muda de cor por status (`data-st`: bloqueada, pronta ou emitida) e mostra motivo, peso a faturar e vagões faturados;
-  - "Pendências" logo abaixo.
-- **Foco automático:** o painel segue o vagão em carga. Depois de uma seleção manual, volta a seguir após `MANUAL_MS` (20 s), no controller.
-- **Placas:** campo `placa` em cada vagão (por exemplo, "HFE 719155-1"), com visual de placa metálica (`.vgPlate`, `.vgWag__plate`).
+- **Cabeçalho:** título, seletor **Automático | Stream**, **Iniciar/Parar**, **Reiniciar**, tema, pílula de situação, relógio.
+- **Indicadores:** vazão medida, total carregado, vagões cheios, vagão atual enche em.
+- **Esquerda:** vagão em foco (placa, carga, seções E/C/D, vistoria, fatura) e a composição (últimos 6 vagões).
+- **Centro:** `Estacao3D`.
+- **Direita:** faturamento por vagão (situação do vagão em foco, botão Faturar, totais, fila) e pendências.
+- **Foco automático:** segue o vagão em carga; após seleção manual volta a seguir em 20 s (ou pelo botão "Seguir carga").
+- O modelo de tela tem tamanho limitado (lista 6, fila 5, estação só os vagões vizinhos), mesmo com centenas de vagões.
 
-### Estação (`StationDom.js`)
+### Estação 3D (`control/estacao3d/`)
 
-- Tem geometria fixa em px (objeto `G`) e é **escalada para caber** no espaço (`_fit`, com `ResizeObserver`), sempre centralizada.
-- Mostra **6 bocas** (a quantidade vem do mock; a geometria se ajusta sozinha): silos com nível, cone, comporta, vazão e linhas de fluxo SVG animadas até o vagão de destino.
-- **Janela do trem:** mostra **3 vagões grandes** (`SLOTS = 3`, `slotW` 300, `wagonH` 260), centrados no vagão selecionado. A locomotiva (posição 0) fica fora da janela (`MIN_START = 1`), para sempre aparecerem 3 vagões; com animação de deslize. As setas ‹ › mostram quantos vagões estão escondidos e há um mini-mapa clicável; os dois **somem** (`is-all`) quando a composição inteira cabe na janela. A navegação manual expira em `NAV_MS` (20 s).
-- O vagão desenha o funil com **3 seções** (E/C/D) e a placa.
-- Atualiza o DOM **no lugar**, sem re-renderizar, para que as animações não reiniciem. O `LoadingStation` sobrescreve os setters com `setProperty(..., true)` e agrupa as atualizações num microtask.
+- HTML + **CSS 3D** (transform), sem WebGL nem biblioteca: funciona no Launchpad sem dependências e com CSP.
+- Interação: arrastar gira, roda/pinça aproxima, vistas 3D/Frente/Topo, "Girar" (balanço automático), clique em vagão seleciona, clique em silo abre o popover, setas ‹ › navegam.
+- O pórtico é fixo; o **trem desliza** quando a carga passa para o vagão seguinte. A câmera se desloca até o vagão selecionado.
+- Atualiza o DOM **no lugar** (sem re-render do UI5): os setters do controle usam `setProperty(..., true)` e juntam as mudanças numa microtarefa.
+- **Regra do CSS 3D:** elementos de grupo (`transform-style: preserve-3d`) não podem ter `opacity`, `filter`, `overflow`, `clip-path` nem `mask`: isso achata o 3D. Esses efeitos só nas faces.
+- Não transforme `.vgE3` em container query: `--vg-r` usa `cqw/cqh` e mudaria de valor lá dentro.
+- Textos vindos de eventos entram por `textContent` (nunca `innerHTML`).
 
-## CSS e responsividade (importante)
+## CSS e responsividade
 
-- **`class` não aceita binding** no XML do UI5. Para estilo por estado use `<customData><core:CustomData key="st" value="{...}" writeToDom="true"/></customData>`, que gera `data-st="..."`, e no CSS `[data-st="Error"]` etc.
-- As **variáveis CSS do tema SAP** (`--sapBrandColor`, `--sapTextColor`, ...) **nem sempre são publicadas** na 1.120. Use sempre **com valor de reserva** (`var(--sapX, #fallback)`); sem isso, bordas e barras somem.
-- **Escala:**
-  - a view raiz tem `class="vgApp"`, que é um *size container* (`container: vgapp / size`);
-  - a unidade `--vg-r` vem do tamanho do **app** (`cqw`/`cqh`), não da janela, e todo o CSS do layout usa `calc(X * var(--vg-r))` no lugar de `rem`;
-  - isso mantém a mesma composição em 720p, 1080p e 4K, sem mexer em `html`/`body`.
-- **Quebras de layout** via `@container vgapp (max-width: 1099px) or (orientation: portrait)`: coluna única com rolagem (tablet e celular).
-  - no modo empilhado, `.vgCenter` usa `aspect-ratio: 1152 / 708` e a estação (`.vgSt`) fica em `position: absolute`. **Não volte** para `height: 100%`/flex ali: no Safari do iPhone a altura vira 0 e a estação some. O `_fit` também tem reserva: sem altura, escala pela largura e define `min-height`.
-- `FlexBox renderType="Bare"` é usado para montar o grid sem wrappers.
-- **Tema:** escuro (`sap_horizon_dark`) por padrão; o botão do cabeçalho alterna para `sap_horizon` via `sap/ui/core/Theming` e salva a escolha no `localStorage` (`vagoes.dashboard.tema`). O modelo `ui>/claro` controla o texto do botão.
-- O tema claro tem tokens próprios **fixos** (sem `var(--sap…)`) em `.sapUiTheme-sap_horizon .vgApp` e `.sapUiTheme-sap_horizon .vgSt`: paleta **cinza suave** (fundo `#d9dee4`, painéis `#e9ecf0`). O usuário achou o branco do Horizon forte demais; não volte ao branco.
+- **`class` não aceita binding** no XML: use `CustomData` com `writeToDom` (`data-st="..."`) e trate no CSS.
+- Variáveis do tema SAP sempre **com valor de reserva** (`var(--sapX, #fallback)`).
+- **Escala:** `.vgApp` é *size container*; a unidade `--vg-r` vem do tamanho do app. Use `calc(X * var(--vg-r))`, não `rem`.
+- **Botões:** `sap.m.Button` com a classe `vgBtn` (tamanho segue `--vg-r`).
+- **Telas estreitas/retrato:** `@container vgapp (max-width: 1099px) or (orientation: portrait)` → coluna única com rolagem. `.vgCenter` usa `aspect-ratio` e a estação fica em `position: absolute` (no Safari do iPhone, `height: 100%` ali vira 0).
+- **Tema:** escuro por padrão; o botão alterna para `sap_horizon` e salva em `localStorage` (`vagoes.dashboard.tema`). O tema claro usa **cinza suave** fixo (o usuário achou o branco forte demais).
+
+## Padrões de código
+
+- Nomes em português, descritivos, com o prefixo UI5: `o` objeto, `a` array, `s` string, `i` inteiro, `f` decimal, `b` booleano, `fn` função, `p` Promise, `m` mapa.
+- Toda função tem comentário explicando o que faz. Handlers de evento começam com `on`.
+- Regras em módulos **puros** (sem controles UI5), testáveis com `npm test`.
+- Textos só no `i18n`.
 
 ## Preferências do usuário
 
 - Escreve em pt-BR informal; responda em pt-BR.
-- Visual para TV: minimalista, informação legível de longe, nada fora da tela, sem rolagem.
-- Gostou da animação das bocas e do fluxo de grão; mantenha-a.
-- Não gostou do painel "No turno" (removido).
-- Uma tentativa de trocar os painéis por controles Fiori padrão (`sap.f.Card`, `NumericContent`, microcharts) **foi revertida a pedido**. Não refaça sem pedido.
-- Ver os resultados no navegador: subir `ui5 serve` e abrir `http://localhost:8080/index.html`.
+- Visual para TV: minimalista, legível de longe, nada fora da tela, sem rolagem.
+- Gosta das animações das bocas e do fluxo de grão; mantenha.
+- Uma tentativa de trocar os painéis por controles Fiori padrão (`sap.f.Card`, microcharts) **foi revertida a pedido**. Não refaça sem pedido.

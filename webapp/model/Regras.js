@@ -1,540 +1,245 @@
 /**
- * Regras de negócio e montagem do modelo de visualização (view model).
+ * Regras
+ * ------------------------------------------------------------------
+ * Regras de negócio do carregamento e do faturamento por vagão.
  *
- * Módulo puro (sem dependências de controles UI5): recebe o estado bruto
- * (vindo hoje do mockData.json e, no futuro, do backend/OData) e devolve um
- * objeto pronto para binding na view. Todos os textos vêm do i18n pela função
- * t(chave, [args]) recebida como parâmetro.
+ * Módulo PURO: só recebe dados e devolve respostas. Não altera o estado,
+ * não conhece a tela e não depende de controles UI5. Por isso pode ser
+ * testado sozinho e reaproveitado no backend.
  *
- * Para a implementação definitiva, mova as regras de validação/fatura para o
- * backend e mantenha aqui apenas a preparação dos dados de tela.
+ * Resumo das regras:
+ *  - Um vagão está CHEIO quando o peso chega a 100% da capacidade.
+ *  - O faturamento é POR VAGÃO e só é LIBERADO depois que ele enche
+ *    (ou quando o sistema de origem informa que o carregamento terminou).
+ *  - Vistoria reprovada ou peso acima da capacidade BLOQUEIAM a fatura
+ *    daquele vagão. Vistoria não informada não bloqueia (só avisa).
+ *  - A vazão da estação vem da receita do material e é dividida entre as
+ *    bocas ligadas, proporcionalmente à abertura de cada comporta.
+ *
+ * Importante: no front estas regras servem para feedback imediato. A
+ * decisão final (principalmente liberar fatura) deve ser repetida no backend.
  */
 sap.ui.define([], function () {
 	"use strict";
 
-	var NF1 = new Intl.NumberFormat("pt-BR", { minimumFractionDigits: 1, maximumFractionDigits: 1 });
-	var NF0 = new Intl.NumberFormat("pt-BR", { maximumFractionDigits: 0 });
-
-	var CHECKLIST = ["limpeza", "escotilhas", "comportas", "rodeiros"];
-
-	/** Seções do vagão onde a boca descarrega (ordem de exibição). */
+	/** Seções do vagão, na ordem em que aparecem na tela. */
 	var SECOES = ["esquerda", "centro", "direita"];
 
-	/** Status do vagão -> sap.ui.core.ValueState */
-	var ESTADO_VAGAO = {
-		bloqueado: "Error",
-		excesso: "Error",
-		carregando: "Information",
-		carregado: "Success",
-		parcial: "Warning",
-		aguardando: "None"
+	/** Itens do checklist de vistoria. */
+	var ITENS_CHECKLIST = ["limpeza", "escotilhas", "comportas", "rodeiros"];
+
+	/** Tolerância (kg) para considerar o vagão cheio, por causa de arredondamento da balança. */
+	var TOLERANCIA_CHEIO_KG = 0.5;
+
+	/** Situações possíveis do faturamento de um vagão. */
+	var SITUACAO_FATURA = {
+		AGUARDANDO: "aguardando",
+		LIBERADO: "liberado",
+		BLOQUEADO: "bloqueado",
+		FATURADO: "faturado"
 	};
 
-	/** Status da boca -> ValueState e ícone */
-	var ESTADO_BOCA = {
-		ativa: "Success",
-		parada: "None",
-		aguardandoVagao: "Information",
-		siloVazio: "Error"
+	/** Motivos de bloqueio da fatura de um vagão. */
+	var MOTIVO_BLOQUEIO = {
+		VISTORIA: "vistoriaReprovada",
+		EXCESSO: "excessoDePeso"
 	};
-	var ICONE_BOCA = {
-		ativa: "sap-icon://media-play",
-		parada: "sap-icon://media-pause",
-		aguardandoVagao: "sap-icon://pending",
-		siloVazio: "sap-icon://error"
-	};
-
-	function f1(v) { return NF1.format(v || 0); }
-	function f0(v) { return NF0.format(v || 0); }
-	function pad(n) { return String(n).padStart(2, "0"); }
-
-	/** minutos -> "mm:ss" ou "1h05" */
-	function duracao(min) {
-		if (!isFinite(min) || min <= 0) {
-			return "—";
-		}
-		var s = Math.round(min * 60);
-		var h = Math.floor(s / 3600);
-		var m = Math.floor((s % 3600) / 60);
-		var ss = s % 60;
-		return h ? h + "h" + pad(m) : pad(m) + ":" + pad(ss);
-	}
-
-	function hora(d) {
-		return pad(d.getHours()) + ":" + pad(d.getMinutes()) + ":" + pad(d.getSeconds());
-	}
 
 	var Regras = {
 
-		formatar: { f1: f1, f0: f0, pad: pad, duracao: duracao },
-
 		SECOES: SECOES,
+		ITENS_CHECKLIST: ITENS_CHECKLIST,
+		TOLERANCIA_CHEIO_KG: TOLERANCIA_CHEIO_KG,
+		SITUACAO_FATURA: SITUACAO_FATURA,
+		MOTIVO_BLOQUEIO: MOTIVO_BLOQUEIO,
+
+		/* =========================================================== */
+		/* Receita e bocas                                             */
+		/* =========================================================== */
 
 		/**
-		 * Receita de descarga do material: vazão da boca (t/h) e quanto dela vai
-		 * para cada seção do vagão (% esquerda / centro / direita).
+		 * Procura a receita de descarga de um material.
+		 * @param {Array<object>} aReceitas lista de receitas do cadastro
+		 * @param {string} sMaterial nome do material, ex.: "Farelo de soja"
+		 * @returns {object|null} receita ({codigo, vazaoTh, distribuicao}) ou null
 		 */
-		receita: function (s, sMaterial) {
-			return (s.receitas || []).filter(function (r) { return r.material === sMaterial; })[0] || null;
-		},
-
-		/** Quantas bocas trabalham com o material (base do cálculo da receita). */
-		bocasDoMaterial: function (s, sMaterial) {
-			return (s.bocas || []).filter(function (b) { return b.produto === sMaterial; }).length;
-		},
-
-		/**
-		 * Vazão nominal de UMA boca: a vazão da receita é o total da estação para
-		 * o material, dividido igualmente entre as bocas que trabalham com ele.
-		 */
-		vazaoPorBoca: function (s, sMaterial) {
-			var r = Regras.receita(s, sMaterial);
-			var n = Regras.bocasDoMaterial(s, sMaterial);
-			return r && n ? r.vazao / n : 0;
-		},
-
-		/** Seções formatadas para exibição (com meta por vagão, se informada). */
-		secoesReceita: function (oReceita, t, nMetaVagao) {
-			return SECOES.map(function (k) {
-				var nPct = oReceita ? oReceita.distribuicao[k] : 0;
-				return {
-					key: k,
-					label: t("sec." + k),
-					sigla: t("sec." + k + ".sigla"),
-					pct: nPct,
-					pctTxt: nPct + "%",
-					pctCss: nPct + "%",
-					metaTxt: nMetaVagao ? f1(nMetaVagao * nPct / 100) + " t" : ""
-				};
-			});
-		},
-
-		/** Carga-alvo de um vagão (limite menos margem de segurança). */
-		alvo: function (oComposicao) {
-			return Math.round((oComposicao.limiteVagao - oComposicao.margemAlvo) * 10) / 10;
-		},
-
-		/** Vagão pode receber grão? (vistoriado e abaixo da carga-alvo) */
-		disponivel: function (oVagao, oComposicao) {
-			return !!oVagao && oVagao.vistoriado && oVagao.carga < Regras.alvo(oComposicao) - 0.05;
-		},
-
-		/** Próximo vagão disponível depois da posição informada (circular). */
-		proximoVagao: function (oState, iAposPos) {
-			var c = oState.composicao;
-			var aDisp = oState.vagoes.filter(function (w) { return Regras.disponivel(w, c); });
-			return aDisp.filter(function (w) { return w.pos > iAposPos; })[0] || aDisp[0] || null;
+		receitaDoMaterial: function (aReceitas, sMaterial) {
+			return (aReceitas || []).filter(function (oReceita) {
+				return oReceita.material === sMaterial;
+			})[0] || null;
 		},
 
 		/**
-		 * Status do vagão na tela. Ordem de prioridade:
-		 * sem vistoria > excesso > em carga (boca ligada ou stream "Carregando") > peso.
-		 * statusChave vem do stream (ver model/Carregamento.js); no modo demonstração é vazio.
+		 * Vazão nominal de UMA boca (t/h): a vazão da receita é o total da
+		 * estação para o material, dividido igualmente entre as bocas que
+		 * trabalham com ele.
+		 * @param {object} oEstado estado do carregamento
+		 * @param {string} sMaterial material da boca
+		 * @returns {number} t/h (0 se não houver receita)
 		 */
-		statusVagao: function (oVagao, oComposicao, mDestinosAtivos) {
-			if (!oVagao.vistoriado) { return "bloqueado"; }
-			if (oVagao.carga > oComposicao.limiteVagao) { return "excesso"; }
-			if (mDestinosAtivos[oVagao.pos] || oVagao.statusChave === "carregando") { return "carregando"; }
-			if (oVagao.statusChave === "carregado" || oVagao.carga >= oComposicao.limiteVagao * 0.94) { return "carregado"; }
-			if (oVagao.carga > 0) { return "parcial"; }
+		vazaoNominalPorBocaTh: function (oEstado, sMaterial) {
+			var oReceita = Regras.receitaDoMaterial(oEstado.receitas, sMaterial);
+			var iBocasDoMaterial = oEstado.bocas.filter(function (oBoca) { return oBoca.produto === sMaterial; }).length;
+			return oReceita && iBocasDoMaterial ? oReceita.vazaoTh / iBocasDoMaterial : 0;
+		},
+
+		/**
+		 * A boca pode descarregar? Precisa estar ligada, com a comporta aberta
+		 * e com grão no silo.
+		 * @param {object} oBoca boca do estado
+		 * @returns {boolean}
+		 */
+		bocaPodeDescarregar: function (oBoca) {
+			return !!oBoca.ligada && oBoca.aberturaPct > 0 && oBoca.estoqueT > 0;
+		},
+
+		/**
+		 * Vazão que a estação entrega com as bocas como estão agora (t/h):
+		 * soma de (vazão nominal x abertura) das bocas que podem descarregar.
+		 * É a vazão usada pelo modo automático.
+		 * @param {object} oEstado estado do carregamento
+		 * @returns {number} t/h
+		 */
+		vazaoConfiguradaTh: function (oEstado) {
+			return oEstado.bocas.reduce(function (fSoma, oBoca) {
+				if (!Regras.bocaPodeDescarregar(oBoca)) {
+					return fSoma;
+				}
+				return fSoma + Regras.vazaoNominalPorBocaTh(oEstado, oBoca.produto) * oBoca.aberturaPct / 100;
+			}, 0);
+		},
+
+		/**
+		 * Em qual seção do vagão a boca descarrega. As bocas ficam em fila
+		 * sobre o vagão: o primeiro terço cai na esquerda, o do meio no
+		 * centro e o último na direita.
+		 * @param {number} iIndiceBoca posição da boca (0 = primeira)
+		 * @param {number} iQuantidadeBocas total de bocas
+		 * @returns {number} índice da seção em SECOES (0, 1 ou 2)
+		 */
+		secaoDaBoca: function (iIndiceBoca, iQuantidadeBocas) {
+			return Math.min(SECOES.length - 1, Math.floor(iIndiceBoca * SECOES.length / Math.max(1, iQuantidadeBocas)));
+		},
+
+		/* =========================================================== */
+		/* Vagão                                                       */
+		/* =========================================================== */
+
+		/**
+		 * O vagão está cheio (100% da capacidade)?
+		 * @param {object} oVagao vagão do estado
+		 * @param {object} oComposicao dados da composição (capacidadeVagaoKg)
+		 * @returns {boolean}
+		 */
+		vagaoCheio: function (oVagao, oComposicao) {
+			return oVagao.pesoKg >= oComposicao.capacidadeVagaoKg - TOLERANCIA_CHEIO_KG;
+		},
+
+		/**
+		 * O vagão passou da capacidade? Só acontece com o transbordo
+		 * automático desligado (ver model/Carregamento.js).
+		 * @returns {boolean}
+		 */
+		vagaoComExcesso: function (oVagao, oComposicao) {
+			return oVagao.pesoKg > oComposicao.capacidadeVagaoKg + TOLERANCIA_CHEIO_KG;
+		},
+
+		/**
+		 * Percentual de enchimento, de 0 a 100. Só devolve 100 quando o vagão
+		 * está realmente cheio (99,9% aparece como 99, nunca como 100).
+		 * @returns {number} inteiro de 0 a 100
+		 */
+		percentualVagao: function (oVagao, oComposicao) {
+			if (Regras.vagaoCheio(oVagao, oComposicao)) {
+				return 100;
+			}
+			return Math.max(0, Math.min(99, Math.floor(oVagao.pesoKg / oComposicao.capacidadeVagaoKg * 100)));
+		},
+
+		/**
+		 * O carregamento do vagão terminou? Termina quando enche ou quando o
+		 * sistema de origem manda o status "Carregado/Finalizado".
+		 * @returns {boolean}
+		 */
+		carregamentoConcluido: function (oVagao, oComposicao) {
+			return Regras.vagaoCheio(oVagao, oComposicao) || oVagao.statusChave === "carregado";
+		},
+
+		/**
+		 * Status do vagão mostrado na tela. Ordem de prioridade:
+		 *   excesso > carregado (100%) > finalizado pelo sistema > carregando > parcial > aguardando
+		 * @returns {string} "excesso" | "carregado" | "finalizado" | "carregando" | "parcial" | "aguardando"
+		 */
+		statusVagao: function (oVagao, oComposicao) {
+			if (Regras.vagaoComExcesso(oVagao, oComposicao)) { return "excesso"; }
+			if (Regras.vagaoCheio(oVagao, oComposicao)) { return "carregado"; }
+			if (oVagao.statusChave === "carregado") { return "finalizado"; }
+			if (oVagao.statusChave === "carregando") { return "carregando"; }
+			if (oVagao.pesoKg > 0) { return "parcial"; }
 			return "aguardando";
 		},
 
 		/**
-		 * Monta o view model completo.
-		 * @param {object} s  estado bruto
-		 * @param {object} ui estado de tela { sel: índice do vagão, bocaSel: índice da boca }
-		 * @param {function} t função de textos i18n: t(chave, aArgs)
+		 * A balança parou de mandar leituras de um vagão que está carregando?
+		 * @param {object} oVagao vagão do estado
+		 * @param {number} iAgoraMs hora atual (ms)
+		 * @param {number} iLimiteSemDadosMs tempo máximo aceito sem leitura (ms)
+		 * @returns {boolean}
 		 */
-		montarViewModel: function (s, ui, t) {
-			var c = s.composicao;
-			var LIM = c.limiteVagao;
-			var ALVO = Regras.alvo(c);
-			var bEmitida = !!s.fatura.emitida;
-			var bRodando = !!s.simulacao.rodando && !bEmitida;
+		vagaoSemAtualizacao: function (oVagao, iAgoraMs, iLimiteSemDadosMs) {
+			return oVagao.statusChave === "carregando" && !!oVagao.recebidoEmMs &&
+				iAgoraMs - oVagao.recebidoEmMs > iLimiteSemDadosMs;
+		},
 
-			// Modo stream: s.conexao existe (ver Carregamento.prepararEstado). Modo demonstração: não existe.
-			var oConexao = s.conexao || null;
-			var bStream = !!oConexao;
-			var iAgoraMs = Date.now();
-			var iLimiteSemDadosMs = ui.limiteSemDadosMs || 15000;
-			if (bStream) {
-				bRodando = oConexao.status === "conectado" && !bEmitida;
+		/**
+		 * Índice do vagão que está recebendo carga agora: o que tem status
+		 * "carregando", ainda não encheu e recebeu a leitura mais recente.
+		 * @param {object} oEstado estado do carregamento
+		 * @returns {number} índice em oEstado.vagoes ou -1 se nenhum
+		 */
+		indiceVagaoEmCarga: function (oEstado) {
+			var iEncontrado = -1;
+			var iMaisRecenteMs = -1;
+			oEstado.vagoes.forEach(function (oVagao, iIndice) {
+				var bCarregando = oVagao.statusChave === "carregando" && !Regras.vagaoCheio(oVagao, oEstado.composicao);
+				if (bCarregando && (oVagao.recebidoEmMs || 0) >= iMaisRecenteMs) {
+					iMaisRecenteMs = oVagao.recebidoEmMs || 0;
+					iEncontrado = iIndice;
+				}
+			});
+			return iEncontrado;
+		},
+
+		/* =========================================================== */
+		/* Faturamento por vagão                                       */
+		/* =========================================================== */
+
+		/**
+		 * Situação do faturamento de UM vagão.
+		 *
+		 *  faturado   -> a nota já foi emitida;
+		 *  aguardando -> ainda não terminou de carregar;
+		 *  bloqueado  -> terminou, mas tem vistoria reprovada ou excesso de peso;
+		 *  liberado   -> terminou e não tem bloqueio: pode faturar.
+		 *
+		 * @param {object} oVagao vagão do estado
+		 * @param {object} oComposicao dados da composição
+		 * @returns {{situacao: string, motivo: (string|null)}}
+		 */
+		situacaoFaturamento: function (oVagao, oComposicao) {
+			if (oVagao.fatura) {
+				return { situacao: SITUACAO_FATURA.FATURADO, motivo: null };
 			}
-
-			var oRecComp = Regras.receita(s, c.produto);
-			var aAtivas = s.bocas.filter(function (b) { return b.status === "ativa" && b.destino != null; });
-			var mDestinos = {};
-			var mVazaoPorVagao = {};
-			aAtivas.forEach(function (b) {
-				(mDestinos[b.destino] = mDestinos[b.destino] || []).push(b.n);
-				mVazaoPorVagao[b.destino] = (mVazaoPorVagao[b.destino] || 0) + b.vazao;
-			});
-
-			/* ---------------- Vagões ---------------- */
-			var aVagoes = s.vagoes.map(function (w, i) {
-				var sSt = Regras.statusVagao(w, c, mDestinos);
-				var iPct = Math.round(w.carga / LIM * 100);
-				var sLabel = pad(w.pos);
-				var nVazao = mVazaoPorVagao[w.pos] || 0;
-				var aSec = SECOES.map(function (k, ix) {
-					var nMeta = LIM * (oRecComp ? oRecComp.distribuicao[k] : 100 / 3) / 100;
-					var nCarga = w.secoes ? w.secoes[k] : 0;
-					var nFill = nMeta ? Math.round(nCarga / nMeta * 100) : 0;
-					return {
-						key: k,
-						sigla: t("sec." + k + ".sigla"),
-						label: t("sec." + k),
-						carga: nCarga,
-						fillPct: Math.max(0, Math.min(100, nFill)),
-						fillCss: Math.max(0, Math.min(100, nFill)) + "%",
-						cargaTxt: f1(nCarga),
-						metaTxt: f1(nMeta) + " t",
-						txt: f1(nCarga) + " / " + f1(nMeta) + " t",
-						state: nCarga > nMeta + 0.05 ? "Error" : (nFill >= 94 ? "Success" : "None")
-					};
-				});
-				return {
-					index: i,
-					pos: w.pos,
-					label: sLabel,
-					placa: w.placa,
-					titulo: t("vagaoN", [sLabel]) + " · " + w.placa,
-					tituloCurto: t("vagaoN", [sLabel]),
-					vistoriado: w.vistoriado,
-					vistText: t(w.vistoriado ? "vistoriado" : "naoVistoriado"),
-					vistState: w.vistoriado ? "Success" : "Error",
-					vistIcon: w.vistoriado ? "sap-icon://shield" : "sap-icon://locked",
-					carga: w.carga,
-					cargaTxt: f1(w.carga),
-					cargaState: w.carga > LIM ? "Error" : "None",
-					limiteTxt: f1(LIM) + " t",
-					taraTxt: f1(c.taraVagao) + " t",
-					brutoTxt: f1(w.carga + c.taraVagao) + " t",
-					pct: Math.max(0, Math.min(100, iPct)),
-					pctCss: Math.max(0, Math.min(100, iPct)) + "%",
-					limiteBarTxt: "/ " + f1(LIM) + " t",
-					pctTxt: iPct + "%",
-					statusKey: sSt,
-					statusText: t("st." + sSt),
-					statusState: ESTADO_VAGAO[sSt],
-					carregando: sSt === "carregando",
-					excesso: w.carga > LIM,
-					bocasHist: w.bocas.slice(),
-					bocasAtivas: mDestinos[w.pos] || [],
-					cargaUnTxt: f1(w.carga) + " t",
-					secoes: aSec,
-					bocasTxt: w.bocas.length ? w.bocas.map(function (n) { return "B" + n; }).join(" · ") : "—",
-					etaTxt: nVazao > 0 ? duracao(Math.max(0, ALVO - w.carga) / nVazao * 60) : "—",
-					checks: CHECKLIST.map(function (k) {
-						var bOk = !!w.checklist[k];
-						return {
-							key: k,
-							label: t("check." + k),
-							ok: bOk,
-							text: t(bOk ? "checkOk" : "checkReprovado"),
-							state: bOk ? "Success" : "Error",
-							icon: bOk ? "sap-icon://sys-enter-2" : "sap-icon://error",
-							iconColor: bOk ? "Positive" : "Negative"
-						};
-					}),
-					// no modo stream o peso vem da balança: ajuste manual seria sobrescrito
-					podeRetirar: w.carga > LIM && !bEmitida && !bStream,
-					statusSistemaTxt: w.statusSistema || "—",
-					leituraTxt: w.recebidoEmMs ? hora(new Date(w.dataHoraMs)) : t("semLeitura"),
-					semAtualizacao: bStream && w.statusChave === "carregando" && !!w.recebidoEmMs && iAgoraMs - w.recebidoEmMs > iLimiteSemDadosMs,
-					incluidoPeloStream: !!w.incluidoPeloStream,
-					retirarTxt: t("acaoRetirarExcesso", [f1(Math.max(0, w.carga - LIM))])
-				};
-			});
-
-			/* ---------------- Bocas (cones de descarga) ---------------- */
-			var aBocas = s.bocas.map(function (b, j) {
-				var nNivel = b.capacidade ? b.estoque / b.capacidade * 100 : 0;
-				var iNivel = Math.max(0, Math.min(100, Math.round(nNivel)));
-				var bAtiva = b.status === "ativa" && b.destino != null;
-				var oDest = null;
-				var iDestIndex = -1;
-				s.vagoes.forEach(function (w, i) { if (w.pos === b.destino) { oDest = w; iDestIndex = i; } });
-				var nVzDest = oDest ? (mVazaoPorVagao[oDest.pos] || 0) : 0;
-				var sEta = bAtiva && nVzDest > 0 ? duracao(Math.max(0, ALVO - oDest.carga) / nVzDest * 60) : "—";
-				var bBaixo = nNivel < c.nivelMinimoSiloPct && b.estoque > 0;
-				var oRec = Regras.receita(s, b.produto);
-				var bDivergente = bAtiva && b.produto !== c.produto;
-				var sNome = "B" + b.n;
-
-				var sAlerta = "";
-				var sAlertaTipo = "None";
-				if (bDivergente) { sAlerta = t("val.produto.d", [sNome, b.produto, c.produto]); sAlertaTipo = "Error"; }
-				else if (b.status === "siloVazio") { sAlerta = t("pop.alerta.siloVazio"); sAlertaTipo = "Error"; }
-				else if (b.status === "aguardandoVagao") { sAlerta = t("pop.alerta.aguardando"); sAlertaTipo = "Information"; }
-				else if (bBaixo) { sAlerta = t("val.siloBaixo.d", [b.silo, f0(b.estoque) + " t", iNivel]); sAlertaTipo = "Warning"; }
-
-				var bLigada = bAtiva || b.status === "aguardandoVagao";
-				return {
-					index: j,
-					n: b.n,
-					nome: sNome,
-					silo: b.silo,
-					produto: b.produto,
-					titulo: t("pop.titulo", [sNome, b.silo]),
-					status: b.status,
-					statusText: t("boca." + b.status),
-					statusState: ESTADO_BOCA[b.status],
-					statusIcon: ICONE_BOCA[b.status],
-					ativa: bAtiva,
-					vazao: bAtiva ? b.vazao : 0,
-					vazaoTxt: f0(bAtiva ? b.vazao : 0),
-					nominalTxt: oRec ? f0(Regras.vazaoPorBoca(s, b.produto)) + " t/h" : "—",
-					receitaCodigo: oRec ? oRec.codigo : t("rec.semReceita"),
-					receitaSecoes: Regras.secoesReceita(oRec, t),
-					receitaDistTxt: oRec ? SECOES.map(function (k) { return t("sec." + k + ".sigla") + " " + oRec.distribuicao[k]; }).join(" · ") : "",
-					abertura: b.abertura,
-					aberturaTxt: b.abertura + "%",
-					aberturaLabel: t("pop.comporta", [b.abertura]),
-					estoqueTxt: f0(b.estoque) + " t",
-					capacidadeTxt: f0(b.capacidade) + " t",
-					nivelPct: iNivel,
-					nivelTxt: iNivel + "% · " + f0(b.estoque) + " t",
-					nivelState: bBaixo || b.estoque <= 0 ? "Error" : (nNivel < 35 ? "Warning" : "Success"),
-					nivelBaixo: bBaixo,
-					umidadeTxt: t("umidadeTxt", [f1(b.umidade)]),
-					destino: bAtiva ? b.destino : null,
-					destinoIndex: bAtiva ? iDestIndex : -1,
-					destinoKey: b.destino != null ? String(b.destino) : "",
-					destinoLabel: bAtiva ? "V" + pad(b.destino) : "—",
-					destinoTxt: bAtiva ? t("destinoTxt", [pad(b.destino)]) : t("semDestino"),
-					etaTxt: sEta,
-					turnoTxt: f1(b.descarregadoTurno),
-					produtoDivergente: bDivergente,
-					temAlerta: !!sAlerta,
-					alertaTxt: sAlerta,
-					alertaTipo: sAlertaTipo,
-					os: b.os || "",
-					podeOperar: b.status !== "siloVazio" && !!oRec && !bEmitida,
-					// no modo stream o destino vem do vagão em carga informado pela balança
-					podeEscolherDestino: b.status !== "siloVazio" && !!oRec && !bEmitida && !bStream,
-					ligada: bLigada,
-					acaoTexto: t(bLigada ? "pop.parar" : "pop.iniciar"),
-					acaoTipo: bLigada ? "Reject" : "Accept",
-					acaoIcone: bLigada ? "sap-icon://stop" : "sap-icon://media-play"
-				};
-			});
-
-			var nTurnoMax = aBocas.reduce(function (a, b) { return Math.max(a, s.bocas[b.index].descarregadoTurno); }, 0);
-			var nTurnoTotal = s.bocas.reduce(function (a, b) { return a + b.descarregadoTurno; }, 0);
-			aBocas.forEach(function (b) {
-				b.turnoPctCss = (nTurnoMax ? Math.round(s.bocas[b.index].descarregadoTurno / nTurnoMax * 100) : 0) + "%";
-				b.turnoUnTxt = b.turnoTxt + " t";
-			});
-
-			/* ---------------- Validações ---------------- */
-			var aVal = [];
-			function add(sType, sTitle, sDesc, iVagao, iBoca) {
-				aVal.push({
-					type: sType,
-					state: sType,
-					title: sTitle,
-					description: sDesc,
-					subtitle: sDesc,
-					infoText: t(sType === "Error" ? "sevErro" : "sevAviso"),
-					icon: sType === "Error" ? "sap-icon://error" : "sap-icon://alert",
-					vagaoIndex: iVagao,
-					bocaIndex: iBoca,
-					navegavel: iVagao >= 0 || iBoca >= 0
-				});
+			if (!Regras.carregamentoConcluido(oVagao, oComposicao)) {
+				return { situacao: SITUACAO_FATURA.AGUARDANDO, motivo: null };
 			}
-			if (bStream && (oConexao.status === "desconectado" || oConexao.status === "indisponivel")) {
-				add("Error", t("val.semConexao.t"), t("val.semConexao.d"), -1, -1);
+			if (oVagao.vistoria === "reprovada") {
+				return { situacao: SITUACAO_FATURA.BLOQUEADO, motivo: MOTIVO_BLOQUEIO.VISTORIA };
 			}
-			s.vagoes.forEach(function (w, i) {
-				if (!w.vistoriado && (w.carga > 0 || w.statusChave === "carregando")) {
-					add("Error", t("val.cargaSemVistoria.t", [pad(w.pos)]), t("val.cargaSemVistoria.d", [w.placa, f1(w.carga)]), i, -1);
-				} else if (!w.vistoriado) {
-					add("Error", t("val.semVistoria.t", [pad(w.pos)]), t("val.semVistoria.d", [w.placa]), i, -1);
-				}
-				if (w.carga > LIM) {
-					add("Error", t("val.excesso.t", [pad(w.pos)]),
-						t("val.excesso.d", [f1(w.carga), f1(LIM), f1(w.carga - LIM)]), i, -1);
-				}
-			});
-			aBocas.forEach(function (b) {
-				if (b.produtoDivergente) {
-					add("Error", t("val.produto.t", [b.nome]), t("val.produto.d", [b.nome, b.produto, c.produto]), -1, b.index);
-				}
-			});
-			var nErros = aVal.length;
-			if (bStream) {
-				if (oConexao.status === "reconectando") {
-					add("Warning", t("val.reconectando.t"), t("val.reconectando.d"), -1, -1);
-				}
-				aVagoes.forEach(function (oVagao) {
-					if (oVagao.semAtualizacao) {
-						add("Warning", t("val.semAtualizacao.t", [oVagao.label]), t("val.semAtualizacao.d", [oVagao.placa, oVagao.leituraTxt]), oVagao.index, -1);
-					}
-					if (oVagao.incluidoPeloStream) {
-						add("Warning", t("val.incluido.t", [oVagao.placa]), t("val.incluido.d"), oVagao.index, -1);
-					}
-				});
-				if (oConexao.mensagensDescartadas > 0) {
-					add("Warning", t("val.descartadas.t", [oConexao.mensagensDescartadas]), t("val.descartadas.d"), -1, -1);
-				}
-				if (oConexao.vagoesIgnorados > 0) {
-					add("Warning", t("val.limiteVagoes.t", [oConexao.vagoesIgnorados]), t("val.limiteVagoes.d"), -1, -1);
-				}
+			if (Regras.vagaoComExcesso(oVagao, oComposicao)) {
+				return { situacao: SITUACAO_FATURA.BLOQUEADO, motivo: MOTIVO_BLOQUEIO.EXCESSO };
 			}
-			aBocas.forEach(function (b) {
-				if (b.status === "siloVazio") {
-					add("Warning", t("val.siloVazio.t", [b.nome]), t("val.siloVazio.d", [b.silo]), -1, b.index);
-				} else if (b.nivelBaixo) {
-					add("Warning", t("val.siloBaixo.t", [b.nome]), t("val.siloBaixo.d", [b.silo, b.estoqueTxt, b.nivelPct]), -1, b.index);
-				}
-			});
-			var nAguardando = s.vagoes.filter(function (w) {
-				return w.vistoriado && w.carga === 0 && !mDestinos[w.pos] && w.statusChave !== "carregando";
-			}).length;
-			if (nAguardando > 0) {
-				add("Warning", nAguardando === 1 ? t("val.aguardando1.t") : t("val.aguardandoN.t", [nAguardando]),
-					t("val.aguardando.d"), -1, -1);
-			}
-			var nAvisos = aVal.length - nErros;
-
-			/* ---------------- Totais / KPIs ---------------- */
-			var nTotal = s.vagoes.reduce(function (a, w) { return a + w.carga; }, 0);
-			var nCap = s.vagoes.length * LIM;
-			var iTotalPct = Math.round(nTotal / nCap * 100);
-			var nCarregados = s.vagoes.filter(function (w) { return w.carga > 0; }).length;
-			var nVist = s.vagoes.filter(function (w) { return w.vistoriado; }).length;
-			var nVazaoTotal = aAtivas.reduce(function (a, b) { return a + b.vazao; }, 0);
-			var nRestante = s.vagoes.reduce(function (a, w) {
-				return a + (w.vistoriado ? Math.max(0, ALVO - w.carga) : 0);
-			}, 0);
-			var sResumoVal = t("resumoVal", [nErros, nAvisos]);
-
-			/* ---------------- Fatura ---------------- */
-			var bPodeEmitir = nErros === 0 && nTotal > 0 && !bEmitida;
-			var sBotao;
-			if (bEmitida) { sBotao = t("fat.botaoEmitida"); }
-			else if (bPodeEmitir) { sBotao = t("acaoEmitirFatura"); }
-			else { sBotao = nErros === 1 ? t("fat.resolva1") : t("fat.resolvaN", [nErros]); }
-
-			var iSel = Math.max(0, Math.min(aVagoes.length - 1, ui.sel || 0));
-			var iBocaSel = Math.max(0, Math.min(aBocas.length - 1, ui.bocaSel || 0));
-
-			return {
-				composicao: {
-					codigo: c.codigo,
-					titulo: t("composicao", [c.codigo]),
-					subtitulo: c.patio,
-					linhaInfo: [c.produto, c.estacao, c.patio].join("  ·  "),
-					produto: c.produto,
-					estacaoTitulo: t("cardEstacao") + " · " + c.estacao,
-					estacaoSub: t("cardEstacaoSub", [c.produto]),
-					nivelMinimoSiloPct: c.nivelMinimoSiloPct
-				},
-				receita: {
-					material: c.produto,
-					codigo: oRecComp ? oRecComp.codigo : t("rec.semReceita"),
-					vazaoTxt: oRecComp ? f0(oRecComp.vazao) : "—",
-					porBocaTxt: oRecComp ? f0(Regras.vazaoPorBoca(s, c.produto)) : "—",
-					bocasTxt: t("rec.bocasMaterial", [Regras.bocasDoMaterial(s, c.produto)]),
-					calculoTxt: oRecComp ? t("rec.calculo", [f0(oRecComp.vazao), Regras.bocasDoMaterial(s, c.produto), f0(Regras.vazaoPorBoca(s, c.produto))]) : t("rec.semReceita"),
-					secoes: Regras.secoesReceita(oRecComp, t, ALVO)
-				},
-				estacaoTextos: {
-					comporta: t("st.txt.comporta"),
-					vazao: t("st.txt.vazao"),
-					eta: t("st.txt.eta"),
-					bocas: t("st.txt.bocas"),
-					locomotiva: t("st.txt.locomotiva"),
-					tracao: t("st.txt.tracao"),
-					locoMov: t("st.txt.locoMov"),
-					locoParada: t("st.txt.locoParada"),
-					minimo: t("st.txt.minimo"),
-					legVist: t("st.txt.legVist"),
-					legNaoVist: t("st.txt.legNaoVist"),
-					legCarregando: t("st.txt.legCarregando"),
-					legFluxo: t("st.txt.legFluxo"),
-					legSel: t("st.txt.legSel"),
-					legMin: t("st.txt.legMin"),
-					anteriores: t("st.txt.anteriores"),
-					proximos: t("st.txt.proximos")
-				},
-				view: {
-					sel: iSel,
-					bocaSel: iBocaSel,
-					running: bRodando,
-					rodandoFlag: !!s.simulacao.rodando,
-					focoLabel: t(ui.auto ? "focoAuto" : "focoManual"),
-					focoKey: ui.auto ? "auto" : "manual",
-					liveKey: bEmitida ? "done" : (bStream
-						? ({ conectado: "live", desconectado: "off", indisponivel: "off" }[oConexao.status] || "paused")
-						: (bRodando ? "live" : "paused")),
-					hora: hora(new Date(s.simulacao.ultimaAtualizacao)),
-					liveText: bEmitida ? t("statusFaturada")
-						: (bStream ? t("conexao." + oConexao.status) : (s.simulacao.rodando ? t("statusAoVivo") : t("statusPausado"))),
-					modoStream: bStream,
-					ultimoEventoTxt: bStream ? (oConexao.ultimoEventoMs ? t("ultimoEvento", [hora(new Date(oConexao.ultimoEventoMs))]) : t("nenhumEvento")) : "",
-					liveState: bEmitida ? "Success" : (bRodando ? "Information" : "None"),
-					liveIcon: bEmitida ? "sap-icon://accept" : (bRodando ? "sap-icon://status-in-process" : "sap-icon://media-pause"),
-					simTexto: s.simulacao.rodando ? t("acaoPausar") : t("acaoRetomar"),
-					simIcone: s.simulacao.rodando ? "sap-icon://media-pause" : "sap-icon://media-play",
-					nErros: nErros,
-					nAvisos: nAvisos,
-					nMsgsTxt: String(aVal.length),
-					temMsgs: aVal.length > 0,
-					temErros: nErros > 0,
-					semPendencias: aVal.length === 0,
-					resumoValidacoes: sResumoVal,
-					ultimaAtualizacao: t("ultimaAtualizacao", [hora(new Date(s.simulacao.ultimaAtualizacao))])
-				},
-				kpi: {
-					vazaoTxt: f0(nVazaoTotal),
-					totalTxt: f1(nTotal),
-					totalPct: Math.min(100, iTotalPct),
-					capTxt: "/ " + f0(nCap) + " t",
-					turnoTxt: f1(nTurnoTotal),
-					carregadosTxt: t("carregadosDe", [nCarregados, s.vagoes.length]),
-					bocasAtivasTxt: t("bocasAtivas", [aAtivas.length, s.bocas.length]),
-					totalPctCss: Math.min(100, iTotalPct) + "%",
-					mediaUnTxt: f1(nCarregados ? nTotal / nCarregados : 0) + " t",
-					totalPctTxt: t("pctCapacidade", [iTotalPct, f1(nCap)]),
-					vistTxt: nVist + "/" + s.vagoes.length,
-					vistState: nVist === s.vagoes.length ? "Success" : "Error",
-					etaTxt: nVazaoTotal > 0 ? duracao(nRestante / nVazaoTotal * 60) : "—",
-					mediaTxt: f1(nCarregados ? nTotal / nCarregados : 0),
-					pendTxt: sResumoVal,
-					pendState: nErros ? "Error" : (nAvisos ? "Warning" : "Success"),
-					resumoCurto: t("resumoCurto", [f1(nTotal), f0(nVazaoTotal), sResumoVal])
-				},
-				vagoes: aVagoes,
-				bocas: aBocas,
-				sel: aVagoes[iSel],
-				bocaSel: aBocas[iBocaSel],
-				destinos: s.vagoes.filter(function (w) { return Regras.disponivel(w, c); }).map(function (w) {
-					return { key: String(w.pos), text: t("vagaoN", [pad(w.pos)]) + " · " + f1(w.carga) + " t" };
-				}),
-				validacoes: aVal,
-				fatura: {
-					emitida: bEmitida,
-					podeEmitir: bPodeEmitir,
-					numeroTxt: bEmitida ? s.fatura.numero : t("fat.pendente"),
-					statusText: bEmitida ? t("fat.emitida", [s.fatura.hora]) : (bPodeEmitir ? t("fat.pronta") : t("fat.bloqueada")),
-					statusState: bEmitida ? "Success" : (bPodeEmitir ? "Information" : "Error"),
-					vagoesTxt: t("fat.vagoesTxt", [nCarregados, s.vagoes.length]),
-					pesoTxt: f1(nTotal) + " t",
-					botaoTexto: sBotao,
-					botaoIcone: bEmitida ? "sap-icon://accept" : "sap-icon://paper-plane",
-					nCarregados: nCarregados,
-					key: bEmitida ? "emitida" : (bPodeEmitir ? "pronta" : "bloqueada"),
-					icone: bEmitida ? "sap-icon://accept" : (bPodeEmitir ? "sap-icon://paper-plane" : "sap-icon://locked"),
-					motivoTxt: bEmitida ? t("fat.motivoEmitida", [s.fatura.numero])
-						: (bPodeEmitir ? t("fat.motivoPronta") : (nErros === 1 ? t("fat.resolva1") : t("fat.resolvaN", [nErros]))),
-					pesoNumTxt: f1(nTotal),
-					vagoesPctCss: Math.round(nCarregados / s.vagoes.length * 100) + "%",
-					mediaTxt: f1(nCarregados ? nTotal / nCarregados : 0) + " t"
-				}
-			};
+			return { situacao: SITUACAO_FATURA.LIBERADO, motivo: null };
 		}
 	};
 

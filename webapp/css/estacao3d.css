@@ -1,0 +1,649 @@
+/* ==========================================================================
+   Estação 3D (controle vagoes.dashboard.control.Estacao3D)
+
+   Tudo é HTML + CSS 3D (transform), sem WebGL e sem biblioteca externa.
+
+   Regras para mexer neste arquivo:
+   1. Entre .vgE3__camera e as faces, todo elemento "de grupo" usa
+      transform-style: preserve-3d. Nesses elementos NÃO use opacity, filter,
+      overflow, clip-path nem mask: o navegador "achata" o grupo e o 3D some.
+      Esses efeitos só podem ir nas FACES (folhas).
+   2. Medidas da cena em px "do mundo" (a cena inteira é escalada por
+      --e3-escala). Medidas da barra de comandos em --vg-r (unidade da TV).
+   3. Cores sempre por token --e3-*. O tema claro só redefine os tokens.
+   4. Variáveis escritas pelo JavaScript em .vgE3__conteudo:
+        --e3-escala      escala para caber no espaço       (Cena3D)
+        --e3-pan         deslocamento até o vagão em foco   (Cena3D)
+        --e3-centro-y    altura do centro da cena           (Cena3D)
+        --e3-guinada     giro lateral da câmera             (Camera3D)
+        --e3-inclinacao  quanto a câmera olha de cima       (Camera3D)
+        --e3-zoom        aproximação                        (Camera3D)
+   ========================================================================== */
+
+/* ---------- tokens ---------- */
+.vgE3 {
+	--e3-grao: #e3a73b;
+	--e3-grao-claro: #f6cd73;
+	--e3-grao-escuro: #b47d1e;
+	--e3-aco: #66727f;
+	--e3-aco-claro: #8c98a5;
+	--e3-aco-escuro: #3b4550;
+	--e3-vidro: #9ec1e6;                 /* casco do vagão e corpo do silo (translúcidos) */
+	--e3-loco: #2f6aa3;
+	--e3-loco-claro: #3f82c4;
+	--e3-loco-escuro: #234f7a;
+	--e3-chao: #161c23;
+	--e3-chao-linha: rgba(255, 255, 255, .07);
+	--e3-texto: #f2f5f8;
+	--e3-texto-2: #a9b4be;
+	--e3-contorno: rgba(8, 12, 16, .9);   /* sombra que destaca texto sobre o grão */
+	--e3-rotulo-fundo: rgba(18, 23, 28, .88);
+	--e3-rotulo-linha: rgba(255, 255, 255, .16);
+	--e3-sobre-destaque: #0b1620;         /* texto sobre a cor de destaque */
+	--e3-ok: var(--vg-ok, #5dc122);
+	--e3-alerta: var(--vg-warn, #ffab1d);
+	--e3-erro: var(--vg-err, #ff8888);
+	--e3-info: var(--vg-info-c, #4db1ff);
+	--e3-destaque: var(--vg-accent, #4db1ff);
+
+	display: block;
+	position: relative;
+	height: 100%;
+	min-height: 0;
+	font-family: var(--sapFontFamily, "72", "72full", Arial, Helvetica, sans-serif);
+	color: var(--e3-texto);
+	-webkit-user-select: none;
+	user-select: none;
+}
+
+/* tema claro (cinza suave, igual ao resto da tela) */
+.sapUiTheme-sap_horizon .vgE3 {
+	--e3-grao: #dfa02c;
+	--e3-grao-claro: #f0c25c;
+	--e3-grao-escuro: #b7811f;
+	--e3-aco: #8a96a3;
+	--e3-aco-claro: #a7b2bd;
+	--e3-aco-escuro: #6b7784;
+	--e3-vidro: #3f5b78;
+	--e3-loco: #3a78b5;
+	--e3-loco-claro: #4f8fce;
+	--e3-loco-escuro: #2d6198;
+	--e3-chao: #c9d0d8;
+	--e3-chao-linha: rgba(29, 45, 62, .10);
+	--e3-texto: #1d2d3e;
+	--e3-texto-2: #4f6175;
+	--e3-contorno: rgba(240, 243, 246, .95);
+	--e3-rotulo-fundo: rgba(240, 243, 246, .94);
+	--e3-rotulo-linha: rgba(29, 45, 62, .22);
+	--e3-sobre-destaque: #ffffff;
+}
+
+/* ---------- palco, câmera e grupos ---------- */
+.vgE3__conteudo {
+	position: absolute;
+	inset: 0;
+	overflow: hidden;
+	border-radius: inherit;
+	outline: none;
+	--e3-escala: 1;
+	--e3-zoom: 1;
+	--e3-guinada: -24deg;
+	--e3-inclinacao: 15deg;
+	--e3-pan: 0;
+	--e3-centro-y: 200px;
+	--e3-fator: calc(var(--e3-escala) * var(--e3-zoom));
+}
+.vgE3__conteudo:focus-visible { outline: 2px solid var(--e3-destaque); outline-offset: -2px; }
+
+/* o palco define a perspectiva (distância do observador) e recebe os gestos */
+.vgE3__palco {
+	position: absolute;
+	inset: 0;
+	perspective: calc(2200px * var(--e3-escala));
+	cursor: grab;
+	touch-action: none;
+}
+.is-arrastando .vgE3__palco { cursor: grabbing; }
+
+/* a câmera: escala, inclinação (olhar de cima) e guinada (giro lateral) */
+.vgE3__camera {
+	position: absolute;
+	left: 50%;
+	top: 47%;
+	width: 0;
+	height: 0;
+	transform-style: preserve-3d;
+	transform:
+		scale3d(var(--e3-fator), var(--e3-fator), var(--e3-fator))
+		rotateX(calc(var(--e3-inclinacao) * -1))
+		rotateY(var(--e3-guinada));
+}
+.is-camera-suave .vgE3__camera,
+.is-camera-suave .vgE3Etiqueta { transition: transform .7s cubic-bezier(.22, .7, .2, 1); }
+
+/* grupos: não têm tamanho, só carregam a posição dos filhos */
+.vgE3__balanco,
+.vgE3__grupoChao,
+.vgE3__mundo,
+.vgE3__portico,
+.vgE3__trem,
+.vgE3Silo,
+.vgE3Vagao,
+.vgE3Loco {
+	position: absolute;
+	left: 0;
+	top: 0;
+	width: 0;
+	height: 0;
+	transform-style: preserve-3d;
+}
+
+/* balanço automático ("Girar"): pausa enquanto o usuário arrasta */
+.is-girando .vgE3__balanco { animation: vgE3Balanco 28s ease-in-out infinite alternate; }
+.is-arrastando .vgE3__balanco { animation-play-state: paused; }
+
+/* o mundo acompanha o vagão em foco; o trem desliza sob o pórtico */
+.vgE3__grupoChao { transform: translateY(var(--e3-centro-y)); }
+.vgE3__mundo {
+	transform: translate3d(calc(var(--e3-pan) * -1px), var(--e3-centro-y), 0);
+	transition: transform .9s cubic-bezier(.3, .7, .2, 1);
+}
+.vgE3__trem { transition: transform 1.4s cubic-bezier(.45, .05, .25, 1); }
+.vgE3__trem.is-sem-transicao { transition: none; }
+
+/* ---------- chão e trilhos ---------- */
+.vgE3__chao,
+.vgE3__dormentes,
+.vgE3__trilho {
+	position: absolute;
+	left: -1500px;
+	width: 3000px;
+	background-position-x: calc(var(--e3-pan) * -1px);
+	transition: background-position .9s cubic-bezier(.3, .7, .2, 1);
+}
+.vgE3__chao {
+	top: -430px;
+	height: 860px;
+	transform: rotateX(90deg);
+	background-color: var(--e3-chao);
+	background-image:
+		linear-gradient(var(--e3-chao-linha) 2px, transparent 2px),
+		linear-gradient(90deg, var(--e3-chao-linha) 2px, transparent 2px);
+	background-size: 86px 86px;
+	-webkit-mask-image: radial-gradient(closest-side, #000 30%, transparent 100%);
+	mask-image: radial-gradient(closest-side, #000 30%, transparent 100%);
+}
+.vgE3__dormentes {
+	top: -62px;
+	height: 124px;
+	transform: translateY(-1px) rotateX(90deg);
+	background-image: repeating-linear-gradient(90deg, var(--e3-aco-escuro) 0 12px, transparent 12px 43px);
+	-webkit-mask-image: linear-gradient(90deg, transparent 8%, #000 30%, #000 70%, transparent 92%);
+	mask-image: linear-gradient(90deg, transparent 8%, #000 30%, #000 70%, transparent 92%);
+}
+.vgE3__trilho {
+	top: -3px;
+	height: 6px;
+	background: var(--e3-aco-claro);
+	-webkit-mask-image: linear-gradient(90deg, transparent 8%, #000 30%, #000 70%, transparent 92%);
+	mask-image: linear-gradient(90deg, transparent 8%, #000 30%, #000 70%, transparent 92%);
+}
+
+/* ---------- caixas 3D (Dom.criarCaixa) ---------- */
+.vgE3Caixa {
+	position: absolute;
+	left: 0;
+	top: 0;
+	transform-style: preserve-3d;
+	transform-origin: 50% 100%;   /* escala e gira a partir do centro da base */
+}
+.vgE3Caixa__face { position: absolute; box-sizing: border-box; }
+
+/* aço: pórtico, bicos e chassis */
+.vgE3Aco__face,
+.vgE3Chassi__face { background: var(--e3-aco); }
+.vgE3Aco__face.is-topo,
+.vgE3Chassi__face.is-topo { background: var(--e3-aco-claro); }
+.vgE3Aco__face.is-esquerda,
+.vgE3Aco__face.is-direita,
+.vgE3Chassi__face.is-esquerda,
+.vgE3Chassi__face.is-direita { background: var(--e3-aco-escuro); }
+.vgE3Chassi__face.is-frente { background: var(--e3-aco-escuro); }
+
+/* grão: usado dentro dos silos e dos vagões; cresce com scaleY */
+.vgE3Grao { transition: transform .5s linear; }
+.vgE3Grao__face { background: var(--e3-grao); }
+.vgE3Grao__face.is-frente { background: linear-gradient(180deg, var(--e3-grao) 0%, var(--e3-grao-escuro) 100%); }
+.vgE3Grao__face.is-esquerda,
+.vgE3Grao__face.is-direita { background: var(--e3-grao-escuro); }
+.vgE3Grao__face.is-topo {
+	background-color: var(--e3-grao-claro);
+	background-image:
+		radial-gradient(circle, color-mix(in srgb, var(--e3-grao-escuro) 55%, transparent) 0 1.4px, transparent 1.8px),
+		radial-gradient(circle, color-mix(in srgb, #fff 45%, transparent) 0 1.2px, transparent 1.6px);
+	background-size: 13px 11px, 17px 15px;
+	background-position: 0 0, 6px 5px;
+}
+
+/* ---------- silos (bocas) ---------- */
+.vgE3Silo {
+	cursor: pointer;
+	outline: none;
+	--e3-silo-borda: color-mix(in srgb, var(--e3-vidro) 70%, transparent);
+	--e3-ponto: var(--e3-aco-claro);
+}
+.vgE3Silo__corpo__face {
+	background: color-mix(in srgb, var(--e3-vidro) 10%, transparent);
+	border: 2px solid var(--e3-silo-borda);
+	border-radius: 3px;
+}
+.vgE3Silo__corpo__face.is-topo { background: color-mix(in srgb, var(--e3-vidro) 24%, transparent); }
+.vgE3Silo__corpo__face.is-frente {
+	display: flex;
+	align-items: flex-end;
+	justify-content: center;
+	padding-bottom: 7px;
+}
+.vgE3Silo__pct {
+	position: relative;
+	font-size: 15px;
+	font-weight: 700;
+	font-variant-numeric: tabular-nums;
+	color: var(--e3-texto);
+	text-shadow: 0 0 5px var(--e3-contorno), 0 0 2px var(--e3-contorno);
+}
+.vgE3Silo__minimo {
+	position: absolute;
+	left: 0;
+	right: 0;
+	height: 0;
+	border-top: 2px dashed var(--e3-alerta);
+	opacity: .75;
+}
+
+/* funil: quatro trapézios (o recorte faz o afunilamento até o bico) */
+.vgE3Funil {
+	position: absolute;
+	left: 0;
+	top: 0;
+	transform-origin: 50% 0;
+	background: var(--e3-aco);
+	clip-path: polygon(0 0, 100% 0, calc(50% + 7px) 100%, calc(50% - 7px) 100%);
+}
+.vgE3Funil.is-lado { background: var(--e3-aco-escuro); }
+
+/* etiqueta do silo (sempre virada para a câmera) */
+.vgE3Etiqueta {
+	position: absolute;
+	left: 0;
+	top: 0;
+	transform-origin: 0 0;   /* gira em torno do ponto de ancoragem (centro da base) */
+	white-space: nowrap;
+}
+.vgE3Silo__etiqueta {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	gap: 1px;
+	min-width: 46px;
+	padding: 3px 6px 4px;
+	border-radius: 8px;
+	background: var(--e3-rotulo-fundo);
+	border: 1px solid var(--e3-rotulo-linha);
+	line-height: 1.15;
+}
+.vgE3Silo__linha { display: inline-flex; align-items: center; gap: 5px; }
+.vgE3Silo__ponto { width: 8px; height: 8px; border-radius: 50%; background: var(--e3-ponto); }
+.vgE3Silo__nome { font-size: 15px; font-weight: 700; color: var(--e3-texto); }
+.vgE3Silo__vazao { font-size: 12.5px; font-weight: 600; font-variant-numeric: tabular-nums; color: var(--e3-texto-2); }
+
+/* estados do silo */
+.vgE3Silo.is-fluindo { --e3-ponto: var(--e3-ok); }
+.vgE3Silo.is-fluindo .vgE3Silo__ponto { animation: vgE3Pulso 1.2s ease-in-out infinite; }
+.vgE3Silo.is-fluindo .vgE3Silo__vazao { color: var(--e3-texto); }
+.vgE3Silo.is-baixo { --e3-silo-borda: var(--e3-alerta); --e3-ponto: var(--e3-alerta); }
+.vgE3Silo.is-reabastecendo { --e3-silo-borda: var(--e3-info); --e3-ponto: var(--e3-info); }
+.vgE3Silo.is-parada,
+.vgE3Silo.is-comportaFechada {
+	--e3-silo-borda: color-mix(in srgb, var(--e3-aco-claro) 55%, transparent);
+	--e3-ponto: transparent;
+}
+.vgE3Silo.is-parada .vgE3Silo__ponto,
+.vgE3Silo.is-comportaFechada .vgE3Silo__ponto { box-shadow: inset 0 0 0 2px var(--e3-aco-claro); }
+.vgE3Silo.is-parada .vgE3Silo__corpo__face,
+.vgE3Silo.is-comportaFechada .vgE3Silo__corpo__face { border-style: dashed; }
+.vgE3Silo.is-parada .vgE3Silo__nome,
+.vgE3Silo.is-comportaFechada .vgE3Silo__nome { color: var(--e3-texto-2); }
+.vgE3Silo.is-siloVazio,
+.vgE3Silo.is-divergente { --e3-silo-borda: var(--e3-erro); --e3-ponto: var(--e3-erro); }
+.vgE3Silo:hover .vgE3Silo__etiqueta,
+.vgE3Silo:focus-visible .vgE3Silo__etiqueta { border-color: var(--e3-destaque); box-shadow: 0 0 0 2px var(--e3-destaque); }
+.vgE3Silo:hover .vgE3Silo__corpo__face,
+.vgE3Silo:focus-visible .vgE3Silo__corpo__face { background: color-mix(in srgb, var(--e3-vidro) 20%, transparent); }
+
+/* ---------- fluxo de grão (do bico até o vagão) ---------- */
+.vgE3Fluxo {
+	position: absolute;
+	left: 0;
+	top: 0;
+	width: 0;
+	transform-style: preserve-3d;
+	visibility: hidden;
+	pointer-events: none;
+	transition: height .5s linear;
+}
+.vgE3Fluxo.is-ligado { visibility: visible; }
+.vgE3Fluxo__plano {
+	position: absolute;
+	left: -5px;
+	top: 0;
+	width: 10px;
+	height: 100%;
+	overflow: hidden;   /* é uma face (folha): aqui o recorte é permitido */
+	background: linear-gradient(90deg, transparent, color-mix(in srgb, var(--e3-grao) 50%, transparent) 35% 65%, transparent);
+}
+.vgE3Fluxo__plano.is-lateral { transform: rotateY(90deg); }
+/* os grãos descem numa faixa mais alta que o plano, animada só com transform */
+.vgE3Fluxo__plano::before {
+	content: "";
+	position: absolute;
+	left: 0;
+	right: 0;
+	top: -28px;
+	bottom: 0;
+	background-image:
+		radial-gradient(circle, var(--e3-grao-claro) 0 2.3px, transparent 2.8px),
+		radial-gradient(circle, var(--e3-grao) 0 2px, transparent 2.5px);
+	background-size: 10px 14px, 10px 28px;
+	background-position: 0 0, 3px 9px;
+}
+.vgE3Fluxo.is-ligado .vgE3Fluxo__plano::before { animation: vgE3Cair .42s linear infinite; }
+
+/* ---------- vagões ---------- */
+.vgE3Vagao {
+	cursor: pointer;
+	outline: none;
+	--e3-borda: color-mix(in srgb, var(--e3-vidro) 72%, transparent);
+	--e3-fat: var(--e3-texto-2);
+}
+.vgE3Vagao__casco__face {
+	background: color-mix(in srgb, var(--e3-vidro) 12%, transparent);
+	border: 2px solid var(--e3-borda);
+	border-radius: 4px;
+}
+.vgE3Vagao__casco__face.is-tras { background: color-mix(in srgb, var(--e3-vidro) 20%, transparent); }
+.vgE3Vagao__casco__face.is-base { background: var(--e3-aco-escuro); border-color: transparent; }
+.vgE3Vagao__casco__face.is-frente {
+	display: grid;
+	grid-template-rows: auto 1fr auto;
+	justify-items: center;
+	padding: 7px 10px 8px;
+	color: var(--e3-texto);
+	text-shadow: 0 0 7px var(--e3-contorno), 0 0 3px var(--e3-contorno), 0 1px 1px var(--e3-contorno);
+	/* nervuras verticais do casco */
+	background-image: repeating-linear-gradient(90deg, transparent 0 94px, color-mix(in srgb, var(--e3-borda) 45%, transparent) 94px 96px);
+	background-color: color-mix(in srgb, var(--e3-vidro) 10%, transparent);
+}
+.vgE3Vagao__placa {
+	padding: 1px 9px;
+	border-radius: 4px;
+	background: var(--e3-rotulo-fundo);
+	border: 1px solid var(--e3-rotulo-linha);
+	font-size: 15px;
+	font-weight: 700;
+	letter-spacing: .05em;
+	text-shadow: none;
+}
+.vgE3Vagao__pct {
+	align-self: center;
+	font-size: 48px;
+	font-weight: 800;
+	line-height: 1;
+	letter-spacing: -.01em;
+	font-variant-numeric: tabular-nums;
+}
+.vgE3Vagao__status { font-size: 15px; font-weight: 700; }
+
+/* marca no chão: vagão selecionado (anel) e vagão em carga (brilho) */
+.vgE3Vagao__base {
+	position: absolute;
+	left: -226px;
+	top: -104px;
+	width: 452px;
+	height: 208px;
+	box-sizing: border-box;
+	border-radius: 30px;
+	border: 3px solid transparent;
+	visibility: hidden;
+}
+.vgE3Vagao.st-carregando .vgE3Vagao__base {
+	visibility: visible;
+	background: radial-gradient(closest-side, color-mix(in srgb, var(--e3-grao) 34%, transparent), transparent);
+	animation: vgE3Pulso 1.6s ease-in-out infinite;
+}
+.vgE3Vagao.is-selecionado .vgE3Vagao__base {
+	visibility: visible;
+	border-color: var(--e3-destaque);
+	background: color-mix(in srgb, var(--e3-destaque) 10%, transparent);
+	animation: none;
+}
+
+/* etiqueta de plataforma do vagão */
+.vgE3Vagao__etiqueta {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	padding: 3px 12px;
+	border-radius: 999px;
+	background: var(--e3-rotulo-fundo);
+	border: 2px solid var(--e3-borda);
+	font-size: 18px;
+	font-weight: 700;
+	color: var(--e3-texto);
+}
+.vgE3Vagao__etiquetaPct { display: none; font-variant-numeric: tabular-nums; }
+.is-vista-de-cima .vgE3Vagao__etiquetaPct { display: inline; }
+.vgE3Vagao__etiquetaFatura {
+	padding: 1px 9px;
+	border-radius: 999px;
+	font-size: 14px;
+	color: var(--e3-fat);
+	background: color-mix(in srgb, var(--e3-fat) 18%, transparent);
+}
+.vgE3Vagao__etiquetaFatura:empty { display: none; }
+
+/* estados do vagão: a cor da borda resume a situação */
+.vgE3Vagao.st-carregando { --e3-borda: var(--e3-destaque); }
+.vgE3Vagao.st-carregado,
+.vgE3Vagao.st-finalizado { --e3-borda: var(--e3-ok); }
+.vgE3Vagao.fat-liberado { --e3-fat: var(--e3-ok); }
+.vgE3Vagao.fat-faturado { --e3-borda: color-mix(in srgb, var(--e3-info) 70%, transparent); --e3-fat: var(--e3-info); }
+.vgE3Vagao.fat-bloqueado { --e3-fat: var(--e3-erro); }
+.vgE3Vagao.st-excesso,
+.vgE3Vagao.is-reprovado { --e3-borda: var(--e3-erro); }
+.vgE3Vagao.is-sem-leitura .vgE3Vagao__casco__face { border-style: dashed; }
+.vgE3Vagao.is-sem-leitura .vgE3Vagao__status { color: var(--e3-alerta); }
+.vgE3Vagao.is-selecionado .vgE3Vagao__casco__face { border-width: 3px; }
+.vgE3Vagao.is-selecionado .vgE3Vagao__etiqueta { border-color: var(--e3-destaque); }
+.vgE3Vagao:hover .vgE3Vagao__casco__face.is-frente,
+.vgE3Vagao:focus-visible .vgE3Vagao__casco__face.is-frente { background-color: color-mix(in srgb, var(--e3-vidro) 22%, transparent); }
+.vgE3Vagao:focus-visible .vgE3Vagao__etiqueta { box-shadow: 0 0 0 3px var(--e3-destaque); }
+
+/* rodas: um disco na lateral; giram só enquanto o trem anda */
+.vgE3Roda { position: absolute; left: 0; top: 0; width: 0; height: 0; transform-style: preserve-3d; }
+.vgE3Roda__disco {
+	position: absolute;
+	left: -15px;
+	top: -30px;
+	width: 30px;
+	height: 30px;
+	border-radius: 50%;
+	background:
+		radial-gradient(circle, var(--e3-aco-claro) 0 20%, transparent 22%),
+		conic-gradient(var(--e3-aco-escuro) 0 12%, var(--e3-aco) 12% 25%, var(--e3-aco-escuro) 25% 37%, var(--e3-aco) 37% 50%,
+			var(--e3-aco-escuro) 50% 62%, var(--e3-aco) 62% 75%, var(--e3-aco-escuro) 75% 87%, var(--e3-aco) 87% 100%);
+	box-shadow: inset 0 0 0 3px var(--e3-aco-escuro);
+}
+.vgE3__trem.is-andando .vgE3Roda__disco { animation: vgE3Roda .7s linear infinite; }
+
+/* ---------- locomotiva ---------- */
+.vgE3Loco__corpo__face,
+.vgE3Loco__cabine__face { background: var(--e3-loco); border: 2px solid var(--e3-loco-escuro); border-radius: 4px; }
+.vgE3Loco__corpo__face.is-topo,
+.vgE3Loco__cabine__face.is-topo { background: var(--e3-loco-claro); }
+.vgE3Loco__corpo__face.is-esquerda,
+.vgE3Loco__corpo__face.is-direita,
+.vgE3Loco__cabine__face.is-esquerda,
+.vgE3Loco__cabine__face.is-direita { background: var(--e3-loco-escuro); }
+.vgE3Loco__janela {
+	position: absolute;
+	left: 16px;
+	right: 16px;
+	top: 16px;
+	height: 42px;
+	border-radius: 5px;
+	background: color-mix(in srgb, #cfe6ff 70%, transparent);
+}
+.vgE3Loco__nome {
+	position: absolute;
+	left: 18px;
+	bottom: 12px;
+	font-size: 17px;
+	font-weight: 700;
+	letter-spacing: .1em;
+	text-transform: uppercase;
+	color: #f2f5f8;
+}
+.vgE3Loco__farol {
+	position: absolute;
+	left: 50%;
+	top: 18px;
+	width: 20px;
+	height: 20px;
+	margin-left: -10px;
+	border-radius: 50%;
+	background: #ffe9a8;
+	box-shadow: 0 0 16px 4px rgba(255, 215, 106, .7);
+}
+
+/* ---------- estado vazio (antes do primeiro evento): aviso 2D sobre a cena ---------- */
+.vgE3__vazio {
+	position: absolute;
+	left: 50%;
+	top: 64%;
+	transform: translate(-50%, -50%);
+	max-width: calc(100% - 2 * var(--vg-r, 16px));
+	visibility: hidden;
+	padding: calc(.5 * var(--vg-r, 16px)) calc(1.25 * var(--vg-r, 16px));
+	border-radius: 999px;
+	background: var(--e3-rotulo-fundo);
+	border: 2px dashed var(--e3-rotulo-linha);
+	font-size: calc(1.0625 * var(--vg-r, 16px));
+	font-weight: 600;
+	text-align: center;
+	color: var(--e3-texto-2);
+	pointer-events: none;
+}
+.vgE3__vazio.is-visivel { visibility: visible; }
+
+/* ---------- comandos (2D, por cima da cena) ---------- */
+/* canto superior esquerdo: vistas + dica de uso */
+.vgE3__canto {
+	position: absolute;
+	left: calc(.625 * var(--vg-r, 16px));
+	top: calc(.625 * var(--vg-r, 16px));
+	display: flex;
+	flex-direction: column;
+	align-items: flex-start;
+	gap: calc(.375 * var(--vg-r, 16px));
+	max-width: 46%;
+	pointer-events: none;   /* só os botões recebem clique; o resto deixa arrastar a cena */
+}
+.vgE3__ajuda {
+	padding-left: calc(.375 * var(--vg-r, 16px));
+	font-size: calc(.75 * var(--vg-r, 16px));
+	line-height: 1.35;
+	color: var(--e3-texto-2);
+	opacity: .85;
+}
+.vgE3__grupo {
+	display: flex;
+	align-items: center;
+	gap: 2px;
+	padding: 3px;
+	border-radius: 999px;
+	background: var(--e3-rotulo-fundo);
+	border: 1px solid var(--e3-rotulo-linha);
+	pointer-events: auto;
+}
+.vgE3__grupo--giro {
+	position: absolute;
+	right: calc(.625 * var(--vg-r, 16px));
+	top: calc(.625 * var(--vg-r, 16px));
+}
+.vgE3__grupo--navegacao {
+	position: absolute;
+	left: 50%;
+	bottom: calc(.625 * var(--vg-r, 16px));
+	transform: translateX(-50%);
+	width: max-content;
+	max-width: calc(100% - 1 * var(--vg-r, 16px));
+}
+.vgE3Botao {
+	appearance: none;
+	margin: 0;
+	border: 0;
+	padding: calc(.3125 * var(--vg-r, 16px)) calc(.8125 * var(--vg-r, 16px));
+	border-radius: 999px;
+	background: transparent;
+	font: inherit;
+	font-size: calc(.8125 * var(--vg-r, 16px));
+	font-weight: 600;
+	line-height: 1.2;
+	color: var(--e3-texto-2);
+	cursor: pointer;
+	white-space: nowrap;
+}
+.vgE3Botao--seta { padding-left: calc(.625 * var(--vg-r, 16px)); padding-right: calc(.625 * var(--vg-r, 16px)); font-size: calc(1.0625 * var(--vg-r, 16px)); line-height: 1; }
+.vgE3Botao:hover:not(:disabled) { color: var(--e3-texto); background: color-mix(in srgb, var(--e3-texto) 10%, transparent); }
+.vgE3Botao:focus-visible { outline: 2px solid var(--e3-destaque); outline-offset: 1px; }
+.vgE3Botao[aria-pressed="true"],
+.vgE3Botao[aria-pressed="true"]:hover { background: var(--e3-destaque); color: var(--e3-sobre-destaque); }
+.vgE3Botao:disabled { opacity: .38; cursor: default; }
+.vgE3__contador {
+	min-width: 6ch;
+	padding: 0 calc(.25 * var(--vg-r, 16px));
+	text-align: center;
+	font-size: calc(.8125 * var(--vg-r, 16px));
+	font-weight: 700;
+	font-variant-numeric: tabular-nums;
+	color: var(--e3-texto);
+}
+
+/* ---------- telas em coluna (tablet e celular) ---------- */
+@container vgapp (max-width: 1099px) or (orientation: portrait) {
+	/* a página rola na vertical: o arrasto vertical é da página, o horizontal gira a cena */
+	.vgE3__palco { touch-action: pan-y; }
+	.vgE3__ajuda { display: none; }
+}
+/* estação estreita (classe ligada pela Cena3D): comandos menores para não cobrir o desenho.
+   Não usamos @container aqui: um container novo mudaria o valor de --vg-r (cqw/cqh). */
+.is-estreita .vgE3Botao { padding: 5px 9px; font-size: 12px; }
+.is-estreita .vgE3Botao--seta { padding: 4px 9px; font-size: 15px; }
+.is-estreita .vgE3__contador { font-size: 12px; }
+.is-estreita .vgE3__canto { left: 6px; top: 6px; }
+.is-estreita .vgE3__grupo--giro { right: 6px; top: 6px; }
+.is-estreita .vgE3__grupo--navegacao { bottom: 6px; }
+.is-estreita .vgE3__ajuda { display: none; }
+
+/* ---------- quem prefere menos movimento ---------- */
+@media (prefers-reduced-motion: reduce) {
+	.vgE3 *,
+	.vgE3 *::before { animation: none !important; transition: none !important; }
+}
+
+/* ---------- animações ---------- */
+@keyframes vgE3Balanco { from { transform: rotateY(-6deg); } to { transform: rotateY(6deg); } }
+@keyframes vgE3Cair { to { transform: translateY(28px); } }
+@keyframes vgE3Roda { to { transform: rotate(-360deg); } }
+@keyframes vgE3Pulso { 0%, 100% { opacity: 1; } 50% { opacity: .4; } }

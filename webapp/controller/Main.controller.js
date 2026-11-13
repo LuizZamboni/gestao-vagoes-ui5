@@ -1,18 +1,30 @@
 /**
  * Main.controller
  * ------------------------------------------------------------------
- * Duas fontes de dados, escolhidas na inicialização:
+ * Liga as três partes da tela:
  *
- *  1. STREAM (produção): eventos SSE de GET {servidor}/GestaoCooperado/stream.
- *     Configuração em manifest.json > sap.ui5 > config > carregamentoStream.
- *     Os eventos entram num buffer; a cada "intervaloAtualizacaoTelaMs" o buffer
- *     é aplicado ao estado (model/Carregamento.js) e a tela é atualizada.
+ *   FONTE DE EVENTOS  ->  ESTADO  ->  MODELO DE TELA  ->  VIEW
  *
- *  2. DEMONSTRAÇÃO: a simulação local (model/Simulador.js), sem servidor.
- *     Ativada por "modoDemonstracao": true no manifest ou pela meta tag
- *     "vagoes-modo-demonstracao" (usada no index-cdn.html / Netlify).
+ *  1. Fonte de eventos (uma por vez, as duas com a mesma interface):
+ *       - "automatico": model/stream/CarregamentoAutomatico.js gera o
+ *         enchimento na própria tela (testes e demonstração, sem servidor);
+ *       - "stream": model/stream/CarregamentoStream.js recebe os eventos
+ *         SSE de GET {servidor}/GestaoCooperado/stream.
+ *     Configuração: manifest.json > sap.ui5 > config > carregamentoStream.
  *
- * Nos dois casos a tela é montada pelo mesmo Regras.montarViewModel.
+ *  2. Os eventos entram em uma fila. A cada "intervaloAtualizacaoTelaMs"
+ *     a fila é aplicada ao estado (model/Carregamento.js). O estado nunca
+ *     é alterado no lugar: cada função devolve um estado novo.
+ *
+ *  3. model/ModeloTela.js transforma o estado nos textos e valores que a
+ *     view mostra. O JSONModel é somente leitura (OneWay).
+ *
+ *  4. Toda ação do usuário (iniciar, parar, faturar, ligar boca...) passa
+ *     por um handler "on..." deste controller, que troca o estado e
+ *     republica a tela.
+ *
+ * Convenção de nomes (padrão UI5): o = objeto, a = array, s = string,
+ * i = inteiro, f = decimal, b = booleano, fn = função, p = Promise.
  */
 sap.ui.define([
 	"sap/ui/core/mvc/Controller",
@@ -21,28 +33,34 @@ sap.ui.define([
 	"sap/ui/core/Theming",
 	"sap/base/Log",
 	"../model/Regras",
-	"../model/Simulador",
 	"../model/Carregamento",
-	"../model/stream/CarregamentoStream"
-], function (Controller, JSONModel, MessageToast, Theming, Log, Regras, Simulador, Carregamento, CarregamentoStream) {
+	"../model/Faturamento",
+	"../model/ModeloTela",
+	"../model/stream/CarregamentoStream",
+	"../model/stream/CarregamentoAutomatico"
+], function (Controller, JSONModel, MessageToast, Theming, Log, Regras, Carregamento, Faturamento, ModeloTela,
+	CarregamentoStream, CarregamentoAutomatico) {
 	"use strict";
 
-	/** Intervalo da simulação (modo demonstração). */
-	var INTERVALO_MS = 1000;
+	var NOME_COMPONENTE_LOG = "vagoes.dashboard.Main";
+
+	/** Tipos de fonte de eventos. */
+	var FONTE_AUTOMATICA = "automatico";
+	var FONTE_STREAM = "stream";
 
 	/** Máximo de eventos guardados com a aba oculta (proteção de memória). */
-	var LIMITE_EVENTOS_NO_BUFFER = 2000;
+	var LIMITE_EVENTOS_NA_FILA = 2000;
 
-	/** No modo stream, a tela é recalculada ao menos a cada X ms (relógio e alerta "sem atualização"). */
-	var INTERVALO_VERIFICACAO_MS = 1000;
+	/** Sem eventos, a tela ainda é recalculada a cada X ms (relógio e alerta "sem leitura"). */
+	var INTERVALO_SEM_EVENTOS_MS = 1000;
 
-	/** Depois de uma seleção manual, volta a seguir o vagão em carga após este tempo. */
-	var MANUAL_MS = 20000;
+	/** Depois de uma seleção manual, a tela volta a seguir o vagão em carga após este tempo. */
+	var TEMPO_DE_SELECAO_MANUAL_MS = 20000;
 
-	/** Temas do modo escuro / claro e chave onde a escolha fica salva no navegador. */
+	/** Temas claro/escuro e a chave onde a escolha fica salva no navegador. */
 	var TEMA_ESCURO = "sap_horizon_dark";
 	var TEMA_CLARO = "sap_horizon";
-	var TEMA_KEY = "vagoes.dashboard.tema";
+	var CHAVE_DO_TEMA_SALVO = "vagoes.dashboard.tema";
 
 	return Controller.extend("vagoes.dashboard.controller.Main", {
 
@@ -50,144 +68,344 @@ sap.ui.define([
 		/* Ciclo de vida                                               */
 		/* =========================================================== */
 
+		/** Cria os modelos, lê a configuração e inicia a fonte de eventos. */
 		onInit: function () {
-			this._ui = { sel: 3, bocaSel: 0, auto: true, manualAt: 0 };
-			this._state = null;
+			this._oEstado = null;             // estado do carregamento (model/Carregamento.js)
+			this._oFonteDeEventos = null;     // CarregamentoAutomatico ou CarregamentoStream
+			this._aEventosNaFila = [];        // eventos recebidos e ainda não aplicados
+			this._bPrecisaPublicar = false;
+			this._iUltimaPublicacaoMs = 0;
+			// o que o usuário está vendo (não faz parte do estado do carregamento)
+			this._oTela = {
+				indiceVagaoSelecionado: 0,
+				indiceBocaSelecionada: 0,
+				seguindoCarga: true,
+				selecaoManualEmMs: 0
+			};
 
-			// modelo de tela (somente leitura: as ações passam pelo controller)
-			this._oModel = new JSONModel();
-			this._oModel.setDefaultBindingMode("OneWay");
-			this._oModel.setSizeLimit(500);
-			this.getView().setModel(this._oModel);
+			// modelo de tela: somente leitura, as ações passam pelo controller
+			this._oModeloDeTela = new JSONModel();
+			this._oModeloDeTela.setDefaultBindingMode("OneWay");
+			this.getView().setModel(this._oModeloDeTela);
 
-			// tema (escuro/claro): modelo "ui" só para o botão do cabeçalho
-			this._oUi = new JSONModel({ claro: false });
-			this.getView().setModel(this._oUi, "ui");
-			this._iniciarTema();
+			// modelo "ui": só o que é da interface (tema claro/escuro)
+			this._oModeloDeInterface = new JSONModel({ temaClaro: false });
+			this.getView().setModel(this._oModeloDeInterface, "ui");
+			this._restaurarTemaSalvo();
 
-			var oComponent = this.getOwnerComponent();
-			var oMock = oComponent.getModel("mock");
-			var pBundle = Promise.resolve(oComponent.getModel("i18n").getResourceBundle());
+			var oComponente = this.getOwnerComponent();
+			var oModeloDeCadastro = oComponente.getModel("mock");
+			var pTextos = Promise.resolve(oComponente.getModel("i18n").getResourceBundle());
+			this._oConfiguracao = Object.assign({}, oComponente.getManifestEntry("/sap.ui5/config/carregamentoStream"));
 
-			this._oConfigStream = Object.assign({}, oComponent.getManifestEntry("/sap.ui5/config/carregamentoStream"));
-			this._ui.limiteSemDadosMs = (this._oConfigStream.segundosSemDadosParaAlerta || 15) * 1000;
-			this._aEventosPendentes = [];
-
-			Promise.all([pBundle, oMock.dataLoaded()]).then(function (aRes) {
-				var oBundle = aRes[0];
-				this._t = function (sKey, aArgs) { return oBundle.getText(sKey, aArgs); };
-				var oEstadoInicial = Simulador.estadoInicial(oMock.getData());
-				if (this._modoDemonstracao()) {
-					this._state = oEstadoInicial;
-					this._publicar();
-					this._iTimer = setInterval(this._tick.bind(this), INTERVALO_MS);
-				} else {
-					this._iniciarStream(oEstadoInicial);
-				}
+			Promise.all([pTextos, oModeloDeCadastro.dataLoaded()]).then(function (aResultados) {
+				var oTextos = aResultados[0];
+				this._fnTexto = function (sChave, aParametros) { return oTextos.getText(sChave, aParametros); };
+				this._oCadastro = oModeloDeCadastro.getData();
+				this._usarFonte(this._fonteInicial());
+				this._iniciarAtualizacaoPeriodica();
 			}.bind(this)).catch(function (oErro) {
-				Log.error("Falha ao carregar dados iniciais", oErro && oErro.message, "vagoes.dashboard");
+				Log.error("Falha ao carregar os dados iniciais", oErro && oErro.message, NOME_COMPONENTE_LOG);
 			});
 		},
 
+		/** Ao sair do app (navegação no Launchpad): fecha a conexão e os temporizadores. */
 		onExit: function () {
-			// fecha a conexão e os timers ao sair do app (navegação no Launchpad)
-			clearInterval(this._iTimer);
-			if (this._oStream) {
-				this._oStream.parar();
-			}
+			clearInterval(this._iTemporizador);
+			this._encerrarFonte();
 			if (this._fnAoMudarVisibilidade) {
 				document.removeEventListener("visibilitychange", this._fnAoMudarVisibilidade);
 			}
 		},
 
 		/* =========================================================== */
-		/* Stream de carregamento (SSE)                                */
+		/* Fonte de eventos: automático ou stream                      */
 		/* =========================================================== */
 
-		_modoDemonstracao: function () {
-			return !!this._oConfigStream.modoDemonstracao ||
-				!!document.querySelector("meta[name='vagoes-modo-demonstracao'][content='true']");
+		/**
+		 * Fonte usada ao abrir a tela: "fonteInicial" do manifest. A página de
+		 * demonstração (index-cdn.html) força o modo automático por meta tag,
+		 * porque lá não existe servidor de stream.
+		 * @returns {string} "automatico" ou "stream"
+		 */
+		_fonteInicial: function () {
+			var bPaginaDeDemonstracao = !!document.querySelector("meta[name='vagoes-modo-demonstracao'][content='true']");
+			if (bPaginaDeDemonstracao || this._oConfiguracao.fonteInicial === FONTE_AUTOMATICA) {
+				return FONTE_AUTOMATICA;
+			}
+			return FONTE_STREAM;
 		},
 
-		_iniciarStream: function (oEstadoInicial) {
-			this._state = Carregamento.prepararEstado(oEstadoInicial);
-			this._iUltimaPublicacaoMs = 0;
-			this._bPrecisaPublicar = true;
+		/**
+		 * Troca a fonte de eventos: encerra a atual, zera a composição e
+		 * começa a receber da nova.
+		 * @param {string} sTipo "automatico" ou "stream"
+		 */
+		_usarFonte: function (sTipo) {
+			var oConfigAutomatico = Object.assign({}, this._oConfiguracao.automatico);
+			oConfigAutomatico.aceleracao = CarregamentoAutomatico.limitarAceleracao(oConfigAutomatico.aceleracao || 1);
 
-			this._oStream = new CarregamentoStream(this._oConfigStream, {
-				aoReceberEvento: function (oEvento) {
-					this._aEventosPendentes.push(oEvento);
-					if (this._aEventosPendentes.length > LIMITE_EVENTOS_NO_BUFFER) {
-						this._compactarBuffer();
-					}
-				}.bind(this),
-				aoMudarStatusConexao: function (sStatus) {
-					this._state = Carregamento.definirStatusConexao(this._state, sStatus);
-					this._bPrecisaPublicar = true;
-				}.bind(this),
-				aoDescartarMensagem: function () {
-					this._state = Carregamento.registrarMensagemDescartada(this._state);
-					this._bPrecisaPublicar = true;
-				}.bind(this)
+			this._encerrarFonte();
+			this._aEventosNaFila = [];
+			this._oEstado = Carregamento.criarEstadoInicial(this._oCadastro, {
+				fonte: sTipo,
+				aceleracao: oConfigAutomatico.aceleracao,
+				transbordoAutomatico: this._oConfiguracao.transbordoAutomatico !== false,
+				limiteVagoes: this._oConfiguracao.limiteVagoes
 			});
+			this._oTela.indiceVagaoSelecionado = 0;
+			this._oTela.seguindoCarga = true;
+			this._oTela.selecaoManualEmMs = 0;
 
-			this._publicar();
-			this._oStream.iniciar();
-
-			var iIntervalo = Math.max(200, this._oConfigStream.intervaloAtualizacaoTelaMs || 500);
-			this._iTimer = setInterval(this._aplicarEventosPendentes.bind(this), iIntervalo);
-
-			this._fnAoMudarVisibilidade = function () {
-				if (!document.hidden) { this._aplicarEventosPendentes(); }
-			}.bind(this);
-			document.addEventListener("visibilitychange", this._fnAoMudarVisibilidade);
+			// as duas fontes avisam o controller pelos mesmos callbacks
+			var mCallbacks = {
+				aoReceberEvento: this._aoReceberEvento.bind(this),
+				aoMudarStatusConexao: this._aoMudarStatusDaFonte.bind(this),
+				aoDescartarMensagem: this._aoDescartarMensagem.bind(this)
+			};
+			if (sTipo === FONTE_AUTOMATICA) {
+				oConfigAutomatico.capacidadeVagaoKg = this._oEstado.composicao.capacidadeVagaoKg;
+				this._oFonteDeEventos = new CarregamentoAutomatico(oConfigAutomatico, mCallbacks, function () {
+					// a vazão do gerador acompanha as bocas ligadas e a abertura das comportas
+					return Regras.vazaoConfiguradaTh(this._oEstado);
+				}.bind(this));
+			} else {
+				this._oFonteDeEventos = new CarregamentoStream(this._oConfiguracao, mCallbacks);
+			}
+			this._iniciarFonte();
 		},
 
-		/** Aplica o buffer de eventos e atualiza a tela (no máximo 1x por intervalo). */
-		_aplicarEventosPendentes: function () {
-			if (!this._state || document.hidden) {
-				return; // aba oculta: os eventos ficam no buffer até voltar
-			}
-			var iAgoraMs = Date.now();
-			var bTemEventos = this._aEventosPendentes.length > 0;
-			if (!bTemEventos && !this._bPrecisaPublicar && iAgoraMs - this._iUltimaPublicacaoMs < INTERVALO_VERIFICACAO_MS) {
-				return;
-			}
-			if (bTemEventos) {
-				var aEventos = this._aEventosPendentes;
-				this._aEventosPendentes = [];
-				this._state = Carregamento.aplicarEventos(this._state, aEventos);
-			}
-			this._state = Carregamento.sincronizarBocas(this._state, iAgoraMs, this._ui.limiteSemDadosMs);
+		/** Começa (ou volta) a receber eventos. */
+		_iniciarFonte: function () {
+			this._oEstado = Carregamento.definirFonteAtiva(this._oEstado, true);
+			this._oFonteDeEventos.iniciar();
 			this._publicar();
-			this._bPrecisaPublicar = false;
-			this._iUltimaPublicacaoMs = iAgoraMs;
 		},
 
-		/** Mantém só os 2 últimos eventos de cada vagão (suficiente para peso e vazão). */
-		_compactarBuffer: function () {
-			var mPorVagao = {};
-			this._aEventosPendentes.forEach(function (oEvento) {
-				var aLista = mPorVagao[oEvento.vagaoId] = mPorVagao[oEvento.vagaoId] || [];
-				aLista.push(oEvento);
-				if (aLista.length > 2) { aLista.shift(); }
+		/** Para de receber eventos. O que já foi carregado continua na tela. */
+		_pararFonte: function () {
+			this._oFonteDeEventos.parar();
+			this._aplicarEventosDaFila();
+			this._oEstado = Carregamento.definirFonteAtiva(this._oEstado, false);
+			this._publicar();
+		},
+
+		/** Fecha a fonte atual (troca de fonte ou saída do app). */
+		_encerrarFonte: function () {
+			if (this._oFonteDeEventos) {
+				this._oFonteDeEventos.parar();
+				this._oFonteDeEventos = null;
+			}
+		},
+
+		/** Callback das fontes: chegou um evento já validado. Só entra na fila. */
+		_aoReceberEvento: function (oEvento) {
+			this._aEventosNaFila.push(oEvento);
+			if (this._aEventosNaFila.length > LIMITE_EVENTOS_NA_FILA) {
+				this._compactarFila();
+			}
+		},
+
+		/** Callback das fontes: mudou a situação (conectando, ao vivo, parado...). */
+		_aoMudarStatusDaFonte: function (sStatus) {
+			if (this._oEstado) {
+				this._oEstado = Carregamento.definirStatusDaFonte(this._oEstado, sStatus);
+				this._bPrecisaPublicar = true;
+			}
+		},
+
+		/** Callback do stream: uma mensagem fora do formato foi descartada. */
+		_aoDescartarMensagem: function () {
+			if (this._oEstado) {
+				this._oEstado = Carregamento.registrarMensagemDescartada(this._oEstado);
+				this._bPrecisaPublicar = true;
+			}
+		},
+
+		/**
+		 * Mantém só os 2 últimos eventos de cada vagão (bastam para o peso e a
+		 * vazão). Usado quando a fila cresce demais, por exemplo com a aba oculta.
+		 */
+		_compactarFila: function () {
+			var mEventosPorVagao = {};
+			this._aEventosNaFila.forEach(function (oEvento) {
+				var aDoVagao = mEventosPorVagao[oEvento.vagaoId] = mEventosPorVagao[oEvento.vagaoId] || [];
+				aDoVagao.push(oEvento);
+				if (aDoVagao.length > 2) { aDoVagao.shift(); }
 			});
-			this._aEventosPendentes = Object.keys(mPorVagao)
-				.reduce(function (aTodos, sId) { return aTodos.concat(mPorVagao[sId]); }, [])
+			this._aEventosNaFila = Object.keys(mEventosPorVagao)
+				.reduce(function (aTodos, sVagaoId) { return aTodos.concat(mEventosPorVagao[sVagaoId]); }, [])
 				.sort(function (oA, oB) { return oA.recebidoEmMs - oB.recebidoEmMs; });
 		},
 
 		/* =========================================================== */
-		/* Tema (modo escuro / claro)                                  */
+		/* Atualização da tela                                         */
 		/* =========================================================== */
 
-		_iniciarTema: function () {
-			var sSalvo = null;
-			try { sSalvo = window.localStorage.getItem(TEMA_KEY); } catch (e) { /* sem storage */ }
-			if (sSalvo === TEMA_CLARO || sSalvo === TEMA_ESCURO) {
-				this._aplicarTema(sSalvo);
+		/** Liga o temporizador que aplica a fila e atualiza a tela. */
+		_iniciarAtualizacaoPeriodica: function () {
+			var iIntervaloMs = Math.max(200, this._oConfiguracao.intervaloAtualizacaoTelaMs || 500);
+			this._iTemporizador = setInterval(this._atualizarPeriodicamente.bind(this), iIntervaloMs);
+
+			// ao voltar para a aba, atualiza na hora com o que ficou na fila
+			this._fnAoMudarVisibilidade = function () {
+				if (!document.hidden) { this._atualizarPeriodicamente(); }
+			}.bind(this);
+			document.addEventListener("visibilitychange", this._fnAoMudarVisibilidade);
+		},
+
+		/** Uma rodada do temporizador: aplica a fila e publica, se houver o que mostrar. */
+		_atualizarPeriodicamente: function () {
+			if (!this._oEstado || document.hidden) {
+				return; // aba oculta: os eventos ficam na fila até o usuário voltar
+			}
+			var bTemEventos = this._aEventosNaFila.length > 0;
+			var bPassouOIntervalo = Date.now() - this._iUltimaPublicacaoMs >= INTERVALO_SEM_EVENTOS_MS;
+			if (!bTemEventos && !this._bPrecisaPublicar && !bPassouOIntervalo) {
+				return;
+			}
+			this._aplicarEventosDaFila();
+			this._publicar();
+		},
+
+		/** Passa os eventos da fila para o estado. */
+		_aplicarEventosDaFila: function () {
+			if (!this._aEventosNaFila.length) {
+				return;
+			}
+			var aEventos = this._aEventosNaFila;
+			this._aEventosNaFila = [];
+			this._oEstado = Carregamento.aplicarEventos(this._oEstado, aEventos, this._buscarCadastroDoVagao.bind(this));
+		},
+
+		/**
+		 * Cadastro (placa e vistoria) de um vagão que apareceu nos eventos.
+		 * TODO integração: trocar por uma consulta à API de cadastro/vistoria.
+		 * @param {string} sVagaoId identificador vindo do evento
+		 * @returns {object|null} { placa, vistoriado, checklist } ou null se não cadastrado
+		 */
+		_buscarCadastroDoVagao: function (sVagaoId) {
+			var aCadastrados = this._oCadastro.cadastroVagoes || [];
+			for (var i = 0; i < aCadastrados.length; i++) {
+				if (aCadastrados[i].id === sVagaoId) {
+					return aCadastrados[i];
+				}
+			}
+			// no modo automático os vagões são inventados: o gerador simula o cadastro
+			var oFonte = this._oFonteDeEventos;
+			return oFonte && oFonte.buscarCadastro ? oFonte.buscarCadastro(sVagaoId) : null;
+		},
+
+		/** Monta o modelo de tela a partir do estado e entrega para a view. */
+		_publicar: function () {
+			if (!this._oEstado || !this._fnTexto) {
+				return;
+			}
+			var iAgoraMs = Date.now();
+			this._atualizarVagaoEmFoco(iAgoraMs);
+			this._oModeloDeTela.setData(ModeloTela.montar(this._oEstado, this._oTela, this._fnTexto, {
+				agoraMs: iAgoraMs,
+				limiteSemDadosMs: (this._oConfiguracao.segundosSemDadosParaAlerta || 15) * 1000
+			}));
+			this._bPrecisaPublicar = false;
+			this._iUltimaPublicacaoMs = iAgoraMs;
+		},
+
+		/**
+		 * Decide qual vagão fica em foco. Por padrão a tela segue o vagão em
+		 * carga; depois de uma seleção manual, espera um tempo antes de voltar.
+		 */
+		_atualizarVagaoEmFoco: function (iAgoraMs) {
+			var oTela = this._oTela;
+			var iUltimo = Math.max(0, this._oEstado.vagoes.length - 1);
+			if (!oTela.seguindoCarga && iAgoraMs - oTela.selecaoManualEmMs >= TEMPO_DE_SELECAO_MANUAL_MS) {
+				oTela.seguindoCarga = true;
+			}
+			if (oTela.seguindoCarga) {
+				var iEmCarga = Regras.indiceVagaoEmCarga(this._oEstado);
+				oTela.indiceVagaoSelecionado = iEmCarga >= 0 ? iEmCarga : iUltimo;
+			}
+			oTela.indiceVagaoSelecionado = Math.min(oTela.indiceVagaoSelecionado, iUltimo);
+		},
+
+		/**
+		 * Coloca um vagão em foco por escolha do usuário.
+		 * @param {number} iIndice posição do vagão na composição
+		 */
+		_selecionarVagao: function (iIndice) {
+			if (!this._oEstado || iIndice < 0 || iIndice >= this._oEstado.vagoes.length) {
+				return;
+			}
+			this._oTela.indiceVagaoSelecionado = iIndice;
+			this._oTela.seguindoCarga = false;
+			this._oTela.selecaoManualEmMs = Date.now();
+			this._publicar();
+		},
+
+		/** Lê um valor do modelo de tela, ex.: this._lerDaTela("/bocaSelecionada"). */
+		_lerDaTela: function (sCaminho) {
+			return this._oModeloDeTela.getProperty(sCaminho);
+		},
+
+		/* =========================================================== */
+		/* Cabeçalho: fonte, iniciar/parar, reiniciar e tema           */
+		/* =========================================================== */
+
+		/** Botão "Automático": a tela gera o enchimento sozinha. */
+		onUsarFonteAutomatica: function () {
+			this._trocarFonte(FONTE_AUTOMATICA, "msgFonteAutomatico");
+		},
+
+		/** Botão "Stream": recebe os eventos do servidor. */
+		onUsarFonteStream: function () {
+			this._trocarFonte(FONTE_STREAM, "msgFonteStream");
+		},
+
+		_trocarFonte: function (sTipo, sChaveDaMensagem) {
+			if (!this._oEstado || this._oEstado.fonte.tipo === sTipo) {
+				return;
+			}
+			this._usarFonte(sTipo);
+			MessageToast.show(this._fnTexto(sChaveDaMensagem));
+		},
+
+		/** Botão "Parar" / "Iniciar": interrompe e retoma de onde parou. */
+		onIniciarOuParar: function () {
+			if (!this._oEstado) {
+				return;
+			}
+			if (this._oEstado.fonte.ativa) {
+				this._pararFonte();
+				MessageToast.show(this._fnTexto("msgParado"));
 			} else {
-				this._oUi.setProperty("/claro", Theming.getTheme() === TEMA_CLARO);
+				this._iniciarFonte();
+				MessageToast.show(this._fnTexto("msgIniciado"));
+			}
+		},
+
+		/** Botão "Reiniciar": zera a composição e começa de novo com a mesma fonte. */
+		onReiniciar: function () {
+			if (!this._oEstado) {
+				return;
+			}
+			this._usarFonte(this._oEstado.fonte.tipo);
+			MessageToast.show(this._fnTexto("msgReiniciado"));
+		},
+
+		/** Botão de tema: alterna entre escuro e claro e guarda a escolha. */
+		onAlternarTema: function () {
+			var sTema = this._oModeloDeInterface.getProperty("/temaClaro") ? TEMA_ESCURO : TEMA_CLARO;
+			this._aplicarTema(sTema);
+			try { window.localStorage.setItem(CHAVE_DO_TEMA_SALVO, sTema); } catch (oErro) { /* navegador sem armazenamento */ }
+		},
+
+		_restaurarTemaSalvo: function () {
+			var sTemaSalvo = null;
+			try { sTemaSalvo = window.localStorage.getItem(CHAVE_DO_TEMA_SALVO); } catch (oErro) { /* navegador sem armazenamento */ }
+			if (sTemaSalvo === TEMA_CLARO || sTemaSalvo === TEMA_ESCURO) {
+				this._aplicarTema(sTemaSalvo);
+			} else {
+				this._oModeloDeInterface.setProperty("/temaClaro", Theming.getTheme() === TEMA_CLARO);
 			}
 		},
 
@@ -195,162 +413,132 @@ sap.ui.define([
 			if (Theming.getTheme() !== sTema) {
 				Theming.setTheme(sTema);
 			}
-			this._oUi.setProperty("/claro", sTema === TEMA_CLARO);
-		},
-
-		onAlternarTema: function () {
-			var sTema = this._oUi.getProperty("/claro") ? TEMA_ESCURO : TEMA_CLARO;
-			this._aplicarTema(sTema);
-			try { window.localStorage.setItem(TEMA_KEY, sTema); } catch (e) { /* sem storage */ }
+			this._oModeloDeInterface.setProperty("/temaClaro", sTema === TEMA_CLARO);
 		},
 
 		/* =========================================================== */
-		/* Estado                                                      */
+		/* Vagões: seleção                                             */
 		/* =========================================================== */
 
-		_tick: function () {
-			this._state = Simulador.passo(this._state);
+		/** Clique em um vagão (ou nas setas ‹ ›) da estação 3D. */
+		onSelecionarVagaoNaEstacao: function (oEvento) {
+			this._selecionarVagao(oEvento.getParameter("indice"));
+		},
+
+		/** Clique na sigla de um vagão nas listas (composição e fila de faturamento). */
+		onSelecionarVagaoDaLista: function (oEvento) {
+			this._selecionarVagao(oEvento.getSource().getBindingContext().getProperty("indice"));
+		},
+
+		/** Botão "Seguir carga" da estação: volta a acompanhar o vagão em carregamento. */
+		onSeguirCarga: function () {
+			this._oTela.seguindoCarga = true;
 			this._publicar();
 		},
 
-		_publicar: function () {
-			if (!this._state) {
+		/* =========================================================== */
+		/* Faturamento por vagão                                       */
+		/* =========================================================== */
+
+		/** Botão "Faturar" do painel: fatura o vagão em foco. */
+		onFaturarVagaoEmFoco: function () {
+			this._faturarVagao(this._oTela.indiceVagaoSelecionado);
+		},
+
+		/** Botão "Faturar" de uma linha da fila. */
+		onFaturarVagaoDaFila: function (oEvento) {
+			this._faturarVagao(oEvento.getSource().getBindingContext().getProperty("indice"));
+		},
+
+		/** Botão "Faturar os N liberados": fatura todos os vagões cheios e sem bloqueio. */
+		onFaturarLiberados: function () {
+			if (!this._oEstado) {
 				return;
 			}
-			this._seguirCarregamento();
-			this._oModel.setData(Regras.montarViewModel(this._state, this._ui, this._t));
-		},
-
-		/** Mantém em foco o vagão que está carregando (salvo seleção manual recente). */
-		_seguirCarregamento: function () {
-			var s = this._state;
-			if (this._ui.manualAt && Date.now() - this._ui.manualAt < MANUAL_MS) {
-				this._ui.auto = false;
+			var iLiberados = Faturamento.quantidadeLiberados(this._oEstado);
+			if (!iLiberados) {
 				return;
 			}
-			this._ui.manualAt = 0;
-			var iCarregando = this._indiceCarregando();
-			this._ui.auto = iCarregando >= 0;
-			if (iCarregando >= 0) {
-				this._ui.sel = iCarregando;
-			}
-		},
-
-		_indiceCarregando: function () {
-			var s = this._state;
-			var oBoca = s.bocas.filter(function (b) { return b.status === "ativa" && b.destino != null; })[0];
-			if (!oBoca) {
-				// modo stream com todas as bocas paradas: usa o status informado pela balança
-				for (var j = 0; j < s.vagoes.length; j++) {
-					if (s.vagoes[j].statusChave === "carregando") {
-						return j;
-					}
-				}
-				return -1;
-			}
-			for (var i = 0; i < s.vagoes.length; i++) {
-				if (s.vagoes[i].pos === oBoca.destino) {
-					return i;
-				}
-			}
-			return -1;
-		},
-
-		_selecionar: function (iVagao) {
-			this._ui.sel = iVagao;
-			this._ui.manualAt = iVagao === this._indiceCarregando() ? 0 : Date.now();
+			this._oEstado = Faturamento.faturarLiberados(this._oEstado, Date.now());
 			this._publicar();
+			MessageToast.show(this._fnTexto("fat.msgFaturados", [iLiberados]));
 		},
 
-		_executar: function (fnAcao) {
-			if (!this._state) {
+		/**
+		 * Fatura um vagão. A regra (só cheio e sem bloqueio) está em
+		 * model/Faturamento.js: se não puder, o estado volta igual.
+		 * @param {number} iIndice posição do vagão na composição
+		 */
+		_faturarVagao: function (iIndice) {
+			if (!this._oEstado) {
 				return;
 			}
-			var aArgs = Array.prototype.slice.call(arguments, 1);
-			this._state = fnAcao.apply(Simulador, [this._state].concat(aArgs));
-			if (this._oStream) {
-				// modo stream: religa as bocas ao vagão em carga logo após a ação do operador
-				this._state = Carregamento.sincronizarBocas(this._state, Date.now(), this._ui.limiteSemDadosMs);
+			var oEstadoNovo = Faturamento.faturarVagao(this._oEstado, iIndice, Date.now());
+			if (oEstadoNovo === this._oEstado) {
+				return; // não estava liberado
 			}
+			this._oEstado = oEstadoNovo;
 			this._publicar();
-		},
-
-		_vm: function (sPath) {
-			return this._oModel.getProperty(sPath);
+			var oVagao = oEstadoNovo.vagoes[iIndice];
+			MessageToast.show(this._fnTexto("fat.msgFaturado", [String(iIndice + 1).padStart(2, "0"), oVagao.fatura.numero]));
 		},
 
 		/* =========================================================== */
-		/* Estação: vagões e bocas                                     */
+		/* Bocas: popover, ligar/desligar e comporta                   */
 		/* =========================================================== */
 
-		onWagonPress: function (oEvent) {
-			this._selecionar(oEvent.getParameter("index"));
+		/** Clique em um silo da estação 3D: abre o popover da boca. */
+		onSelecionarBocaNaEstacao: function (oEvento) {
+			this._abrirPopoverDaBoca(oEvento.getParameter("indice"), oEvento.getParameter("elemento"));
 		},
 
-		onVagaoListPress: function (oEvent) {
-			this._selecionar(oEvent.getSource().getBindingContext().getProperty("index"));
-		},
-
-		onBocaPress: function (oEvent) {
-			this._abrirBoca(oEvent.getParameter("index"), oEvent.getParameter("domRef"));
-		},
-
-		_abrirBoca: function (iBoca, vOpener) {
-			this._ui.bocaSel = iBoca;
+		/**
+		 * @param {number} iIndiceBoca posição da boca
+		 * @param {HTMLElement|sap.ui.core.Control} vAncora onde o popover aponta
+		 */
+		_abrirPopoverDaBoca: function (iIndiceBoca, vAncora) {
+			this._oTela.indiceBocaSelecionada = iIndiceBoca;
 			this._publicar();
-			if (!this._pPopover) {
-				this._pPopover = this.loadFragment({ name: "vagoes.dashboard.view.BocaPopover" });
+			// o fragmento é carregado só na primeira vez
+			if (!this._pPopoverDaBoca) {
+				this._pPopoverDaBoca = this.loadFragment({ name: "vagoes.dashboard.view.BocaPopover" });
 			}
-			this._pPopover.then(function (oPopover) {
-				oPopover.openBy(vOpener);
-			});
+			this._pPopoverDaBoca.then(function (oPopover) {
+				oPopover.openBy(vAncora || this.byId("estacao"));
+			}.bind(this));
 		},
 
 		onFecharPopover: function () {
 			this.byId("bocaPopover").close();
 		},
 
-		onAberturaChange: function (oEvent) {
-			this._executar(Simulador.definirAbertura, this._ui.bocaSel, oEvent.getParameter("value"));
+		/** Botão do popover: liga ou desliga a boca selecionada. */
+		onLigarOuDesligarBoca: function () {
+			var oBoca = this._lerDaTela("/bocaSelecionada");
+			this._oEstado = Carregamento.alternarBoca(this._oEstado, this._oTela.indiceBocaSelecionada);
+			this._publicar();
+			MessageToast.show(this._fnTexto(oBoca.ligada ? "pop.msgDesligada" : "pop.msgLigada", [oBoca.numero]));
 		},
 
-		onDestinoChange: function (oEvent) {
-			var oItem = oEvent.getParameter("selectedItem");
-			if (oItem) {
-				this._executar(Simulador.definirDestino, this._ui.bocaSel, Number(oItem.getKey()));
-			}
-		},
-
-		onBocaAcao: function () {
-			var oBoca = this._vm("/bocaSel");
-			if (oBoca.ligada) {
-				this._executar(Simulador.pararBoca, this._ui.bocaSel);
-			} else {
-				this._executar(Simulador.iniciarBoca, this._ui.bocaSel);
-			}
+		/** Slider do popover: abertura da comporta (0 a 100%). */
+		onMudarAberturaDaBoca: function (oEvento) {
+			this._oEstado = Carregamento.definirAberturaDaBoca(
+				this._oEstado, this._oTela.indiceBocaSelecionada, oEvento.getParameter("value"));
+			this._publicar();
 		},
 
 		/* =========================================================== */
-		/* Vagão selecionado                                           */
+		/* Pendências                                                  */
 		/* =========================================================== */
 
-		onRetirarExcesso: function () {
-			var sLabel = this._vm("/sel/label");
-			this._executar(Simulador.retirarExcesso, this._ui.sel);
-			MessageToast.show(this._t("msgExcessoOk", [sLabel]));
-		},
-
-		/* =========================================================== */
-		/* Validações                                                  */
-		/* =========================================================== */
-
-		onValidacaoPress: function (oEvent) {
-			var oLink = oEvent.getSource();
-			var oVal = oLink.getBindingContext().getObject();
-			if (oVal.vagaoIndex >= 0) {
-				this._selecionar(oVal.vagaoIndex);
-			} else if (oVal.bocaIndex >= 0) {
-				this._abrirBoca(oVal.bocaIndex, oLink);
+		/** Clique em uma pendência: leva ao vagão ou abre a boca relacionada. */
+		onAbrirPendencia: function (oEvento) {
+			var oLink = oEvento.getSource();
+			var oPendencia = oLink.getBindingContext().getObject();
+			if (oPendencia.indiceVagao >= 0) {
+				this._selecionarVagao(oPendencia.indiceVagao);
+			} else if (oPendencia.indiceBoca >= 0) {
+				this._abrirPopoverDaBoca(oPendencia.indiceBoca, oLink);
 			}
 		}
 	});
